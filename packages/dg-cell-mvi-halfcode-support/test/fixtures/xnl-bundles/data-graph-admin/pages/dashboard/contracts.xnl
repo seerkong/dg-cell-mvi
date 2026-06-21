@@ -1,0 +1,11 @@
+<Contracts #dashboard-page-contracts (
+  <PageContract #dg.admin.graph.DashboardPage {
+    urlInputs = { query = {} }
+  }>
+) [
+  <ElementContract #dashboard-cards (
+    <Requires {
+      config = [ "config://#dashboard-summary" ]
+    }>
+  )>
+]>

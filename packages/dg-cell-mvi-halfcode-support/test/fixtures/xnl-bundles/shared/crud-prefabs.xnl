@@ -1,0 +1,5 @@
+<Prefabs [
+  <dg.materials.CrudTable #SharedCrudTable export=true name="SharedCrudTable" {
+    pageSize = 20
+  }>
+]>

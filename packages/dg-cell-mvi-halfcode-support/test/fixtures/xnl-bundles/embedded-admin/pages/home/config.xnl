@@ -1,0 +1,8 @@
+<Config #home-page-config [
+  <ConfigEntry #home-page {
+    layout = "grid"
+  }>
+  <ConfigEntry #reports-embed {
+    url = { query = { period = "7d" } }
+  }>
+]>

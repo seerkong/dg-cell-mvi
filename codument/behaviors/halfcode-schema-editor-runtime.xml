@@ -1,0 +1,77 @@
+<behaviors capability="halfcode-schema-editor-runtime" version="1">
+  <requirement id="command-template-resolution">
+    <statement>The support runtime SHALL resolve a schema-editor command template against one dispatch-time accepted snapshot, serializable event data and explicit wildcard bindings without performing mutation.</statement>
+    <suite id="resolution" name="Command resolution">
+      <case id="event-value-literal">
+        <given>A valid template using event, value and literal sources</given>
+        <when>The resolver runs for one dispatch</when>
+        <then>It SHALL produce one validated concrete command from the captured snapshot and SHALL NOT reread mutable host state</then>
+      </case>
+      <case id="invalid-or-unmaterialized">
+        <given>A required source is missing, a path is unsafe, or a wildcard has no concrete binding</given>
+        <when>The resolver runs</when>
+        <then>It SHALL return structured diagnostics and SHALL NOT return a partial command</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="revision-gated-session">
+    <statement>SchemaEditorSession SHALL project only authoritative snapshots accepted by its scoped ValueHost at the current revision and SHALL never optimistically mutate the accepted value.</statement>
+    <suite id="session" name="Accepted snapshot session">
+      <case id="accept-reject-conflict">
+        <given>A session dispatches commands to a ValueHost</given>
+        <when>The host accepts, rejects, conflicts or returns malformed data</when>
+        <then>Only a valid current-revision acceptance SHALL advance the projection</then>
+      </case>
+      <case id="stale-and-dispose">
+        <given>Multiple requests complete out of order or after session disposal</given>
+        <when>Late, duplicate or stale responses arrive</when>
+        <then>They SHALL NOT overwrite an already advanced accepted snapshot or notify disposed subscribers</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="scoped-value-host-capability">
+    <statement>Schema-editor runtime SHALL resolve ValueHost and session capabilities from typed Scope runtime bindings using stable config ids rather than plan provenance or a global registry.</statement>
+    <suite id="scope" name="Scoped runtime bridge">
+      <case id="inherit-and-override">
+        <given>Parent and child scopes bind schema-editor host capabilities</given>
+        <when>The runtime resolves a host id in each scope</when>
+        <then>Existing runtime assembly visibility and override semantics SHALL select the scoped capability without rescanning source documents</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="pure-canonical-shell-lowering">
+    <statement>lowerEditorPlan SHALL generate deterministic canonical Halfcode source material containing one schemaEditor.Editor shell atom, an asUnitFqn-validated logical identity, an injectively projected XNL runtime identity and serializable plan/runtime bindings without capturing host or session state.</statement>
+    <suite id="lowering" name="Canonical shell lifecycle">
+      <case id="real-loader-runtime-path">
+        <given>A valid renderer-complete EditorPlan</given>
+        <when>It is lowered and loaded through the real source resolver, loader, unit compiler and app runtime</when>
+        <then>The runtime SHALL expose an equivalent plan and one shell atom with zero loader/compiler diagnostics</then>
+      </case>
+      <case id="pure-output">
+        <given>The same plan and serializable lowering config</given>
+        <when>Lowering runs repeatedly</when>
+        <then>The source bundle SHALL be deterministic and SHALL contain no ValueHost, callback, accepted snapshot, renderer implementation or synthetic loaded bundle</then>
+      </case>
+      <case id="canonical-dollar-identity">
+        <given>Canonical logical Unit FQNs containing $ProfileEditor and _dProfileEditor segments</given>
+        <when>Lowering projects them into the current XNL Word-compatible runtime identity</when>
+        <then>$ SHALL project to _d and _ SHALL project to __ so the two runtime identities remain distinct while the logical identities are preserved</then>
+      </case>
+      <case id="multi-bundle-vfs-coexistence">
+        <given>Two valid EditorPlans with distinct canonical logical Unit FQNs</given>
+        <when>Their lowered source maps are mounted in one memory VFS</when>
+        <then>The logical-identity-derived source roots SHALL NOT overlap and both bundles SHALL independently pass the real loader/compiler/app-runtime lifecycle</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="runtime-ownership-boundaries">
+    <statement>The schema-editor support capsule SHALL depend on canonical contract/logic/runtime APIs and SHALL NOT own Vue, Element Plus, Flow/XNL mutation, VFS/database persistence or host-specific writers.</statement>
+    <suite id="boundaries" name="Runtime package boundaries">
+      <case id="dependency-scan">
+        <given>The support schema-editor source graph and package root exports</given>
+        <when>Dependency and public-surface checks run</when>
+        <then>The capsule SHALL expose stable root APIs without renderer or host-mutation ownership leakage</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

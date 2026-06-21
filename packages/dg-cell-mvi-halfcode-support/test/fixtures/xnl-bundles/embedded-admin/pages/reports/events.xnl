@@ -1,0 +1,3 @@
+<Events #reports-page-events [
+  <Event #report.saved>
+]>

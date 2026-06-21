@@ -1,0 +1,47 @@
+<behaviors capability="halfcode-runtime-dynamic-execution" version="1">
+  <requirement id="dynamic-code-entry">
+    <statement>系统 SHALL execute dynamic halfcode code entries with output = fn(runtime, input, config).</statement>
+    <suite id="entry-protocol" name="动态代码入口协议">
+      <case id="runtime-first-entry">
+        <given>a dynamic code entry with a callable export</given>
+        <when>the runtime invokes the entry</when>
+        <then>the export SHALL receive runtime, input, and config in that order</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="selected-instance-entry">
+    <statement>系统 SHALL execute selected-instance code entries with output = fn(runtime, instanceRefs, input, config).</statement>
+    <suite id="instance-protocol" name="实例引用入口协议">
+      <case id="instance-refs-before-input">
+        <given>a selected element or instance reference collection</given>
+        <when>the runtime invokes the entry</when>
+        <then>the export SHALL receive runtime, instanceRefs, input, and config in that order</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="injected-symbol-resolution">
+    <statement>系统 SHALL use injected symbol resolution instead of baking module loading policy into the DSL.</statement>
+    <suite id="resolution" name="符号解析边界">
+      <case id="runtime-provided-resolution">
+        <given>a code reference declared in a bundle</given>
+        <when>the entry is materialized</when>
+        <then>the runtime SHALL resolve its symbol through an injected resolver</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="runtime-diagnostics">
+    <statement>系统 SHALL return runtime diagnostics for non-callable symbols and thrown execution failures.</statement>
+    <suite id="diagnostics" name="运行时诊断">
+      <case id="non-callable-symbol">
+        <given>a resolved export is not callable</given>
+        <when>the runtime invokes the entry</when>
+        <then>the runtime SHALL return a structured diagnostic</then>
+      </case>
+      <case id="thrown-execution-failure">
+        <given>a callable export throws during execution</given>
+        <when>the runtime invokes the entry</when>
+        <then>the runtime SHALL return a structured execution diagnostic</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

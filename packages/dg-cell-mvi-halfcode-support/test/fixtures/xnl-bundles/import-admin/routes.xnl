@@ -1,0 +1,7 @@
+<Routes #import-admin-routes [
+  <Route #orders-route {
+    path = "/orders"
+    page = "page://dg.admin.imports.OrdersPage"
+    menu = { icon = "shopping-cart" order = 1 }
+  }>
+]>

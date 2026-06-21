@@ -1,0 +1,6 @@
+<Commands #reports-page-commands [
+  <Command #reports.search {
+    handler = "vfs://./command-handlers/reports.command-handlers.ts#searchReports"
+  }>
+  <Command #report.refresh>
+]>

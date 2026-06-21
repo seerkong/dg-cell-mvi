@@ -1,0 +1,22 @@
+<Elements #users-page-elements (
+  <Scope ref="users-page">
+) [
+  <h1 #users-title { text = "用户数据图" }>
+  <Capsule #users-filter (
+    <Scope ref="users-filter">
+  ) [
+    <elementPlus.ElInput #keyword-input {
+      props = "config://#users-filter/keywordInput"
+      command = "command://#users.search"
+    }>
+    <elementPlus.ElSelect #status-select {
+      props = "config://#users-filter/statusSelect"
+      command = "command://#users.search"
+    }>
+  ]>
+  <elementPlus.DataTable #users-grid {
+    props = "config://#users-grid"
+    rows = "scope-data-graph://#users-list/outputs.filteredRows"
+    summary = "scope-data-graph://#users-list/outputs.summary"
+  }>
+]>

@@ -1,0 +1,86 @@
+<behavior-patch capability="halfcode-schema-editor-contracts" version="1">
+  <upsert selector="behavior://halfcode-schema-editor-contracts/requirements/serializable-schema-and-presentation">
+    <requirement id="serializable-schema-and-presentation">
+      <statement>The contract package SHALL define serializable StructureSchema and EditorPresentation data without executable or renderer implementation values.</statement>
+      <suite id="data-boundary" name="Data boundary">
+        <case id="recursive-structure-kinds">
+          <given>A schema containing nested object, array, map, union, scalar, and ref nodes</given>
+          <when>The schema is validated</when>
+          <then>The validator SHALL preserve recursive structure and semantic annotations without requiring a renderer</then>
+        </case>
+        <case id="presentation-is-pure-data">
+          <given>An EditorPresentation with stable presenter ids and serializable options</given>
+          <when>The presentation is validated</when>
+          <then>The validator SHALL accept it and SHALL reject functions, component constructors, and runtime instances</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-contracts/requirements/renderer-neutral-editor-plan">
+    <requirement id="renderer-neutral-editor-plan">
+      <statement>The contract package SHALL define a renderer-neutral EditorPlan with recursive collection templates, stable paths, bindings, diagnostics, and provenance.</statement>
+      <suite id="plan-ir" name="Editor plan IR">
+        <case id="collection-template">
+          <given>An array or map plan node</given>
+          <when>The plan is inspected independently of a current value snapshot</when>
+          <then>The plan SHALL contain a reusable item or value template suitable for future insertions</then>
+        </case>
+        <case id="no-renderer-dependency">
+          <given>The public EditorPlan export graph</given>
+          <when>Package dependency boundaries are checked</when>
+          <then>The graph SHALL NOT import Vue, Element Plus, DOM, or concrete component implementations</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-contracts/requirements/runtime-first-dialect-protocol">
+    <requirement id="runtime-first-dialect-protocol">
+      <statement>The contract package SHALL define the exact code-side SchemaEditorDialect route as classify plus transformers, and recursive compile runtime protocols using output = fn(runtime, input, config). Fixed resolution precedence is base compiler policy, not a caller-owned dialect surface.</statement>
+      <suite id="processor-shape" name="Processor shape">
+        <case id="runtime-owned-recursion">
+          <given>A transformer that needs to compile child schema nodes</given>
+          <when>The transformer protocol is used</when>
+          <then>Recursion SHALL be requested through the compile runtime and SHALL NOT be supplied as an ad-hoc fourth callback</then>
+        </case>
+        <case id="resolution-precedence">
+          <given>Presentation, semantic, format, and structural bindings all match a node</given>
+          <when>A later compiler resolves the transformer</when>
+          <then>The base compiler policy SHALL use precedence presentation, scoped semantic, format, structural kind, then unsupported diagnostic; public dialects SHALL NOT expose resolver, registry, classifier, or caller resolutionPrecedence compatibility fields</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-contracts/requirements/host-owned-structured-edits">
+    <requirement id="host-owned-structured-edits">
+      <statement>The editor contract SHALL express value, collection, map, and union changes as structured Commands while leaving apply, persistence, and accepted-snapshot ownership to the host.</statement>
+      <suite id="commands" name="Structured commands">
+        <case id="collection-authoring">
+          <given>A consumer editing a recursive collection</given>
+          <when>The consumer requests insert, remove, or move</when>
+          <then>The request SHALL be represented by a serializable collection Command with a stable target path</then>
+        </case>
+        <case id="no-persistence-effect">
+          <given>A public editor Command or command binding</given>
+          <when>Its data is inspected</when>
+          <then>It SHALL NOT contain an apply callback, XNL mutation implementation, VFS client, database writer, or signal setter</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-contracts/requirements/no-implicit-json-fallback">
+    <requirement id="no-implicit-json-fallback">
+      <statement>The schema editor contracts SHALL require unsupported structures to produce diagnostics and SHALL permit raw JSON or code editing only through an explicit presenter selection.</statement>
+      <suite id="fallback" name="Fallback policy">
+        <case id="unsupported-is-diagnostic">
+          <given>A schema node for which no presenter or transformer is available</given>
+          <when>The node is represented in an EditorPlan</when>
+          <then>The plan SHALL carry an unsupported diagnostic and SHALL NOT silently select a JSON textarea</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

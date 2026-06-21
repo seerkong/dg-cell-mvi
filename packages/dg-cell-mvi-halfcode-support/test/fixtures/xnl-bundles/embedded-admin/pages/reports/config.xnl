@@ -1,0 +1,17 @@
+<Config #reports-page-config [
+  <ConfigEntry #reports-page {
+    layout = "mixed"
+  }>
+  <ConfigEntry #reports-admin-slot {
+    padding = "16px"
+  }>
+  <ConfigEntry #reports-table {
+    columns = [
+      { field = "name" label = "名称" }
+      { field = "score" label = "评分" }
+    ]
+  }>
+  <ConfigEntry #resources {
+    reportsPage = { source = "mock" collection = "reports" }
+  }>
+]>

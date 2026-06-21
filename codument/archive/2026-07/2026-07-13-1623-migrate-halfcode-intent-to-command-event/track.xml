@@ -1,0 +1,103 @@
+<Track id="migrate-halfcode-intent-to-command-event" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>将 canonical halfcode 通信协议从 MVI intent 迁移为可前后端统一的 Command / Event / Message 模型。</Goal>
+    <Description>以破坏性、零双拼写的 canonical migration 更新 DSL 文档、contract/runtime 类型、XNL loader/compiler、非 legacy fixtures 和回归测试；旧兼容输入保持隔离。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-13T00:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-13T13:23:30Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="halfcode-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="halfcode-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_migrate-halfcode-intent-to-command-event" name="migrate-halfcode-intent-to-command-event" version="1">
+    <Description>先建立新的协议真源和 contract，再让 loader/runtime/compiler 以新词汇工作，最后迁移 canonical bundles 并封口旧词汇防回归。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="协议真源与公开 contract" status="DONE" order="0">
+        <Description>将 Command/Event/Message 的语义、域表、契约和诊断写成唯一 canonical 表面。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Command 与 Event 的类型、URI、边界契约和 Wire 语义无重复 type 字段且可由测试区分</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="先写 command/event contract 的失败测试" status="DONE" order="0" priority="P0">
+            <Description>为 commands/events ref scheme、Sends、MessagePolicy、Wire.message、event 无 handler、旧 canonical intent vocabulary 诊断写聚焦的 contract/loader red tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">测试能区分 Command 请求与 Event 事实，并在实现前失败</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试明确证明 canonical loader 不把 retired intent 拼写当别名</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 canonical message contract 与诊断" status="DONE" order="1" priority="P0">
+            <Description>替换 canonical unit contract、domain/scheme table、runtime scope binding 和 Wire model；新增 focused legacy-vocabulary diagnostic，保留显式 legacy codec 隔离。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">公开 canonical 类型使用 Command/Event/MessageRef、sends、commands/events/messagePolicy 和 Wire.message</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">旧 HalfcodeDocument/xnl-bundles-legacy 路径仍可作为独立兼容层测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="同步 DSL 公理与节点规范" status="DONE" order="2" priority="P0">
+            <Description>更新 frontend/runtime/effect/data-graph 引用点、refs/files/domains/README，使 Command、Event、MessagePolicy、Sends、Wire.message 和 runtime-first handler 成为唯一 canonical 描述。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">canonical DSL 文档不再将 Intent/Intents/IntentPolicy 作为有效词汇</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">文档明确跨 route 只传同一 Message，转换必须在代码中完成</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Loader、runtime 与 compiler 迁移" status="DONE" order="1">
+        <Description>让可执行 canonical path 解析、装配并验证新消息协议。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Command handler 继续 runtime-first；Event 不获得隐式 handler；Wire 保持 message identity</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 canonical XNL loader 与 scope assembly" status="DONE" order="0" priority="P0">
+            <Description>解析 Commands/Events、command element field、Sends、MessagePolicy/MessageRule、Scope commands/events，并把它们作为 runtime assembly input；拒绝 canonical retired spellings。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">FrontendApp bundle 可加载 commands/events 并形成 scope runtime command/event bindings</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">MessageRule 仍只承担 consume/bubble/reject 策略，不执行 handler 或转换</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="迁移 compiler 的 contract 与 wiring 验证" status="DONE" order="1" priority="P0">
+            <Description>将 WiringPlan 和未接线诊断改为 message identity 校验：source sends 和 target accepts 必须引用同一 commands/events ref；不保留 emit-to-accept mapping。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">event wire 编译为携带 events:// ref 的 WirePlanBinding.message</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">跨 route event-to-command mapping 不再被 XNL 或 compiler 接受</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Canonical fixture 迁移与验证" status="DONE" order="2">
+        <Description>用真实 sample bundles 展示命令执行与事件跨 route 传递，并运行包级回归。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>所有非 legacy fixture 和 canonical docs 只使用新消息词汇</cdt:Criterion>
+          <cdt:Criterion>contract/support/logic 的 canonical 测试通过</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="迁移 canonical bundle fixtures" status="DONE" order="0" priority="P0">
+            <Description>迁移 xnl-bundles 中的 basic-admin、embedded-admin、import-admin、runtime-counter 和 data-graph examples；counter 用 Command，report.saved 等过去式事实用 Event，embedded wire 传递同一 Event。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">runtime-counter 通过 commands:// 调用现有 runtime-first handler</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">embedded-admin 使用 events://#report.saved 的 identity wire 且 home 接受同一 Event</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="回归、残留扫描与报告" status="DONE" order="1" priority="P0">
+            <Description>运行 contract/support/logic package tests、检查 XML 和 diff；扫描 canonical docs/fixtures/source 是否残留 retired vocabulary，并将 legacy 例外列入验证报告。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">三包测试通过，canonical Command/Event behavior 有正反例覆盖</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">retired vocabulary 仅留在明确 legacy compatibility 边界或历史 codument archive</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

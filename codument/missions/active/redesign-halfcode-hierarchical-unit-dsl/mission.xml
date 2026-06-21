@@ -1,0 +1,102 @@
+<Mission id="redesign-halfcode-hierarchical-unit-dsl" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>把 halfcode DSL 从单 app 层级重设计为 App/Page/Component/Capsule 分层单元体系 + 统一 URI 引用系统，并通过分批 track 落地 contract、loader、fixtures、compiler、preview。</Goal>
+    <Description>基于 2026-07-02 讨论收敛的 16 项决策（decisions.md D1-D16）：Capsule 为唯一内联封装原语，Page/Component 为其有名可复用发行形态；App 为组合根（app.routes.xnl 路由树 + Units 单元注册）；引用统一为 vfs:// 物理寻址 + 类别 scheme 逻辑寻址；单/多文件双形态；xnl-core 语法能力先验证后扩展。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>12</Revision>
+    <CreatedAt>2026-07-02T18:20:12Z</CreatedAt>
+    <UpdatedAt>2026-07-02T21:05:00Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="mission">
+    <MaterialBundle role="input" name="decisions" domain="mission" path="vfs://./decisions.md"/>
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+  </Ports>
+
+  <TaskSpace id="space_redesign-halfcode-hierarchical-unit-dsl" name="redesign-halfcode-hierarchical-unit-dsl" version="1" cdt:child-mode="dag">
+    <Description>分层单元 DSL mission：证据与规范收敛 -> v3 契约 track -> loader/fixtures track -> compiler/preview track -> 验证收口。决策真源为 decisions.md（D1-D16），各 track proposal 必须回指决策编号。</Description>
+    <SubNodes>
+
+      <TaskGroup id="G1" name="证据盘点与 DSL 规范收敛" status="DONE" order="0">
+        <Description>验证 xnl-core 语法能力，收敛 v3 DSL 规范文本（scheme 映射表、单文件区段对照表、目录布局），据 evidence 决定 xnl-core 扩展 track 是否转正。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="验证 xnl-core 新语法能力并出报告" status="DONE" order="0">
+            <Description>在 xnl.ts 上实测：tag 名含点分 FQN（如 dg.materials.CrudTable）、同一节点 (...) 具名区段与 [...] 数组段并存、属性值含 scheme://（vfs:// 与类别 scheme）、#id 携带点分 FQN。只产出 analysis/xnl-core-capability-report.md evidence，不改代码（mission 直接执行的显式例外，见 design.md）。对应决策 D16。</Description>
+          </Task>
+          <Task id="G1-T2" name="起草 v3 分层单元 DSL 规范与纸面 fixture" status="DONE" order="1">
+            <Description>写 analysis/v3-unit-dsl-spec-draft.md：单元层级模型（D1/D2）、目录布局与单/多文件双形态（D10/D15）、统一 URI 规范与 scheme-domain-单文件区段三列对照表（D7/D8）、实例 tag 语法（D4/D11/D12）、PageContract/ComponentContract/Requires（D5/D9/D14）、app.routes.xnl 与 wiring（D3/D6/D13）。附 basic-admin 重写为分层结构的完整纸面 fixture 作自验证。</Description>
+          </Task>
+          <Task id="G1-T3" name="确认 track 切片并按 evidence 转正或移除 xnl-core 扩展 track" status="DONE" order="2">
+            <Description>依据 G1-T1 报告决定 extend-xnl-core-dsl-syntax 是否需要：需要则保留 candidate 并排入 G2 之前的依赖（受控重规划，Revision+1，写 reports/replan-001.md）；不需要则标记本任务说明并在重规划中移除 G2-T0。同时依据 G1-T2 冻结后续三个 track 的边界。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G2" name="xnl-core 扩展与 v3 契约落地" status="DONE" order="1">
+        <Description>条件执行 xnl-core 语法扩展 track，然后落地 v3 单元契约 track。gate：G1 的规范草案已冻结；xnl-core 能力结论明确。</Description>
+        <SubNodes>
+          <Task id="G2-T0" name="创建并执行 xnl-core 语法扩展 track（条件性）" status="DONE" order="0">
+            <Description>已由 replan-001 转正（G1-T1 evidence：仅 tag 点分 FQN 不支持）。在 xnl.ts 仓库自带 codument 中创建并执行 track：parseNode tag 读取支持点分 FQN（DataElementNode.tag 保持 joined string）；验收=dotted tag parse/stringify/roundtrip、与 #id/{}/()/[]/metadata 全组合、mutation diff/apply 与 path 在 dotted tag 节点上的回归。对应决策 D16，evidence 见 analysis/xnl-core-capability-report.md。</Description>
+            <cdt:TrackLink state="bound" id="extend-xnl-core-dsl-syntax"/>
+          </Task>
+          <Task id="G2-T1" name="创建并执行 v3 单元契约 track" status="DONE" order="1">
+            <Description>contract 层：HalfcodeApp/HalfcodePage/HalfcodeComponent/Capsule v3 类型、PageContract（urlInputs+accepts/emits）/ComponentContract（props/slots/accepts/emits/exposes）、ElementContract.Requires、统一 URI ref 类型与 scheme-domain 映射表、Route/Wire 类型、单文件区段对照、apiVersion v3 与 v2 隔离、validation 红线（禁函数/直接 fetch/Page props 后门）与边界测试。对应决策 D1,D2,D4,D5,D7,D8,D9,D11,D12,D13,D14。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-v3-unit-contract"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G3" name="单元 bundle loader 与分层 fixtures 落地" status="DONE" order="2">
+        <Description>落地 Units 注册、递归单元加载、FQN 注册表、scheme 解析器与分层 fixtures 迁移。gate：G2 契约稳定；若 G2-T0 执行，xnl.ts 变更已可通过本地 link/发布消费。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="创建并执行单元 bundle loader 与 fixtures track" status="DONE" order="0">
+            <Description>support 层：bundle.xnl Units 段（UnitBundle kind/path，文件与文件夹双形态）、递归单元加载与 FQN 注册表、类别 scheme 解析器（当前单元私有性 + pages://,components://,routes:// 内建）、单元私有性/FQN 冲突 diagnostics；fixtures 全量迁移为分层结构（多文件 page、单文件 component、component 被两 page 复用、embedded page 合成 URL 输入、app wiring、Requires 负例），XNL-only 结构扫描测试延续。对应决策 D3,D7,D10,D15。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-unit-bundle-loader"/>
+          </Task>
+          <Task id="G3-T2" name="批间验证：fixture 自验证与决策一致性复核" status="DONE" order="1">
+            <Description>对照 decisions.md D1-D16 逐项复核 loader+fixtures 实际形态；写 reports/batch-verify-loader.md。若暴露决策冲突或 DSL 矛盾，触发受控重规划（回写 decisions.md 修订记录 + 调整 G4 track 边界）。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G4" name="v3 compiler 投影与 preview 闭环" status="DONE" order="3">
+        <Description>落地 RouteTree/URL/props/Requires/wiring 的编译投影与 preview 页闭环。gate：G3 loader 与 fixtures 通过批间验证。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 v3 compiler 投影与 preview track" status="DONE" order="0">
+            <Description>logic/preview：RouteTree 展开 -> AdminShellPlan（Route 元数据覆盖 page 默认 title，menu/permission 输入）；Route path 模式与 page urlInputs 匹配校验；嵌入 page urlInputs 校验；component 实例 props 与 ComponentContract 校验；Requires 沿 scope 链校验（HALFCODE_CAPSULE_REQUIRES_UNMET）；app wiring 编译为 wiring plan（未接线 emit 产 warning）；intent unhandled diagnostics 延续；v2 单文档路径隔离进 legacy quarantine；admin-element-plus preview 页升级消费分层 bundle。对应决策 D2,D3,D5,D6,D14。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-v3-compiler-projection"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="VERIFY" name="验证收口" status="DONE" order="4">
+        <Description>对照 proposal.md 成功判据做最终验证并归档收口。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="全链路验证与 mission verify 报告" status="DONE" order="0">
+            <Description>复跑 halfcode 包测试矩阵与 bundle E2E（folder load -> 单元注册表 -> v3 document -> compile -> plans + diagnostics）；逐项核对 proposal.md 成功判据与 decisions.md D1-D16 落地状态；写 reports/mission-verify.md；确认各 track 已归档或明确遗留 backlog（表达式三分类落地、-def 类型 DSL 深化、CRUD data graph、workbench 迁移）。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Dag for="space_redesign-halfcode-hierarchical-unit-dsl">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G3"/></Node>
+      <Node id="VERIFY"><After ref="G4"/></Node>
+    </Dag>
+  </Schedule>
+
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-rounds="3" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

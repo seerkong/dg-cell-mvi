@@ -1,0 +1,78 @@
+<behavior-patch capability="dg-cell-mvi-halfcode-unit-compile" version="1">
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-compile/requirements/route-projection">
+    <requirement id="route-projection">
+      <statement>v3 compiler SHALL 从 App 路由树派生 admin shell plan：Route 元数据（menu/permissionRef）进入 plan，title 取 Route 覆盖值否则取 page manifest 默认值；Route path 模式与目标 PageContract.urlInputs 不匹配 SHALL 产出 HALFCODE_ROUTE_URLINPUTS_MISMATCH。</statement>
+      <suite id="routes" name="路由投影">
+        <case id="title-override">
+          <given>Route 声明 title 覆盖而 page manifest 有默认 title</given>
+          <when>编译 admin shell plan</when>
+          <then>plan 中该路由 title SHALL 为 Route 覆盖值；无覆盖时 SHALL 回落 page 默认值</then>
+        </case>
+        <case id="url-mismatch">
+          <given>Route path 含 :id 但目标 page urlInputs.path 未声明 id（或反之必填缺失）</given>
+          <when>编译</when>
+          <then>SHALL 产出 HALFCODE_ROUTE_URLINPUTS_MISMATCH 诊断</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-compile/requirements/contract-checks">
+    <requirement id="contract-checks">
+      <statement>compiler SHALL 做契约编译期校验：component 实例 props（内联+propsRef 引用形）对照 ComponentContract.props（未知/必填缺失 -> HALFCODE_PROPS_CONTRACT_MISMATCH）；Capsule Requires 沿 scope 链核验 config/intents/effects（不满足 -> HALFCODE_CAPSULE_REQUIRES_UNMET）。</statement>
+      <suite id="contracts" name="契约校验">
+        <case id="unknown-prop">
+          <given>component 实例内联了 ComponentContract 未声明的 prop</given>
+          <when>编译</when>
+          <then>SHALL 产出 HALFCODE_PROPS_CONTRACT_MISMATCH</then>
+        </case>
+        <case id="requires-unmet">
+          <given>broken-requires fixture：capsule Requires 声明宿主 scope 链无法满足的 config/intents/effects 需求</given>
+          <when>编译</when>
+          <then>SHALL 产出 HALFCODE_CAPSULE_REQUIRES_UNMET，定位到 capsule 实例</then>
+        </case>
+        <case id="requires-met">
+          <given>basic-admin 的 users-filter Requires 正例</given>
+          <when>编译</when>
+          <then>SHALL 无 REQUIRES 相关诊断</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-compile/requirements/wiring-plan">
+    <requirement id="wiring-plan">
+      <statement>compiler SHALL 把 app wiring 编译为 typed WiringPlan（from/to 对照 route 注册表，emit/accept 对照 PageContract）；page 声明的 emit 未被任何 Wire 接线 SHALL 产出 HALFCODE_INTENT_UNWIRED warning，不静默丢弃。</statement>
+      <suite id="wiring" name="接线编译">
+        <case id="wire-compiled">
+          <given>basic-admin 的 report.saved -> users.refresh Wire</given>
+          <when>编译</when>
+          <then>WiringPlan SHALL 含该绑定且端点解析为 route 实例</then>
+        </case>
+        <case id="unwired-emit">
+          <given>某 page PageContract 声明 emit 但 app wiring 无对应 Wire</given>
+          <when>编译</when>
+          <then>SHALL 产出 HALFCODE_INTENT_UNWIRED warning</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-compile/requirements/render-plan-and-v2-isolation">
+    <requirement id="render-plan-and-v2-isolation">
+      <statement>compiler SHALL 为每单元元素树派生 UnitRenderPlan（renderer 不解释 raw XNL）；v3 编译为新入口，v2 compileHalfcode 路径 SHALL 零修改。</statement>
+      <suite id="isolation" name="投影与隔离">
+        <case id="render-plan">
+          <given>users page 元素树（原子/Capsule/component 实例/嵌入 page/Slot）</given>
+          <when>编译</when>
+          <then>UnitRenderPlan SHALL 结构化表达全部节点类别与实例 props/refs</then>
+        </case>
+        <case id="v2-untouched">
+          <given>logic 包既有 v2 compiler 测试</given>
+          <when>本 track 完成后运行</when>
+          <then>SHALL 零修改全绿</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

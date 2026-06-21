@@ -1,0 +1,6 @@
+<Scopes #home-page-scopes [
+  <Scope #home-page {
+    config = "config://#home-page"
+    events = "event://#home-page-events"
+  }>
+]>

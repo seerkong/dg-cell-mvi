@@ -1,0 +1,73 @@
+<behavior-patch capability="halfcode-canonical-admin-consumers" version="1">
+  <upsert selector="behavior://halfcode-canonical-admin-consumers/requirements/workbench-admin-showcase">
+    <requirement id="workbench-admin-showcase">
+      <statement>Workbench SHALL 通过同一个 canonical Halfcode host 直接运行 basic-admin、embedded-admin、import-admin 与 data-graph-admin 的真实 XNL bundle 和动态代码。</statement>
+      <suite id="fixture-catalog" name="Canonical admin fixture catalog">
+        <case id="switch-four-apps">
+          <given>四套 admin fixture 作为 Workbench 构建输入</given>
+          <when>用户在 showcase 中切换 app 与 route</when>
+          <then>Workbench SHALL 创建对应 HalfcodeAppRuntime、渲染目标 Page 并释放被替换的 runtime，且不得复制或转换为旧对象 Schema</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-admin-consumers/requirements/canonical-admin-rendering">
+    <requirement id="canonical-admin-rendering">
+      <statement>Canonical Vue renderer SHALL 从 compiled plans 与 HalfcodeAppRuntime 完成 config props、route、Component/Page composition 和 DataGraph projection。</statement>
+      <suite id="admin-capabilities" name="Admin runtime capabilities">
+        <case id="basic-effect-command">
+          <given>basic-admin Users Page 与 mock Effect bundle</given>
+          <when>页面渲染并执行 users.search Command</when>
+          <then>DOM SHALL 包含配置化 input 与 CrudTable unit，Command SHALL 通过当前 Scope RuntimeObject 返回用户结果</then>
+        </case>
+        <case id="embedded-composition">
+          <given>embedded-admin Home Page 嵌入 Reports Page，Reports Page 使用 embedded CrudTable</given>
+          <when>Home route 被渲染</when>
+          <then>renderer SHALL 跨 unit 递归渲染两个层级且使用各自 Scope runtime</then>
+        </case>
+        <case id="imported-prefab">
+          <given>import-admin Orders Page 引用 imported SharedCrudTable prefab</given>
+          <when>Orders route 被加载和渲染</when>
+          <then>import/proto 结果 SHALL 出现在 compiled render plan 和真实 DOM 中</then>
+        </case>
+        <case id="data-graph-projection">
+          <given>data-graph-admin Users graph 和 Dashboard Quick Graph extension</given>
+          <when>对应 routes 被渲染</when>
+          <then>DataTable rows/summary 与 Statistic cards SHALL 来自 mounted graph projections</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-admin-consumers/requirements/remove-legacy-renderer">
+    <requirement id="remove-legacy-renderer">
+      <statement>代码库 SHALL 删除 legacy Halfcode schema/store renderer 及其兼容 exports、依赖、fixture、demo、adapter 与 tests，不提供历史兼容入口。</statement>
+      <suite id="legacy-removal" name="Legacy renderer removal">
+        <case id="no-legacy-api">
+          <given>dg-cell-mvi 与 Workbench 全部生产源码和测试</given>
+          <when>扫描 legacy subpath 与旧 renderer/store/schema symbols</when>
+          <then>`/legacy`、RenderWithState、createRender、HalfcodeSchema、HalfcodeStore 与 DgHalfcodeCrud 的有效引用 SHALL 为零</then>
+        </case>
+        <case id="delete-dependent-assets">
+          <given>旧 Web/Form/Tiptap/CRUD Halfcode demos 和专属测试</given>
+          <when>legacy renderer 被删除</when>
+          <then>这些资产 SHALL 被删除而不是保留失效入口或 compatibility shim</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-admin-consumers/requirements/admin-e2e-gate">
+    <requirement id="admin-e2e-gate">
+      <statement>四套 canonical admin app SHALL 通过真实 DOM E2E，受影响 package 与 Workbench SHALL 通过测试、类型检查和 production build。</statement>
+      <suite id="verification" name="Cross-repository verification">
+        <case id="real-admin-e2e">
+          <given>真实 fixture documents、code modules、Element Plus registry 和 Vue DOM</given>
+          <when>运行 Workbench canonical admin E2E</when>
+          <then>四套 app 的代表能力 SHALL 全部通过，测试不得使用 fake runtime 或手写 fake plans</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

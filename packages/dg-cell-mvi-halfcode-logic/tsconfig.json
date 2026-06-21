@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "ignoreDeprecations": "5.0",
+    "types": ["node"],
+    "paths": {
+      "dg-cell-mvi-halfcode-contract": ["../dg-cell-mvi-halfcode-contract/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

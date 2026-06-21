@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "demo/schema-editor-business-dialect/presenters.ts",
+    "demo/schema-editor-business-dialect/sharedCapsule.ts",
+    "test/schemaEditorBusinessDialectSharedCapsule.test.ts"
+  ]
+}

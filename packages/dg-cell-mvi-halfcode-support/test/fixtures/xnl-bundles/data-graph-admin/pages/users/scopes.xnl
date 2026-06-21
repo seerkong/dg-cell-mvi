@@ -1,0 +1,31 @@
+<Scopes #users-page-scopes [
+  <Scope #users-page {
+    config = "config://#users-page"
+    commands = "command://#users-page-commands"
+    events = "event://#users-page-events"
+  } (
+    <DataGraphBindings [
+      <GraphObject #store {
+        src = "vfs://./graph-code/users.graph-target.ts#getUsersStoreGraph"
+      }>
+      <GraphMount #users-list {
+        graph = "scope-data-graph://#store"
+        module = "data-graph://#users.list"
+        seed = "data-graph-seed://#users-list-demo"
+      } (
+        <NodeBindings [
+          <ComputedBinding #users.filteredRows {
+            impl = "vfs://./graph-code/mock-users.graph.impl.ts#computeFilteredRows"
+          }>
+          <ComputedBinding #users.summary {
+            impl = "vfs://./graph-code/mock-users.graph.impl.ts#computeSummary"
+          }>
+          <ProcessorBinding #users.applyQuery {
+            impl = "vfs://./graph-code/mock-users.graph.impl.ts#applyQuery"
+          }>
+        ]>
+      )>
+    ]>
+  )>
+  <Scope #users-filter { config = "config://#users-filter" }>
+]>

@@ -1,0 +1,7 @@
+<Routes #counter-demo-routes [
+  <Route #counter-route {
+    path = "/counter"
+    page = "page://dg.demo.counter.CounterPage"
+    menu = { icon = "plus" order = 1 }
+  }>
+]>

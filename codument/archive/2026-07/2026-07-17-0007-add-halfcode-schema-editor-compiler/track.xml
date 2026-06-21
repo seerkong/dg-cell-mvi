@@ -1,0 +1,118 @@
+<Track id="add-halfcode-schema-editor-compiler" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>实现 runtime-owned dialect、固定选择策略和递归 EditorPlan 生成，并把真实编译压力反馈回中立 contracts。</Goal>
+    <Description>新增 schema-editor compiler capsule、默认 structural dialect、scoped dialect composition、runtime.compile recursion、diagnostics/provenance、command template contract refinement、文档与验证。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-16T19:22:01Z</CreatedAt>
+    <UpdatedAt>2026-07-16T21:07:25Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="input" name="existing-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="schema-editor-compiler" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/schema-editor/"/>
+    <MaterialBundle role="output" name="compiler-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/test/"/>
+    <MaterialBundle role="output" name="contract-feedback" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-schema-editor-compiler" name="add-halfcode-schema-editor-compiler" version="1">
+    <Description>先以真实递归/collection red tests 暴露 contract 压力，再实现 runtime-first compiler 和 scoped composition，最后收口 docs/exports/verification。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Compiler behavior and contract feedback" status="DONE" order="0">
+        <Description>冻结递归编译、固定选择、runtime-owned dialect 和 event-time command template。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Dialect 只从 runtime 取得，config 不含函数或 dialect。</cdt:Criterion>
+          <cdt:Criterion>默认 compiler 递归生成 object/array/map/union/scalar/ref plan 和 template。</cdt:Criterion>
+          <cdt:Criterion>固定选择策略无 resolver/registry/classifier alias。</cdt:Criterion>
+          <cdt:Criterion>collection/map/union command bindings 不伪造 event-time 参数。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写递归 compiler 与 command-template 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 runtime/config 归位、六类 schema、presentation overlays、wildcard templates、命令 event arguments、选择优先级、unsupported diagnostics 和无 UI/IO 依赖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明当前 logic 无 schema-editor compiler，且 concrete Command binding 不能完整表达 remove/move event 参数</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试不使用 Flow 特例、renderer component 或 host writer</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="修订 event-time Command template contract" status="DONE" order="1" priority="P0">
+            <Description>根据红测试把 EditorPlan command binding 修订为 serializable event/value/literal argument template，保留 concrete SchemaEditorCommand 作为 accepted edit contract。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">insert/remove/move/map/union bindings 可在无具体事件时通过 plan validation</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">template 不含 callback、renderer event object 或 persistence effect</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="实现 runtime-first recursive compiler" status="DONE" order="2" priority="P0">
+            <Description>实现 compile runtime/factory、compileEditorPlan/node、default structural transformers、fixed selection、presentation recursion、diagnostics/provenance 和 plan validation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">所有 child recursion 经 runtime.compile 且 processor arity 为 3</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">无隐式 JSON fallback，完整 plan 通过 contract validator</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.4" name="实现 scoped dialect composition" status="DONE" order="3" priority="P0">
+            <Description>实现 ordered composition、later-wins transformer table、classification merge 和独立 runtime isolation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.4-AC1" checked="true">同 semantic type 在两个 runtime 选择不同 transformer 且无泄漏</cdt:Criterion>
+              <cdt:Criterion id="T1.4-AC2" checked="true">输入 dialect 对象不被修改，固定 precedence 不成为 caller config</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Public surface and documentation" status="DONE" order="1">
+        <Description>收口 logic capsule exports、dependency boundaries 和 compiler 状态文档。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>外部从 logic package root 导入 compiler API。</cdt:Criterion>
+          <cdt:Criterion>文档准确区分 compiler 已实现与 lowering/runtime/presenter 未实现。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="增加 compiler public/dependency boundary tests" status="DONE" order="0" priority="P0">
+            <Description>导出稳定 compiler API，禁止 deep internals、renderer/runtime-support/VFS/XNL/persistence/Flow import。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">root surface 唯一且 dependency scan 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="更新 Schema Editor compiler 文档" status="DONE" order="1" priority="P1">
+            <Description>记录 runtime-owned dialect API、选择顺序、默认 plans、scoped composition、command templates 和当前/未来边界。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">示例 config 不携带 dialect/function，且不声称 lowering/renderer 已实现</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Verification" status="DONE" order="2">
+        <Description>验证 contract+logic tests/typecheck、DEPA boundaries、docs truth 和 Codument structure。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>contract/logic tests 与 TypeScript 全绿。</cdt:Criterion>
+          <cdt:Criterion>compiler 无 renderer/IO/Flow 特例，config 无 function dependency。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="运行 compiler 验证矩阵并记录报告" status="DONE" order="0" priority="P0">
+            <Description>运行 focused/full tests、typecheck、strict validate、dependency/stale vocabulary/config scans、diff check，写 reports/verification.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">报告逐项映射 behavior/proposal 并记录 contract feedback</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

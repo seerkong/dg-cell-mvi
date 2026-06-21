@@ -1,0 +1,129 @@
+<Track id="add-halfcode-unit-bundle-loader" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在 dg-cell-mvi-halfcode-support 落地 v3 单元 bundle loader（Units 注册、单/多文件单元加载、FQN 注册表、统一 URI ref 索引与私有性诊断），并迁移分层 fixtures 作为 16 项决策的代码级自验证。</Goal>
+    <Description>mission redesign-halfcode-hierarchical-unit-dsl 的 G3-T1；前置 contract v3 与 xnl-core 点分 tag 均已完成；不改 v2 loader 与既有测试。</Description>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-02T19:45:00Z</CreatedAt>
+    <UpdatedAt>2026-07-02T20:19:24Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mission-spec" domain="mission" path="vfs://@/codument/missions/active/redesign-halfcode-hierarchical-unit-dsl/analysis/v3-unit-dsl-spec-draft.md"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+    <MaterialBundle role="output" name="support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-unit-bundle-loader" name="add-halfcode-unit-bundle-loader" version="1">
+    <Description>三个 phase：manifest 与 app 组合加载、单元递归加载与 FQN 注册表、ref 索引/诊断/fixtures/E2E。</Description>
+    <SubNodes>
+
+      <TaskGroup id="P1" name="bundle manifest 与 app 组合加载" status="DONE" order="0">
+        <Description>新模块解析 bundle.xnl（Ports domains + Units 注册），加载 app domains（routes/product/wiring/runtime/editor/dev），复用 v2 的 ImportResolver 与 vfs 语义。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>不修改 v2 xnlAssetBundle.ts；新模块独立导出</cdt:Criterion>
+          <cdt:Criterion>Route 树（嵌套/#id/元数据）与 Wire 列表结构化返回</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="实现 v3 manifest 解析与 app domains 加载" status="DONE" order="0" priority="P0">
+            <Description>loadHalfcodeUnitBundle 入口：bundle.xnl 的 Ports/MaterialBundle + Units/UnitBundle；app.routes.xnl -> RouteSpec 树、app.product.xnl、app.wiring.xnl -> WireSpec[]；其余 app domains 进 domains map。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">basic-admin 的 app 组合全部结构化加载</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="单元递归加载与 FQN 注册表" status="DONE" order="1">
+        <Description>文件夹单元（薄 manifest + domain 文件，显式注册允许缺省）与单文件单元（区段按 HALFCODE_SCHEME_TABLE 映射）双形态加载；FQN 注册表与 kind/存在性校验；elements（点分 tag）与 contracts 解析。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>双形态产出同型 LoadedUnit 结构</cdt:Criterion>
+          <cdt:Criterion>FQN 冲突/kind 不符/未注册引用有对应诊断码</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现文件夹与单文件单元加载" status="DONE" order="0" priority="P0">
+            <Description>kind 分发 page.xnl/component.xnl manifest；单文件根 #FQN + 区段映射；elements 数组段树 + Slot 区段；PageContract/ComponentContract 解析为 contract v3 类型。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">users(多文件) 与 status-badge(单文件) 产出同型结构</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 FQN 注册表与引用存在性校验" status="DONE" order="1" priority="P0">
+            <Description>注册表冲突 -> HALFCODE_UNIT_FQN_CONFLICT；Units kind 与 manifest 根不符 -> HALFCODE_UNIT_KIND_MISMATCH；Route.pageRef 与元素 FQN tag 未注册 -> HALFCODE_UNIT_NOT_FOUND。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">三类诊断均有负例覆盖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="ref 索引、fixtures 与 E2E 收口" status="DONE" order="2">
+        <Description>单元级 ref 索引与私有性诊断；xnl-unit-bundles fixtures（basic-admin + 负例）；E2E 与结构扫描；support 全包测试绿。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>正例加载零 error 诊断；负例产出预期诊断码</cdt:Criterion>
+          <cdt:Criterion>fixtures XNL-only；page 侧无 route/mount/props；v2 测试零修改全绿</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现单元级 ref 索引与私有性诊断" status="DONE" order="0" priority="P0">
+            <Description>用 contract parseHalfcodeRef 建索引；本地失败 -> HALFCODE_REF_UNRESOLVED；他单元可解析 -> HALFCODE_REF_PRIVACY_VIOLATION。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">privacy 升级语义有测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="编写分层 fixtures" status="DONE" order="1" priority="P0">
+            <Description>basic-admin（多文件 users/report-detail page、多文件 crud-table、单文件 status-badge、routes/product/wiring、嵌入 page、Slot、Requires 正例）；负例 fqn-conflict、privacy-violation；broken-requires 数据就位（核验在 G4）。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">fixtures 覆盖 mission 规范 §9 全部要素</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="E2E、结构扫描与测试矩阵" status="DONE" order="2" priority="P0">
+            <Description>folder load -> 注册表/units/routes/wiring/contracts 断言；负例诊断断言；XNL-only 与 page 禁字段扫描；bun run --cwd packages/dg-cell-mvi-halfcode-support test 全绿且 v2 测试零修改。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">support 全包测试通过；扫描零违规</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="批间验证增量：单文件 App 与 Slots 容器" status="DONE" order="3">
+        <Description>批间验证（reports/batch-verify-loader.md + replan-002.md）增量：D10 单文件 App 形态补齐（App 根 + 区段映射 app 域 + Units 内联注册）；D11 附注多具名 slot 的 Slots 容器形态（保持单 Slot 直写兼容）。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>单文件 App 与文件夹 app 产出同型结构（manifest/app/units/registry/diagnostics）</cdt:Criterion>
+          <cdt:Criterion>Slot 直写与 Slots 容器双形态解析；既有 fixtures 与 v2 测试零修改</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="单文件 App 形态加载" status="DONE" order="0" priority="P0">
+            <Description>bundleSrc 指向 .xnl 且根为 App 时：区段按 HALFCODE_SCHEME_TABLE 单文件区段列映射 app 专属域（Routes/Product/AppIntentWiring/Config/RuntimeProfile 等），Units 区段内联单元注册（path 相对该 app 文件解析，可指向外部文件/文件夹单元）；产出与文件夹 app 同型。新增 fixture single-file-app.xnl。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">single-file-app.xnl 加载零 error 诊断，且与文件夹形态同型（顶层键集合一致、跨引用单元深度相等）</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="Slots 容器多具名 slot" status="DONE" order="1" priority="P0">
+            <Description>elements 解析支持双形态：(...) 内直写单个 Slot（兼容现状）；或 Slots 容器承载多具名 Slot。basic-admin fixture 保持单 slot 直写不动，多 slot 用 e2e 内联 XNL 覆盖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">Slots 容器内两个具名 slot 均解析且名字正确；单 Slot 直写用例保持通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

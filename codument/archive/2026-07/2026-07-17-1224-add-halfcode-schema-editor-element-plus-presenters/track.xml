@@ -1,0 +1,192 @@
+<Track id="add-halfcode-schema-editor-element-plus-presenters" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>为 canonical Halfcode Schema Editor 提供 product-ready、可组合且 accepted-only 的 Element Plus 默认 presenters。</Goal>
+    <Description>在 dg-cell-mvi-halfcode-element-plus 中实现完整 presenter matrix、normalized interactions、显式 registry/canonical composition 和真实 kitchen-sink canonical demo/test。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-17T06:17:45Z</CreatedAt>
+    <UpdatedAt>2026-07-17T09:24:42Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="input" name="schema-editor-vue" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/src/schema-editor/"/>
+    <MaterialBundle role="input" name="element-plus-canonical-registry" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/src/canonicalRegistry.ts"/>
+    <MaterialBundle role="output" name="element-plus-schema-editor" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/src/schema-editor/"/>
+    <MaterialBundle role="output" name="element-plus-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/test/"/>
+    <MaterialBundle role="output" name="element-plus-demo" domain="demo" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/demo/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-schema-editor-element-plus-presenters" name="add-halfcode-schema-editor-element-plus-presenters" version="1">
+    <Description>先冻结 presenter/event/ownership RED contract，再依次实现基础字段、结构编辑、显式组合与真实 canonical kitchen-sink，最后独立验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Presenter contract and RED baseline" status="DONE" order="0">
+        <Description>冻结默认 id/format matrix、Element Plus interaction、normalized payload、slot ownership、registry composition 和禁止能力。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>所有 compiler 默认 presenter ids 与 common format aliases 均有显式期望。</cdt:Criterion>
+          <cdt:Criterion>事件名和 payload 与现有 compiler command bindings 完全一致。</cdt:Criterion>
+          <cdt:Criterion>Presenter props/callback 不暴露 runtime、Session、ValueHost 或 writer。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 presenter public contract 与 registry RED tests" status="DONE" order="0" priority="P0">
+            <Description>覆盖 package-root exports、三参数 factories、完整 id/alias snapshot、duplicate/unknown/last-wins、实例隔离和 hostile input。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">RED 证明当前 Element Plus 包没有 Schema Editor presenter registry surface</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试冻结业务 registry 后置覆盖且不污染默认实例</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="编写 presenter interaction 与 ownership RED tests" status="DONE" order="1" priority="P0">
+            <Description>用真实 Element Plus 控件冻结 metadata/pending/diagnostics、normalized event payload、slot-only recursion、no direct mutation 和 no JSON fallback。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">RED 覆盖 value/item/entry/alternative 全部 normalized event families</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">RED 证明递归 children 只能来自 default slot</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="true">RED 拒绝 runtime/session/ValueHost/writer/Flow/XNL/VFS/database 和 JSON textarea fallback</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Object scalar and format presenters" status="DONE" order="1">
+        <Description>实现 product-ready form/group、scalar、reference、format aliases 和 shared presentation shell。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>visible/readOnly/required/label/description/options/pending/diagnostics 有一致行为。</cdt:Criterion>
+          <cdt:Criterion>所有原生 UI 值先规范化为 contract-serializable payload。</cdt:Criterion>
+          <cdt:Criterion>const/null/unsupported 不产生隐式写入。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 shared field shell 与 object group presenter" status="DONE" order="0" priority="P0">
+            <Description>实现 form item/group、label/description/required/visibility/readOnly/pending/diagnostics 和 allowlisted options；children 只渲染 slot。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Metadata 与 session state 在真实 Element Plus DOM 中正确可见</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Options 不能覆盖 value、安全状态、事件或 slot ownership</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 scalar reference and unsupported presenters" status="DONE" order="1" priority="P0">
+            <Description>实现 text/number/boolean/null/enum/const/schema.ref/unsupported，发出 value.change 或保持显式只读。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">默认 scalar/ref 控件可发现且 payload serializable</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Unsupported 显示 diagnostics 且没有 raw/JSON/code editor</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 common scalar format aliases" status="DONE" order="2" priority="P1">
+            <Description>显式注册 email/password/textarea/multiline/url/uri/tel/phone/date/time/datetime/date-time/color/currency adapters。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">所有约定 alias 均可从 registry snapshot 解析</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">Temporal controls 只发 string，不泄漏 Date/dayjs/component runtime object</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Structural presenters and discoverable operations" status="DONE" order="2">
+        <Description>实现 collection、map 和 union 的完整增删改移交互，同时保持 renderer-owned recursion。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>所有操作使用熟悉控件、icon buttons、tooltip 和稳定尺寸。</cdt:Criterion>
+          <cdt:Criterion>Presenter 不读 item/value template，不自行递归，不修改 accepted value。</cdt:Criterion>
+          <cdt:Criterion>readOnly/pending 时所有结构写命令关闭。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现 collection list presenter" status="DONE" order="0" priority="P0">
+            <Description>使用 recursive slot item、itemDefault 和 index 发出 insert/remove/move，并覆盖边界按钮、空态与 nested list。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">真实按钮产生正确 item.insert/remove/move payload</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">移动边界、pending/readOnly、空 collection 和 nested slot 通过交互测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 map entries presenter" status="DONE" order="1" priority="P0">
+            <Description>实现 new-key draft、valueDefault、remove 和 rename；递归 value 仅来自对应 slot VNode。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">真实控件产生正确 entry.set/remove/rename payload</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Draft key 不进入 accepted value，重复/空 key fail closed</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="实现 union select presenter" status="DONE" order="2" priority="P0">
+            <Description>用 ordered descriptors 渲染 alternative selector，发出 alternativeId/initialValue，并展示 Vue renderer 选择的 recursive slot。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">选择每个 alternative 发出准确 serializable payload</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">Presenter 不自行选择或编译 alternative child</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Registry canonical composition and kitchen-sink" status="DONE" order="3">
+        <Description>收口默认/业务 registry composition、canonical bootstrap，并通过真实 kitchen-sink bundle 验证 accepted-only 产品体验。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>每次 factory 创建独立冻结 registry，无 module-global mutable state。</cdt:Criterion>
+          <cdt:Criterion>Canonical helper 只组合现有 registries 和唯一 schemaEditor.Editor shell。</cdt:Criterion>
+          <cdt:Criterion>Kitchen-sink 真实经过 lowering/loader/compiler/runtime/canonical renderer。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="实现默认 registry 与业务 later-wins composition" status="DONE" order="0" priority="P0">
+            <Description>用 Vue public factory 创建完整默认 registry，并提供显式 ordered composition；base 在前、业务在后、冲突策略由调用方声明。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">完整 ids/aliases snapshot、duplicate reject、last-wins 和实例隔离测试通过</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">Registry API 从 Element Plus 包根导出且保持三参数协议</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="实现 canonical registry composition helper" status="DONE" order="1" priority="P0">
+            <Description>组合 Element Plus canonical parent、默认/业务 presenter registries 和 Vue schema editor canonical registry，返回结构化 diagnostics。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">schemaEditor.Editor 通过 componentIdentity Editor 和当前 Scope Session 解析</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Helper 不捕获 ValueHost、不创建 Session、不新增 renderer/runtime/lowering</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">现有 Element Plus canonical registry 行为保持通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="实现 kitchen-sink canonical bundle demo and integration test" status="DONE" order="2" priority="P0">
+            <Description>建立单一 fixture 供 demo/test 共用，覆盖全部 presenter families、nested structures、metadata、normalized operations 和 host outcomes。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">真实 canonical lifecycle mount 后所有默认 presenters 可交互且零 loader/compiler/runtime errors</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">pending/reject/conflict/stale 不推进 DOM，accept 后才推进</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">Demo 与 integration test 使用同一 schema/presentation/fixture 真源</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="Public boundaries documentation and verification" status="DONE" order="4">
+        <Description>独立验证 behavior、产品交互、真实 canonical lifecycle、回归、DEPA ownership 和文档 truth。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Element Plus focused/full tests 与 TypeScript 全绿。</cdt:Criterion>
+          <cdt:Criterion>Contract/logic/support/Vue regressions 和 real canonical lifecycle 全绿。</cdt:Criterion>
+          <cdt:Criterion>Public/dependency/ownership/no-fallback scans 与 strict validate 通过。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="收口 package-root public and dependency boundaries" status="DONE" order="0" priority="P0">
+            <Description>增加 root-only exports、arity、dependency/ownership scans，拒绝 deep imports、parallel runtime、direct mutation、global mutable registry 和 JSON fallback。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">Element Plus Schema Editor capsule 只依赖允许的 public roots 和 toolkit APIs</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">Source/test scan 无 ValueHost/runtime/writer/Flow/XNL/VFS/database/direct mutation</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="更新 Schema Editor Element Plus usage documentation" status="DONE" order="1" priority="P1">
+            <Description>更新 presenter matrix、format aliases、normalized payload、business later-wins、canonical bootstrap、kitchen-sink 和 ownership 示例。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">文档 API、ids、events 与 package-root exports/tests 一致</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC2" checked="true">文档明确 accepted-only、slot-owned recursion 和无 JSON fallback</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="运行完整 verification matrix 并记录报告" status="DONE" order="2" priority="P0">
+            <Description>运行 focused/full interaction、typecheck、upstream regressions、real canonical lifecycle、accepted-only outcomes、boundary scans、strict validate 和 diff check，写 reports/verification.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">Verification report 逐项映射六个 behavior requirements 和全部 cases</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC2" checked="true">报告明确 Workbench Flow/XNL mutation 仍属 G4 下游边界</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

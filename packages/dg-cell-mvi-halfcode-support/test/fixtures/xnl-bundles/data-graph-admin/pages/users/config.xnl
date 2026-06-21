@@ -1,0 +1,17 @@
+<Config #users-page-config [
+  <ConfigEntry #users-page {
+    density = "comfortable"
+  }>
+  <ConfigEntry #users-filter {
+    keywordInput = { placeholder = "按姓名搜索" clearable = true }
+    statusSelect = { placeholder = "状态" options = [ "all" "active" "inactive" ] }
+  }>
+  <ConfigEntry #users-grid {
+    rowKey = "id"
+    columns = [
+      { field = "name" label = "姓名" }
+      { field = "status" label = "状态" }
+      { field = "score" label = "评分" }
+    ]
+  }>
+]>

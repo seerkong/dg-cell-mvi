@@ -1,0 +1,82 @@
+<Track id="add-halfcode-runtime-instance-loader" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 v3 unit bundle loader 投影 RuntimeInstance 与 Scope.runtime 绑定。</Goal>
+    <Description>G2-T2：只做 parse-only loader/projection，不执行 runtime 代码。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-04T17:03:00Z</CreatedAt>
+    <UpdatedAt>2026-07-04T17:07:12Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="support-loader" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="contract-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-runtime-instance-loader" name="add-halfcode-runtime-instance-loader" version="1">
+    <Description>Parse runtime domain and scope runtime bindings into loader output.</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contracts and loader shape" status="DONE" order="0">
+        <Description>Add parse-only output shapes.</Description>
+        <SubNodes>
+          <Task id="T1.1" name="Add scope runtime binding contract" status="DONE" order="0">
+            <Description>Add RuntimeScopeBindingSpec if absent.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1">RuntimeScopeBindingSpec is exported from contract root.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="Extend LoadedHalfcodeUnit output" status="DONE" order="1">
+            <Description>Expose runtime and scopeRuntimeBindings on loaded units.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1">Existing loaded unit shape remains backward-compatible.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Runtime parser" status="DONE" order="1">
+        <Description>Parse Runtime and Scope binding documents.</Description>
+        <SubNodes>
+          <Task id="T2.1" name="Parse RuntimeInstance" status="DONE" order="0">
+            <Description>Read src/create/prototype/derive/config into RuntimeInstanceSpec and validate source exclusivity.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1">Loader returns RuntimeSpec instances for runtime domain.</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2">Ambiguous RuntimeInstance source produces HALFCODE_RUNTIME_SOURCE_AMBIGUOUS.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="Parse Scope.runtime bindings" status="DONE" order="1">
+            <Description>Read runtime/config/intents refs from Scope nodes.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1">Loader returns scopeRuntimeBindings with scope ids and refs.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="Collect dotted refs" status="DONE" order="2">
+            <Description>Update loader ref-like scanner to include dotted schemes.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1">effect.types:// and data.graph:// refs are seen by ref collection.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Tests" status="DONE" order="2">
+        <Description>Add support tests and run package test matrix.</Description>
+        <SubNodes>
+          <Task id="T3.1" name="Add loader tests" status="DONE" order="0">
+            <Description>Use in-memory bundle fixture to assert runtime projection and diagnostics.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1">Support tests cover RuntimeSpec and Scope.runtime projection.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="Run tests" status="DONE" order="1">
+            <Description>Run contract and support tests.</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1">Contract tests pass.</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2">Support tests pass.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Hooks/>
+</Track>

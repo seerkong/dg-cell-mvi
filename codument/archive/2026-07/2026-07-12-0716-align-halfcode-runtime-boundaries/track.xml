@@ -1,0 +1,130 @@
+<Track id="align-halfcode-runtime-boundaries" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>校准 RuntimeInstance、Scope、loader 与跨仓库行为登记表的边界，使 G3 data graph binding 建立在正确的 runtime 语义上。</Goal>
+    <Description>承接 DEPA/halfcode 扫描发现的 runtime 收口偏差：术语真源、scope-derived refs、host diagnostics、portable domain loading、version contract 和 DSL guardrails。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-12T03:20:34Z</CreatedAt>
+    <UpdatedAt>2026-07-12T04:16:26Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="halfcode-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_align-halfcode-runtime-boundaries" name="align-halfcode-runtime-boundaries" version="1">
+    <Description>先校准行为与版本真源，再修正 loader/assembly 边界，最后用 guardrail 与真实 fixture 回归封口。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="语义真源与版本契约" status="DONE" order="0">
+        <Description>消除跨仓库 runtime 术语冲突，明确 public DSL API 与 loader representation 的版本关系。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>RuntimeInstance 与 legacy MVI store 的行为归属有代码证据和单一真源</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="对齐 workbench runtime 行为登记表" status="DONE" order="0" priority="P0">
+            <Description>盘点 eidolon-workbench 中 event/reducer store 的真实消费者；修订 halfcode.runtime 为 RuntimeInstance object runtime，并将仍有效的 store 行为独立登记或明确废弃。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">workbench behavior registry 与 dg-cell-mvi RuntimeInstance 文档不再把同一 runtime 名称赋予互相冲突的语义</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">任何保留的 event/reducer store 行为有独立 capability 和代码证据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="定义 FrontendApp 与 loader 版本契约" status="DONE" order="1" priority="P1">
+            <Description>在 halfcode DSL 文档和 loader tests 中说明或校正 halfcode.dg-cell-mvi/v1 与 bundle representation v3 的两轴关系、受支持组合和失败诊断。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">用户可从规范得知 FrontendApp API version 与 loader representation version 是否独立及如何兼容</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">至少一组接受和一组拒绝的版本组合由测试覆盖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Loader 与装配边界" status="DONE" order="1">
+        <Description>修复 scope visibility、host resolver diagnostic 和 package loading 的运行时边界。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>所有新增 loader/assembly 行为先有失败测试，再修改实现</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <TaskGroup id="T2.1" name="scope-derived ref 语义" status="DONE" order="0" priority="P0">
+            <Description>将 unit-global declared-id inventory 与 lexical Scope 可见性分离，并让 runtime family 采用 scope-aware validation。</Description>
+            <SubNodes>
+              <Task id="T2.1.1" name="编写 scope visibility 失败测试" status="DONE" order="0">
+                <Description>覆盖祖先可见、最近绑定覆盖、sibling 不可见和投影 suffix 不由 loader 解释。</Description>
+              </Task>
+              <Task id="T2.1.2" name="实现 scope-aware ref 校验" status="DONE" order="1">
+                <Description>修订 derived scheme collection/validation API，使 scope.runtime 不再从 unit-global id 集合取得可见性结论；为 effect/data graph 保留共享的 scope-aware extension point。</Description>
+              </Task>
+            </SubNodes>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">sibling Scope 不能借由 unit-global declaration 获得 scope.runtime 可见性</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">所有 scope-derived family 的 API 命名不再将 declaration inventory 误称为 visibility</cdt:Criterion>
+            </cdt:Acceptance>
+          </TaskGroup>
+          <TaskGroup id="T2.2" name="config resolver 诊断隔离" status="DONE" order="1" priority="P0">
+            <Description>将 host config resolver 异常转为定位明确的 runtime diagnostic。</Description>
+            <SubNodes>
+              <Task id="T2.2.1" name="编写 config resolver 异常测试" status="DONE" order="0">
+                <Description>模拟 runtime-level 与 Scope-level config resolution 失败，并断言其他可独立诊断仍被返回。</Description>
+              </Task>
+              <Task id="T2.2.2" name="实现 config resolution diagnostic" status="DONE" order="1">
+                <Description>在 runtime assembly 的 resolver adapter 捕获异常，加入语义准确的 contract diagnostic，并保留错误来源/引用定位。</Description>
+              </Task>
+            </SubNodes>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">config resolver 抛错不会以未分类异常中断 assembly</cdt:Criterion>
+            </cdt:Acceptance>
+          </TaskGroup>
+          <TaskGroup id="T2.3" name="可移植 domain loading" status="DONE" order="2" priority="P1">
+            <Description>保留本地目录 discover，同时新增显式 domain-file inventory 路径以支持 package/read-only hosts。</Description>
+            <SubNodes>
+              <Task id="T2.3.1" name="编写无 readDir bundle 测试" status="DONE" order="0">
+                <Description>以只读 resolver 和显式 domain inventory 加载 FrontendApp fixture。</Description>
+              </Task>
+              <Task id="T2.3.2" name="实现显式 domain inventory" status="DONE" order="1">
+                <Description>将 authoring directory discovery 与 supplied document inventory 汇入同一 validated document list，避免双重语义。</Description>
+              </Task>
+            </SubNodes>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">没有 readDir 的 packaged bundle 可加载声明的 domain documents</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">directory discovery 继续支持当前本地 fixture authoring workflow</cdt:Criterion>
+            </cdt:Acceptance>
+          </TaskGroup>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="DSL guardrails 与收口验证" status="DONE" order="2">
+        <Description>把 halfcode 的代码优先边界写成可执行防回归规则，并验证真实 workspace 测试路径。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Runtime XNL 仍只表达实例与装配，动态代码仍 runtime-first</cdt:Criterion>
+          <cdt:Criterion>support 测试通过 package 的 canonical workspace invocation</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="添加 Runtime DSL guardrail tests" status="DONE" order="0" priority="P0">
+            <Description>为禁止的 imperative runtime DSL/state 词汇、runtime-first 3/4 参数动态入口和 scope projection ownership 添加正反向测试；同步必要文档。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">不支持的 runtime fields/methods/router/visibility/reducer/state DSL 不能悄然成为有效 halfcode 语义</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">3/4 参数动态执行协议持续被测试保护</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="执行跨仓库回归与 mission 复查" status="DONE" order="1" priority="P0">
+            <Description>使用可解析 xnl-core 的 package-local canonical command 运行 contract/support tests，复查 workbench behavior 与 dg-cell-mvi docs/fixtures，并写 track verification report 与 mission reconciliation evidence。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">contract/support 测试在可复现 workspace 命令下通过</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">六项扫描偏差逐项关闭或有明确、带证据的后续 track 归属</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+</Track>

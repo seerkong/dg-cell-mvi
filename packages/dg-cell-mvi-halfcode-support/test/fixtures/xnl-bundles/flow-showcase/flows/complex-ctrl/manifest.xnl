@@ -1,0 +1,25 @@
+<InstantFlow #dg.demo.flow.ComplexCtrl apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.ComplexCtrl {
+    input = "vfs://./flow-code/complex.ctrl.types.ts#ComplexCtrlInput"
+    output = "vfs://./flow-code/complex.ctrl.types.ts#ComplexCtrlOutput"
+  }>
+  <FlowAuthoring #dg.demo.flow.ComplexCtrl { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #init-array { x = 80 y = 100 }>
+    <NodeLayout #choose-result { x = 360 y = 100 }>
+  ]>
+) [
+  <Run #init-array {
+    type = "vfs://./flow-code/complex.ctrl.types.ts#InitArrayLogic"
+    src = "vfs://./flow-code/complex.ctrl.impl.ts#initArray"
+  }>
+  <If #choose-result (
+    <Branches [
+      <Branch #has-result { when = "vfs://./flow-code/complex.ctrl.ts#hasResult" } [
+        <Return #success { src = "vfs://./flow-code/complex.ctrl.ts#returnResult" }>
+      ]>
+      <Otherwise #otherwise [
+        <Return #empty { src = "vfs://./flow-code/complex.ctrl.ts#returnEmpty" }>
+      ]>
+    ]>
+  )>
+]>

@@ -1,0 +1,7 @@
+<Contracts #crud-table-contracts (
+  <ComponentContract #dg.materials.CrudTable (
+    <Props { pageSize = "number?" entity = "string?" }>
+    <Accepts [ <Command ref="command://#table.refresh"> ]>
+    <Sends [ <Event ref="event://#table.rowSelected"> ]>
+  )>
+)>

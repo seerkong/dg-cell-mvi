@@ -1,0 +1,5 @@
+<Contracts #orders-page-contracts (
+  <PageContract #dg.admin.imports.OrdersPage (
+    <Accepts [ <Command ref="command://#orders.refresh"> ]>
+  )>
+)>

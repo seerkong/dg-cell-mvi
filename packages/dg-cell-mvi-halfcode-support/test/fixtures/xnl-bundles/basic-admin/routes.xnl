@@ -1,0 +1,7 @@
+<Routes #basic-admin-routes [
+  <Route #users-route {
+    path = "/users"
+    page = "page://dg.admin.basic.UsersPage"
+    menu = { icon = "user" order = 1 }
+  }>
+]>

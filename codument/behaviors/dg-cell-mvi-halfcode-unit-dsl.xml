@@ -1,0 +1,87 @@
+<behaviors capability="dg-cell-mvi-halfcode-unit-dsl" version="1">
+  <requirement id="unit-hierarchy">
+    <statement>系统 SHALL 提供 App/Page/Component 分层单元契约：Capsule 是唯一内联封装原语（仅存在于元素树），Page/Component 是其带 FQN 的有名可复用发行形态，App 是组合根（路由树 + 单元注册 + 跨页接线）。</statement>
+    <suite id="hierarchy" name="单元层级">
+      <case id="capsule-inline-only">
+        <given>v3 契约类型集合</given>
+        <when>检查 Capsule 的类型定义位置</when>
+        <then>Capsule SHALL 只作为元素树节点类型存在，不存在 Capsule 单元 manifest 类型</then>
+      </case>
+      <case id="unit-fqn-identity">
+        <given>Page/Component 单元 manifest 或单文件根节点</given>
+        <when>解析其身份</when>
+        <then>身份 SHALL 是点分 FQN（如 dg.materials.CrudTable），FQN 冲突 SHALL 对应 HALFCODE_UNIT_FQN_CONFLICT 诊断码</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="page-url-contract">
+    <statement>Page 的公共输入契约 SHALL 锁定为 URL 形状（path/query/hash variables），公共输出为 emits；PageContract MUST NOT 包含 props/slots/exposes；嵌入 Page 等价于提供合成 URL 输入。</statement>
+    <suite id="page-boundary" name="Page 边界">
+      <case id="reject-page-props">
+        <given>一个声明了 props 的 PageContract 输入</given>
+        <when>运行 v3 contract 校验</when>
+        <then>校验 SHALL 拒绝并产出 error 诊断</then>
+      </case>
+      <case id="url-inputs-typed">
+        <given>PageContract 声明 urlInputs（path/query/hash 变量类型）</given>
+        <when>Route path 或嵌入实例的合成 urlInputs 与之不匹配</when>
+        <then>系统 SHALL 以 HALFCODE_ROUTE_URLINPUTS_MISMATCH 诊断表达（编译期校验在 compiler track 落地，本契约提供类型与诊断码）</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="unified-uri-refs">
+    <statement>全部引用 SHALL 统一为 URI 形态：vfs:// 为物理寻址；类别 scheme（&amp;lt;scheme&amp;gt;://&amp;lt;path&amp;gt;、&amp;lt;scheme&amp;gt;://#&amp;lt;id&amp;gt;、&amp;lt;scheme&amp;gt;://#&amp;lt;id&amp;gt;/&amp;lt;sub&amp;gt;）为逻辑寻址；scheme 集合由 domain 注册表派生并以单一对照表常量固化（domain↔scheme↔单文件区段）。</statement>
+    <suite id="uri-refs" name="统一引用">
+      <case id="parse-ref-grammar">
+        <given>合法与非法的 ref 字符串样本</given>
+        <when>parseHalfcodeRef 解析</when>
+        <then>合法形态 SHALL 解析出 scheme/path/id/subPath；非法形态 SHALL 报错或返回诊断，不静默通过</then>
+      </case>
+      <case id="scheme-table-single-source">
+        <given>loader/compiler/codec 需要 domain 与 scheme 的映射</given>
+        <when>它们读取映射</when>
+        <then>映射 SHALL 只来自 contract 层的 HALFCODE_SCHEME_TABLE 单一常量表；def 域 SHALL 有独立 scheme 且与主域成对</then>
+      </case>
+      <case id="unit-privacy">
+        <given>类别 scheme 引用出现在某单元的 domain 中</given>
+        <when>解析该引用</when>
+        <then>解析范围 SHALL 限于当前单元（app 级文件限于 app domains）；跨单元越权 SHALL 对应 HALFCODE_REF_PRIVACY_VIOLATION 诊断码</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="requires-contract">
+    <statement>内联 Capsule 的 ElementContract SHALL 支持 Requires 区段，声明对宿主 scope 链的期望：state（state-def 字段路径字符串）、intents（intent refs）、config（config refs）；不满足 SHALL 对应 HALFCODE_CAPSULE_REQUIRES_UNMET 诊断码。</statement>
+    <suite id="requires" name="宿主期望">
+      <case id="requires-shape">
+        <given>一个声明 Requires 的 v3 ElementContract</given>
+        <when>类型校验其结构</when>
+        <then>state SHALL 是字段路径字符串数组（不引入 state:// scheme），intents/config SHALL 是 HalfcodeRef 数组</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="routes-and-wiring">
+    <statement>路由树 SHALL 属于 App：RouteSpec 携带 #id、path、pageRef 与 app 视角元数据（menu/permissionRef/title 覆盖，page 自带默认 title）；跨页通信 SHALL 由 WireSpec 显式接线并寻址 route 实例；未接线 emit SHALL 对应 HALFCODE_INTENT_UNWIRED 诊断码。</statement>
+    <suite id="routes" name="路由与接线">
+      <case id="page-has-no-route">
+        <given>v3 Page manifest 与元素类型</given>
+        <when>检查其字段</when>
+        <then>Page 侧 SHALL 不存在 route/mount 字段；路由挂载语义只在 RouteSpec 上</then>
+      </case>
+      <case id="wire-addresses-route-instance">
+        <given>WireSpec 的 from/to</given>
+        <when>解析其寻址</when>
+        <then>寻址 SHALL 指向 route 实例（routes://#id 或 routes://path），不指向 page 定义 FQN</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="dual-form-units">
+    <statement>Page/Component/App 三级 SHALL 都支持单文件与多文件形态：单文件区段节点与多文件 domain 文件根节点同型；UnitBundleRef.path SHALL 可指向文件或文件夹；domain 显式注册且允许缺省。</statement>
+    <suite id="dual-form" name="双形态">
+      <case id="section-domain-parity">
+        <given>HALFCODE_SCHEME_TABLE 的三列对照</given>
+        <when>检查每个可归属单元的 domain</when>
+        <then>每个 domain SHALL 同时有 scheme 短名与单文件区段标签（app 专属域除外的区段标签），保证两形态机械互转</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

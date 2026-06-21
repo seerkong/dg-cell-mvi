@@ -1,0 +1,59 @@
+<Track id="integrate-profiled-flow-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 Halfcode AppBundle 与 Scope runtime 完整集成 profile-aware Flow definitions、composition 与 durable lifecycle。</Goal>
+    <Description>迁移 typed FlowContract fixtures，补充 bundle-local CallFlow linking、durable child dependency ports 和真实 handle E2E。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-19T08:28:48Z</CreatedAt>
+    <UpdatedAt>2026-07-19T09:28:01Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="upstream-flow-runtime" domain="workspace" path="vfs://@/../depa-flows.ts/"/>
+    <MaterialBundle role="input" name="halfcode-flow-docs" domain="docs" path="vfs://@/docs/halfcode/dsl-bundle/std/flow/"/>
+    <MaterialBundle role="output" name="halfcode-flow-support" domain="workspace" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="flow-showcase" domain="workspace" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/fixtures/xnl-bundles/flow-showcase/"/>
+  </Ports>
+  <TaskSpace id="space_integrate-profiled-flow-runtime" name="integrate-profiled-flow-runtime" version="1">
+    <Description>先对齐 contracts/fixtures，再实现 composition/lifecycle adapter，最后做 Scope 与全仓验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contracts and fixtures" status="DONE" order="0">
+        <SubNodes>
+          <Task id="P1-T1" name="迁移 typed FlowContract 与 profile fixtures" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="P1-T1-AC1" checked="true">全部 CtrlFlow fixture 声明唯一 typed FlowContract</cdt:Criterion>
+              <cdt:Criterion id="P1-T1-AC2" checked="true">flow-showcase 覆盖三类 CtrlFlow profile 且 EagerDataFlow 不回归</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Composition and lifecycle" status="DONE" order="1">
+        <SubNodes>
+          <Task id="P2-T1" name="实现 bundle-local definition linking 与 durable child adapter" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="P2-T1-AC1" checked="true">同步 CallFlow 按目标 unit VFS 上下文执行</cdt:Criterion>
+              <cdt:Criterion id="P2-T1-AC2" checked="true">durable child 通过显式 dependency port 启动和检查</cdt:Criterion>
+              <cdt:Criterion id="P2-T1-AC3" checked="true">Halfcode 不复制 upstream scheduler 或 snapshot facts</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Scope and verification" status="DONE" order="2">
+        <SubNodes>
+          <Task id="P3-T1" name="验证 Scope-bound handles 与跨产品 E2E" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="P3-T1-AC1" checked="true">三类 CtrlFlow handles 和 EagerDataFlow handle 通过真实 AppBundle E2E</cdt:Criterion>
+              <cdt:Criterion id="P3-T1-AC2" checked="true">相关 tests、typecheck、dependency scan 与 strict validation 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule/>
+  <Hooks><Hook on="track:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+</Track>

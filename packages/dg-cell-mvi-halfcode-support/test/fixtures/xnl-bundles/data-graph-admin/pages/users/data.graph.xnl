@@ -1,0 +1,50 @@
+<DataGraph #users-data-graphs [
+  <GraphModule #users.list {
+    src = "vfs://./graph-code/users.graph.types.ts#UsersListGraphModule"
+  } (
+    <Slots (
+      <Inputs [
+        <GraphSlot #query>
+      ]>
+      <State [
+        <GraphSlot #rows>
+      ]>
+      <Outputs [
+        <GraphSlot #filteredRows>
+        <GraphSlot #summary>
+      ]>
+      <Internals [
+        <GraphSlot #applyQuery>
+      ]>
+    )>
+    <GraphNodes [
+      <SignalNode #query {
+        slot = "inputs.query"
+        initial = { keyword = "" status = "all" }
+        flags = { in = true }
+      }>
+      <SignalNode #rows {
+        slot = "state.rows"
+        initial = []
+      }>
+      <ComputedNode #filteredRows {
+        slot = "outputs.filteredRows"
+        deps = ["state.rows" "inputs.query"]
+        type = "vfs://./graph-code/users.graph.types.ts#UsersFilteredRowsLogic"
+        flags = { out = true }
+      }>
+      <ComputedNode #summary {
+        slot = "outputs.summary"
+        deps = ["outputs.filteredRows"]
+        type = "vfs://./graph-code/users.graph.types.ts#UsersSummaryLogic"
+        flags = { out = true }
+      }>
+      <ProcessorNode #applyQuery {
+        slot = "internals.applyQuery"
+        deps = ["inputs.query"]
+        outputs = ["state.rows"]
+        type = "vfs://./graph-code/users.graph.types.ts#UsersApplyQueryLogic"
+      }>
+    ]>
+  )>
+]>

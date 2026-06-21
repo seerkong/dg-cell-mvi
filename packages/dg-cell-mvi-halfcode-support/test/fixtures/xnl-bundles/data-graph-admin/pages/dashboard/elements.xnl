@@ -1,0 +1,8 @@
+<Elements #dashboard-page-elements (
+  <Scope ref="dashboard-page">
+) [
+  <h1 #dashboard-title { text = "Quick Graph 扩展" }>
+  <elementPlus.StatisticGroup #dashboard-cards {
+    cards = "scope-data-graph://#dashboard-summary/outputs.cards"
+  }>
+]>

@@ -1,0 +1,14 @@
+<Config #dashboard-page-config [
+  <ConfigEntry #dashboard-page {
+    density = "compact"
+  }>
+  <ConfigEntry #dashboard-summary {
+    title = "用户概览"
+    cardOrder = [ "total" "active" "inactive" ]
+    cardLabels = {
+      total = "总用户"
+      active = "活跃用户"
+      inactive = "非活跃用户"
+    }
+  }>
+]>

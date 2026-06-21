@@ -1,0 +1,6 @@
+<Config #crud-table-config [
+  <ConfigEntry #crud-table {
+    table = { density = "compact" stripe = true }
+    resource = { source = "mock" }
+  }>
+]>

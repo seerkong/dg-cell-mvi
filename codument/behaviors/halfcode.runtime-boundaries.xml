@@ -1,0 +1,72 @@
+<behaviors capability="halfcode.runtime-boundaries" version="1">
+  <requirement id="runtime-object-source-of-truth">
+    <statement>Halfcode SHALL define RuntimeInstance as a code-owned runtime object system; XNL SHALL declare only instance references and Scope assembly bindings, not runtime fields, methods, message routing, visibility rules, reducers, or state definitions.</statement>
+    <suite id="dsl-guardrails" name="Runtime DSL guardrails">
+      <case id="reject-imperative-runtime-shape">
+        <given>a bundle declares a Runtime node with imperative runtime implementation structure</given>
+        <when>the halfcode loader validates the runtime domain</when>
+        <then>the loader SHALL reject or diagnose the unsupported structure without treating it as a RuntimeInstance capability declaration</then>
+      </case>
+      <case id="runtime-first-code-entry">
+        <given>a dynamic handler, effect, or processor is executed by the halfcode runtime</given>
+        <when>the entry is invoked</when>
+        <then>the executor SHALL invoke it with runtime as the first argument and SHALL preserve the explicit instanceRefs extension when requested</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="scope-derived-reference-visibility">
+    <statement>Halfcode SHALL resolve and validate each scope-derived reference against the referencing node's Scope chain; a unit-global collection of declared ids SHALL NOT be represented as scope visibility.</statement>
+    <suite id="scope-resolution" name="Scope-derived reference resolution">
+      <case id="nearest-runtime-binding-wins">
+        <given>nested scopes bind the same RuntimeInstance id</given>
+        <when>a descendant uses scope.runtime:// for that id</when>
+        <then>the resolver SHALL select the nearest visible binding</then>
+      </case>
+      <case id="sibling-scope-is-not-visible">
+        <given>a RuntimeInstance id is bound only in a sibling Scope</given>
+        <when>another sibling uses scope.runtime:// for that id</when>
+        <then>the loader or scope-aware resolver SHALL report it as unresolved rather than accepting the unit-global declaration</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="host-boundary-diagnostics">
+    <statement>Halfcode runtime assembly SHALL convert failures from injected host resolvers, including config resolution, into scoped diagnostics and SHALL continue reporting independent assembly failures when safe.</statement>
+    <suite id="resolver-failures" name="Injected resolver failures">
+      <case id="config-resolution-throws">
+        <given>the host config resolver throws for a declared runtime or Scope config reference</given>
+        <when>runtime assembly runs</when>
+        <then>assembly SHALL return a configuration-resolution diagnostic and SHALL NOT leak the host exception as an uncategorized failure</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="portable-domain-loading">
+    <statement>Halfcode unit loading SHALL support an explicit domain-file inventory when directory enumeration is unavailable; directory discovery MAY remain an authoring convenience but SHALL NOT be the only valid loading mode.</statement>
+    <suite id="packaged-bundle-loading" name="Packaged bundle loading">
+      <case id="load-without-read-dir">
+        <given>a packaged bundle provides its domain documents through an explicit inventory and the resolver has no readDir capability</given>
+        <when>the loader reads a FrontendApp unit</when>
+        <then>the loader SHALL load and validate the declared domain documents without requiring directory enumeration</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="frontend-app-version-meaning">
+    <statement>Halfcode SHALL document and test the compatibility relation between the public FrontendApp API version and the loader's bundle representation version; the two version names SHALL NOT be treated as an undocumented alias.</statement>
+    <suite id="version-contract" name="Version contract">
+      <case id="frontend-app-v1-through-current-loader">
+        <given>a FrontendApp declares the supported halfcode.dg-cell-mvi/v1 API</given>
+        <when>the current hierarchical loader representation reads it</when>
+        <then>the compatibility contract SHALL identify the accepted combination and the diagnostic behavior for unsupported combinations</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="cross-repository-runtime-terminology">
+    <statement>The dg-cell-mvi DSL documentation and eidolon-workbench behavior registry SHALL distinguish a RuntimeInstance object runtime from any legacy event/reducer MVI store, so each behavior has one unambiguous source of truth.</statement>
+    <suite id="behavior-registry-alignment" name="Cross-repository behavior alignment">
+      <case id="runtime-object-behavior-is-explicit">
+        <given>the workbench publishes halfcode runtime behavior</given>
+        <when>an implementer reads the behavior registry and DSL runtime specification</when>
+        <then>the documents SHALL agree that RuntimeInstance behavior is code-owned and Scope-assembled</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

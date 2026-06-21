@@ -1,0 +1,240 @@
+<Track id="add-halfcode-flow-unit-dsl-and-editor" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 CtrlFlow/DataFlow 成为采用单数 kebab-case URI scheme 与节点自持类型配置的 AppBundle 一等单元，并让 Workbench 通过 canonical authoring plan 编辑简单与复杂 Flow，不实现执行 runtime。</Goal>
+    <Description>完成 AppBundle 根与全量单数 kebab-case URI scheme breaking migration，移除 Type catalog/URI 中间层，新增 Flow contracts/refs/authoring plans、五单元 flow-showcase、Workbench projection/persistence 与跨仓 E2E；明确禁止 flow code resolve 和 execution。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-15T09:52:55Z</CreatedAt>
+    <UpdatedAt>2026-07-15T21:52:00Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="flow-mission" domain="mission" path="vfs://@/codument/missions/pending/introduce-halfcode-flow-units/"/>
+    <MaterialBundle role="input" name="existing-bundles" domain="fixture" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/fixtures/xnl-bundles/"/>
+    <MaterialBundle role="input" name="workbench-flow-editor" domain="code" path="vfs://@/../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/"/>
+    <MaterialBundle role="output" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="flow-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="flow-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="flow-fixtures" domain="fixture" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/fixtures/xnl-bundles/flow-showcase/"/>
+    <MaterialBundle role="output" name="workbench-editor" domain="code" path="vfs://@/../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-flow-unit-dsl-and-editor" name="add-halfcode-flow-unit-dsl-and-editor" version="1">
+    <Description>先固定 breaking AppBundle 根、全量单数 kebab-case URI scheme、节点自持类型配置与 Flow contract，再实现 loader/compiler authoring plan，随后用五个真实 units 和 Workbench 编辑器验证；全程禁止 execution runtime。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="AppBundle 与 Flow contract" status="DONE" order="0">
+        <Description>以测试和文档冻结异构 unit registry、Flow roots、typed refs、三档写法和 serializable authoring plans。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>`AppBundle` 是唯一 canonical root，UnitKind 包含四类单元。</cdt:Criterion>
+          <cdt:Criterion>全部 URI scheme 使用被引用实体的单数 kebab-case 名，scheme 禁止点，且不存在复数/dotted alias。</cdt:Criterion>
+          <cdt:Criterion>Effect/DataGraph/Flow 类别由实际 node tag 表达，TS 签名由节点 vfs type 配置表达，不存在 Type catalog 或 Type URI scheme。</cdt:Criterion>
+          <cdt:Criterion>CtrlFlow/DataFlow contract 与 DataGraph/runtime contract 正交。</cdt:Criterion>
+          <cdt:Criterion>authoring plan 类型不允许函数、module 或 runtime instance。</cdt:Criterion>
+          <cdt:Criterion>Flow 根 list segment 直接承载语句/图节点，metadata、attributes、唯一子域和重复子节点严格归入各自 XNL 槽位。</cdt:Criterion>
+          <cdt:Criterion>DataFlow contract 明确 EntryNode/TransformNode/SinkNode/SubFlowNode/ReturnNode 五类节点、flow-node 完成事实引用、flow-port 数据引用、data/waitFor/subflow 三类边与端口派生；DataGraph 继续使用 ComputedNode/ConsumerNode。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 AppBundle 与 Flow contract 红测试" status="DONE" order="0" priority="P0">
+            <Description>先为四种 UnitKind、kind/root/FQN mismatch、全量单数 kebab-case scheme table、复数/dotted scheme rejection、Type catalog removal、tag/type/src ownership、XNL 槽位归属、根 direct children、DataFlow Entry/Transform/Sink/SubFlow/Return node/port/ref rules、旧 ComputeNode/ConsumeNode rejection、typed flow refs、plan serializability、inline code forbidden 和 no-execution-export boundary 写失败测试。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="false">测试在实现前暴露 page/component-only、FrontendApp-only 与无 Flow plan 的现状</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="false">红测试明确区分 DataFlowAuthoringPlan 与 DataGraph plan/runtime</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="false">红测试拒绝根 Block/Nodes wrapper、重复单件子域和 metadata/attributes/list 的错误槽位</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC4" checked="false">红测试覆盖全部复数/dotted scheme 到单数 kebab-case 的映射，并证明旧 alias 当前仍被接受或输出</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC5" checked="false">红测试证明 EffectType/DataGraphLogicTypes 当前仍是中间 catalog，并固定 tag + 节点 type/src/impl 的目标形态</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC6" checked="false">红测试固定 DataGraph ComputedNode/ConsumerNode 与 DataFlow TransformNode/SinkNode 的领域边界，并拒绝 canonical DataFlow 中的 ComputeNode/ConsumeNode</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 Flow contracts 与 AppBundle 根" status="DONE" order="1" priority="P0">
+            <Description>扩展 UnitKind/registries/refs/diagnostics 和 serializable plans；把 canonical root contract 改为 AppBundle，把 HALFCODE_SCHEME_TABLE、SCHEME_PATTERN、builtin scheme types 与 validators 迁移为单数 kebab-case scheme，并删除 EffectType/GraphLogicType/FlowLogicType catalog contract，不加入 FrontendApp 或旧 scheme compatibility type。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="false">contract tests 覆盖 page/component/ctrl-flow/data-flow 与 typed refs</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="false">authoring plans 只包含 serializable data、source spans、code refs 和 diagnostics</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="false">Flow contract 明确表示 root direct children、唯一 child domains 与原始 XNL slot identity，不制造 Block/Nodes plan 层</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC4" checked="false">DataFlowAuthoringPlan 分列 nodes/nodeById、entry/return、dataEdges、waitForEdges、subflowEdges 与 diagnostics，显式 waitFor 不因已有 data edge 被丢弃</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC5" checked="false">HALFCODE_SCHEME_TABLE 显式映射复数/dotted collection domain 到单数 kebab-case entry scheme，builtin schemes 为 page/component/route/ctrl-flow/data-flow，canonical scheme grammar 禁止点</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC6" checked="false">Flow node plan 以 tag 表达类别，并分别保留可选 vfs type 与 src/impl；contract 不导出 Type catalog/ref 类型</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC7" checked="false">DataFlow contract 仅导出 EntryNode/TransformNode/SinkNode/SubFlowNode/ReturnNode，且 TransformNode 有 outputs、SinkNode 无 outputs；DataGraph contract 命名保持不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="编写 Flow DSL 分层文档" status="DONE" order="2" priority="P0">
+            <Description>新增 std/flow axioms 与 spec/flow domains/files/nodes/refs，修订 foundation M-N2/M-N4 并更新 frontend/effect/runtime/data-graph bundle 文档，完整记录单数 kebab-case URI scheme、tag/type/src ownership、Type catalog removal、XNL 四槽位、DataFlow contract/node/port/edge/subflow、根 direct children、quick/compact/split、flow.authoring ownership 和 no-runtime boundary。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="false">文档包含 AppBundle 和五单元 showcase 示例、typed main/subflow ref 与 code-ref 迁移示例</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="false">文档明确 DataFlow 不等于 DataGraph，Flow Editor 不拥有执行语义</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC3" checked="false">所有示例使用 Flow 根 [] 直接节点；{} 仅业务属性，metadata slot 仅系统信息，() 每类子域唯一且多项使用复数容器</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC4" checked="false">文档包含 Welcome DataFlow、复杂 main/sub DataFlow、flow-node/flow-port URI、data/waitFor edge、完整依赖 DAG 和 FlowContract 端口派生的完整例子</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC5" checked="false">foundation 明确复数/dotted collection domain 与单数 kebab-case entry scheme 的投影规则，L3 refs 表只列无点 canonical scheme</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC6" checked="false">Effect/DataGraph/Flow 文档删除 Type catalog scheme，并说明类别用 tag、TS 签名用节点 vfs type、闭集选项用裸 enum</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC7" checked="false">文档说明 DataGraph ComputedNode/ConsumerNode 与 DataFlow TransformNode/SinkNode 的不同生命周期和端口语义，且不把 TransformNode 限定为纯或同步逻辑</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Loader/compiler authoring pipeline" status="DONE" order="1">
+        <Description>扩展 unit loader 与 kind compiler，产出 CtrlFlow/DataFlow authoring plans，并完成 AppBundle corpus migration。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>loader 支持 flow 单文件与 folder manifest 两种形态。</cdt:Criterion>
+          <cdt:Criterion>compiler 只做 parse/validate/project，不能 resolve 或调用 code refs。</cdt:Criterion>
+          <cdt:Criterion>既有 canonical app fixtures 已迁移且 admin behavior 不回归。</cdt:Criterion>
+          <cdt:Criterion>resolver、transport descriptor、plan 与 serializer 只产生和接受单数 kebab-case scheme，不维护复数/dotted alias。</cdt:Criterion>
+          <cdt:Criterion>loader/compiler 不加载 Type catalog domain，不解析 Type URI；type 仅作为节点上的 opaque vfs ref 投影。</cdt:Criterion>
+          <cdt:Criterion>loader/compiler 保持 XNL 槽位和 root direct-child order，并对非法 wrapper/slot 产生稳定 diagnostic。</cdt:Criterion>
+          <cdt:Criterion>DataFlow 数据边、waitFor 边和 subflow 边分别投影，dataEdges + waitForEdges 的合并依赖 DAG 与 bundle 内 subflow 图可校验。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="编写 Flow loader/compiler 红测试" status="DONE" order="0" priority="P0">
+            <Description>先覆盖 root dispatch、single/folder unit、全量单数 kebab-case scheme resolution/transport/serialization、复数/dotted scheme rejection、Type catalog rejection、node type/src ownership、XNL slot shape、direct-child order、duplicate child domain/node/port、Entry/Return cardinality、Transform/Sink port rules、旧 Compute/Consume tag rejection、flow-node/flow-port scheme 与类型位置校验、data/waitFor DAG、waitFor unresolved/self/duplicate/preservation、typed subflow contracts/cycles、unknown extensions 与 source spans。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="false">坏 kind/ref/port/topology/slot/wrapper fixtures 产生稳定 diagnostics，合法 plan 可 JSON round-trip</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 Flow load/validate/compile" status="DONE" order="1" priority="P0">
+            <Description>复用现有 VFS/unit registry/ref resolver，先把 scheme registry/resolver/transport/serializer 收敛到单数 kebab-case 协议并移除 Type catalog path，再按 root kind 分发到 CtrlFlow/DataFlow compiler；保留节点 opaque type/src/impl refs 和 source identity。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="false">合法 flow units 进入 typed registries 并生成对应 authoring plans</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="false">load/compile 路径没有 dynamic import、module resolver、executor、GraphRuntime mount 或 fake execution</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="false">parse/stringify/reload 保持 metadata/attributes/child-domain/list 槽位、direct-child order 与 node identity</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC4" checked="false">SubFlowNode outputs 从目标 FlowContract 投影，调用点无 outputs 复制；Return inputs 与 outputPorts 严格匹配</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC5" checked="false">canonical load/compile/serialize 输出中无复数/dotted scheme，旧 scheme 返回稳定 diagnostic 且无 fallback</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC6" checked="false">compiler 将节点 type/src/impl 原样投影，不创建或解析 EffectType/GraphLogicType/FlowLogicType registry</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="迁移 AppBundle 根与全部 URI scheme" status="DONE" order="2" priority="P0">
+            <Description>迁移全部 xnl-bundles、内联测试输入、docs 和 Workbench canonical admin catalog 到 AppBundle 与单数 kebab-case URI；把 EffectType/DataGraphLogicTypes 信息归回实际节点 tag/type 配置；将 DataFlow ComputeNode/ConsumeNode 迁移为 TransformNode/SinkNode；删除 FrontendApp branch、旧 scheme alias/常量/测试、Type catalog 和过时负例字符串。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="false">仓库 canonical XNL 中 FrontendApp 根为零，所有既有 bundle tests 通过</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="false">basic/embedded/import/data-graph admin loader/compiler 与 Workbench admin E2E 保持通过</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC3" checked="false">docs、source、tests、fixtures 与 Workbench canonical paths 中所有旧复数/dotted scheme 残留为零</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC4" checked="false">EffectType、DataGraphLogicTypes、FlowLogicTypes catalog/domain/ref 残留为零，类型配置已归实际节点</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC5" checked="false">canonical DataFlow docs/source/tests/fixtures/Workbench 中 ComputeNode/ConsumeNode tag 残留为零，且 DataGraph ComputedNode/ConsumerNode 未被误改</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Canonical flow-showcase fixtures" status="DONE" order="2">
+        <Description>以一个真实 AppBundle 同时承载最小和复杂 CtrlFlow/DataFlow，并把历史动态代码表达迁移为 Halfcode code refs。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>五个 flow units 共享 canonical registry，但各自保持 typed kind 和 contract。</cdt:Criterion>
+          <cdt:Criterion>flow-showcase 只使用 ctrl-flow/data-flow/flow-node/flow-port 等单数 kebab-case scheme，不包含 FlowLogicTypes 或 logic type URI。</cdt:Criterion>
+          <cdt:Criterion>Flow node tag 表达类别，Compact/Split 节点直接携带 vfs type，Quick/Compact 实现使用 src。</cdt:Criterion>
+          <cdt:Criterion>DataFlow fixtures 只使用 TransformNode/SinkNode 表达有输出/无输出步骤，不使用 ComputeNode/ConsumeNode。</cdt:Criterion>
+          <cdt:Criterion>复杂 main/subflow 的 topology 与数据血缘不丢失。</cdt:Criterion>
+          <cdt:Criterion>五个 Flow 根直接承载语句/图节点，canonical fixtures 不使用 Block/Nodes 结构 wrapper。</cdt:Criterion>
+          <cdt:Criterion>复杂 DataFlow 把旧 connectedInputs 与 waitNodeKeys 一对一保留为 data edges 与 waitFor edges，并保留 main/sub typed ref 和多端口返回。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="创建五单元 flow-showcase" status="DONE" order="0" priority="P0">
+            <Description>创建 WelcomeCtrl、WelcomeData、ComplexCtrl、TransformMain、TransformSub；把 ExprCode/StatementCode 和 clazz+methodName 迁移为 TS type/impl exports 与 src/logic refs。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="false">fixture 包含两种 quick units、一个 complex CtrlFlow 和 DataFlow main/sub 两个 public units</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="false">XNL 无 inline executable code、clazz、methodName 或裸 subFlow identity</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="false">XNL 无根 Block/Nodes wrapper；子域在 () 中每类唯一，多条目由唯一复数容器的 [] 承载</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC4" checked="false">所有 Flow registry、node 与 port refs 使用 canonical 单数 kebab-case scheme；无 FlowLogicType catalog/ref</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC5" checked="false">五个 fixture 中 DataFlow 节点只使用 EntryNode/TransformNode/SinkNode/SubFlowNode/ReturnNode，且 SinkNode 无 outputs</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="验证复杂 Flow 语义 round-trip" status="DONE" order="1" priority="P0">
+            <Description>为 CtrlFlow branch/loop/break/return 和 DataFlow contract/ports/dataEdges/waitForEdges/main-sub refs 建结构快照与 parse-stringify-reload 测试。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="false">五个 plans 的 XNL slot、direct-child order、node identity、edge、config/ref 在 round-trip 后等价</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="false">测试只验证 authoring data，不调用任何 flow code export</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="false">TransformMain/Sub 的 dataEdges、waitForEdges、subflowEdges、entry/return 与 contract ports 快照符合 design，原 waitNodeKeys source-target identity 全部保留</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Workbench canonical Flow Editor" status="DONE" order="3">
+        <Description>让 Flow Editor 从 canonical bundle/plan 投影和修改五个 flow units，收敛 semantic/flow.authoring/runtime 三类事实 owner。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Workbench 不拥有平行 flow parser/schema 真源。</cdt:Criterion>
+          <cdt:Criterion>semantic XNL、flow.authoring XNL、runtime UI state 写入边界清晰，组合 view model 只读。</cdt:Criterion>
+          <cdt:Criterion>主编辑器仍使用最新 canonical Halfcode renderer 编辑节点表单。</cdt:Criterion>
+          <cdt:Criterion>Workbench adapter、保存结果与 transport descriptor 不产生复数/dotted scheme 或 Type catalog。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="编写 canonical plan adapter 与 ownership 红测试" status="DONE" order="0" priority="P0">
+            <Description>先固定 bundle import、five-unit catalog、plan-to-view projection、DataFlow data/waitFor edge 与 subflow port rendering、semantic mutation、flow.authoring mutation 与 reload 行为；证明旧硬编码/sidecar 路径不满足新契约。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="false">测试覆盖 CtrlFlow tree、DataFlow graph、main/subflow navigation 与复杂节点配置</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="false">测试区分 core semantic mutation、flow.authoring mutation 和 runtime-only state，组合 projection 不可直接写</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC3" checked="false">DataFlow view 分别投影和编辑 data/waitFor edge，不互相转换；SubFlowNode pins 来自目标 FlowContract，编辑后保持 URI、port 和 waitFor identity</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="迁移 Flow Editor 到 canonical bundle/plan" status="DONE" order="1" priority="P0">
+            <Description>导入 flow-showcase，替换 DEFAULT_SEED/private schema ownership；保留 VisualGraph/TreeFlowEditor view adapters 和 canonical Halfcode node renderer，通过 owner command 写回 XNL。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="false">五个 units 可浏览、选择、编辑、保存、重新加载，node identity 稳定</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="false">production path 中硬编码 flow XNL、graph.json、halfcode.json 和重复 formModel semantic owner 为零；布局只写 flow.authoring XNL 的业务属性</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="false">editor load/edit 不触发 flow code import 或 execution</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC4" checked="false">editor mutation/save/reload 保持直接根 [] 结构，不生成 Block/Nodes wrapper 或把领域布局写入 XNL metadata slot</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC5" checked="false">editor import/save/reload 全程保持单数 kebab-case scheme 与节点 type 配置，不含旧 scheme rewrite 或 Type catalog</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="增加 Flow Editor browser E2E" status="DONE" order="2" priority="P0">
+            <Description>在真实页面验证 Welcome、复杂 CtrlFlow、DataFlow main/subflow 的切换、节点选择、canonical form 编辑、layout persistence 与 reload。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="false">browser E2E 可见五个 units，复杂 flow 节点/边数量与关键 labels 正确</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="false">编辑 semantic field 与 layout 后 reload 分别从 semantic XNL 与 flow.authoring XNL 恢复，无 console/runtime error</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="跨仓验证与 mission handoff" status="DONE" order="4">
+        <Description>验证 DSL/editor 目标和 no-runtime 边界，向 mission 后续 runtime-contract track 提供稳定 evidence。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>受影响测试、类型检查、构建和浏览器 E2E 全部通过。</cdt:Criterion>
+          <cdt:Criterion>FrontendApp、所有旧复数/dotted scheme、Type catalog、DataFlow ComputeNode/ConsumeNode、旧 Flow semantic sidecar 与 execution 越界残留扫描通过。</cdt:Criterion>
+          <cdt:Criterion>track report 足以作为 runtime-contract track 的输入。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="运行 dg-cell-mvi 验证矩阵" status="DONE" order="0" priority="P0">
+            <Description>运行 contract/support/admin 相关 tests、typecheck/build、fixture corpus、XML/doc examples，以及 FrontendApp、全部旧复数/dotted scheme、Type catalog 与 DataFlow ComputeNode/ConsumeNode 的 stale-root/ref 扫描，同时确认 DataGraph ComputedNode/ConsumerNode 仍保持原协议。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="false">dg-cell-mvi 受影响 gates 全通过，五个 flow plans 与既有 admin plans 均稳定</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="运行 Workbench 验证矩阵" status="DONE" order="1" priority="P0">
+            <Description>运行 Flow Editor targeted/full tests、typecheck/build、flow browser E2E 与 canonical admin E2E。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="false">Workbench gates 全通过且当前用户/前序未提交改动被保留并正确整合</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="记录验证证据与 runtime handoff" status="DONE" order="2" priority="P0">
+            <Description>写 reports/verification.md 和 reports/runtime-contract-input.md，列出稳定 plan、code refs、未执行边界和后续 ABI decision frontier。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="false">报告逐项映射 behavior delta 与 proposal 成功判据，并明确没有实现 flow execution</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

@@ -1,0 +1,90 @@
+<Mission id="introduce-halfcode-flow-units" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>superseded</Status>
+    <Goal>把 CtrlFlow/DataFlow 引入为 Halfcode bundle 一等单元，先闭合 canonical DSL 与 Flow Editor，再分阶段实现 scope-aware execution runtime。</Goal>
+    <Description>以 AppBundle 异构单元注册、typed flow refs、canonical flow-showcase 和 Workbench authoring plan/metadata 为第一阶段；后续依次落地 runtime contracts、CtrlFlow/DataFlow executors 与 flow composition。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>2</Revision>
+    <CreatedAt>2026-07-15T09:52:55Z</CreatedAt>
+    <UpdatedAt>2026-07-15T22:08:08Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+    <MaterialBundle role="output" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="flow-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="flow-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="workbench-editor" domain="code" path="vfs://@/../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/"/>
+  </Ports>
+  <TaskSpace id="space_introduce-halfcode-flow-units" name="introduce-halfcode-flow-units" version="1" cdt:child-mode="dag">
+    <Description>先用真实简单/复杂样例闭合 DSL 与编辑器，再冻结执行协议并分别实现两类 flow runtime，最后接通跨 flow composition。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="Flow unit DSL 与编辑器" status="NOT_STARTED" order="0">
+        <Description>把 Flow 注册为 canonical bundle unit，生成不执行代码的 authoring plan，并让 Workbench 编辑五个 canonical showcase units。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="创建并执行 Flow unit DSL 与 editor track" status="NOT_STARTED" order="0">
+            <Description>实现 AppBundle、ctrl-flow/data-flow Unit kind、typed refs、loader/compiler authoring plans、flow-showcase 与 Workbench semantic/flow.authoring persistence；明确不执行 flow。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-flow-unit-dsl-and-editor"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2" name="Flow runtime contracts" status="NOT_STARTED" order="1">
+        <Description>根据第一阶段的 DSL 与 DX evidence，冻结 runtime-first invocation、node logic、错误/取消、scope visibility 与 implementation binding 协议。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="创建并执行 Flow runtime contracts track" status="NOT_STARTED" order="0">
+            <Description>只定义强类型执行协议与 compile-to-execution-plan 边界，不实现完整 CtrlFlow/DataFlow 调度器。</Description>
+            <cdt:TrackLink state="candidate" id="add-halfcode-flow-runtime-contracts"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G3C" name="CtrlFlow execution runtime" status="NOT_STARTED" order="2">
+        <Description>实现结构化控制流节点、分支/循环/提前返回与 runtime-first code invocation。</Description>
+        <SubNodes>
+          <Task id="G3C-T1" name="创建并执行 CtrlFlow runtime track" status="NOT_STARTED" order="0">
+            <cdt:TrackLink state="candidate" id="add-halfcode-ctrl-flow-runtime"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G3D" name="DataFlow execution runtime" status="NOT_STARTED" order="3">
+        <Description>实现端口数据血缘、依赖 DAG、wait edges、compute/consume 与确定性调度。</Description>
+        <SubNodes>
+          <Task id="G3D-T1" name="创建并执行 DataFlow runtime track" status="NOT_STARTED" order="0">
+            <cdt:TrackLink state="candidate" id="add-halfcode-data-flow-runtime"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G4" name="Flow composition 与 scope integration" status="NOT_STARTED" order="4">
+        <Description>实现 typed cross-flow invocation、main/subflow、scope runtime 可见性、继承与覆盖。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 Flow composition runtime track" status="NOT_STARTED" order="0">
+            <cdt:TrackLink state="candidate" id="add-halfcode-flow-composition-runtime"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY" name="验证与收口" status="NOT_STARTED" order="5">
+        <Description>验证 authoring 与 execution 共享同一 DSL/plan 真源，五个 showcase flow 可编辑并在 runtime tracks 完成后可执行。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="验证 mission 成功判据" status="NOT_STARTED" order="0">
+            <Description>运行跨仓 tests/typecheck/build/browser E2E，核对所有 bound tracks 和零双事实源扫描，写 reports/mission-verify.md。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_introduce-halfcode-flow-units">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3C"><After ref="G2"/></Node>
+      <Node id="G3D"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G3C"/><After ref="G3D"/></Node>
+      <Node id="VERIFY"><After ref="G4"/></Node>
+    </Dag>
+  </Schedule>
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-rounds="3" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

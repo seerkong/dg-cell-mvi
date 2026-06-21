@@ -1,0 +1,6 @@
+<Config #data-graph-admin-config [
+  <ConfigEntry #app {
+    title = "Data Graph Admin"
+    locale = "zh-CN"
+  }>
+]>

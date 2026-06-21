@@ -1,0 +1,18 @@
+<Contracts #reports-page-contracts (
+  <PageContract #dg.admin.embedded.ReportsPage {
+    urlInputs = {
+      query = { period = "string?" }
+    }
+  } (
+    <Accepts [ <Command ref="command://#report.refresh"> ]>
+    <Sends [ <Event ref="event://#report.saved"> ]>
+  )>
+) [
+  <ElementContract #reports-admin-slot (
+    <Requires {
+      commands = [ "command://#reports.search" ]
+      config = [ "config://#reports-admin-slot" ]
+    }>
+    <Sends [ <Command ref="command://#reports.search"> ]>
+  )>
+]>

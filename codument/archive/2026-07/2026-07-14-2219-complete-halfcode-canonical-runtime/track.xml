@@ -1,0 +1,184 @@
+<Track id="complete-halfcode-canonical-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>闭合 canonical Halfcode 从 XNL、compiled plans、Scope RuntimeObject 到 Effect/DataGraph、dg-cell-mvi 与 Vue/Workbench 的可执行主链。</Goal>
+    <Description>落实已确认的裸名迁移，并修复 DEPA 扫描 P-01 至 P-08：Command 链、Scope hierarchy、family bindings、双 runtime、真实 GraphModule、消息 kind 与依赖门禁。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-14T17:29:22Z</CreatedAt>
+    <UpdatedAt>2026-07-14T19:19:45Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mission" domain="mission" path="vfs://@/codument/missions/active/evolve-halfcode-non-frontend-dsl/"/>
+    <MaterialBundle role="output" name="halfcode-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="halfcode-vue" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/"/>
+    <MaterialBundle role="output" name="dg-cell-mvi-core" domain="code" path="vfs://@/packages/dg-cell-mvi-core/"/>
+    <MaterialBundle role="output" name="admin-preview" domain="code" path="vfs://@/packages/dg-cell-mvi-admin-element-plus/"/>
+    <MaterialBundle role="output" name="workbench" domain="code" path="vfs://@/../ai/eidolon/eidolon-workbench/"/>
+  </Ports>
+  <TaskSpace id="space_complete-halfcode-canonical-runtime" name="complete-halfcode-canonical-runtime" version="1">
+    <Description>先统一 source language 和 AST，再闭合 execution/scope，随后接 family materializers 和 consumer，最后全量验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Canonical naming 与 source AST" status="DONE" order="0">
+        <Description>一次性迁移 XNL、source AST、loader、fixtures、compiler inputs 与 tests，不保留 XxxRef 兼容分支。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>canonical XNL 与 source AST 使用裸语义字段</cdt:Criterion>
+          <cdt:Criterion>Scope/Contract/parent 使用结构和隐式关联，不做机械改名</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="建立命名与 AST 红测试" status="DONE" order="0" priority="P0">
+            <Description>为 page/permission/props/urlInputs/command、inlineProps、ScopeUseSpec 和旧 XxxRef 拒绝行为补 contract/loader/compiler tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">测试覆盖裸名正例、XxxRef 负例、Scope tree 与 contract implicit association</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="迁移 contract、loader 与 compiled naming" status="DONE" order="1" priority="P0">
+            <Description>重命名 source AST；删除 scopeRef/contractRef/manifest scopeRef；将 compiled plan 改为 FQN/id/binding 命名并调整 preview。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">canonical unit public types 不再暴露历史 Ref 后缀字段</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="迁移 fixtures 与 stale-name guard" status="DONE" order="2" priority="P0">
+            <Description>修复四处 pageRef，统一六个 fixtures，并用通用 nameRef attribute guard 替换易漏枚举。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">canonical XNL 的 nameRef attribute 出现数为 0</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Execution spine 与 Scope RuntimeObject" status="DONE" order="1">
+        <Description>让 compiler 生成完整 Scope/Dispatch plans，并由 canonical app runtime parent-first 装配和执行。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>renderer/runtime 不读取 raw domains</cdt:Criterion>
+          <cdt:Criterion>元素树是 Scope hierarchy 唯一事实源</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="编译 ScopeRuntimePlan 与 MessageDispatchPlan" status="DONE" order="0" priority="P0">
+            <Description>从 Elements/Capsule 派生 scopeId/parentScopeId/ownerElementId；保留 element command 并解析 handler/config/owning Scope。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">compiler 不读 parentRef 且 Render/Dispatch plan 不丢 Command</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 parent-first Scope assembly" status="DONE" order="1" priority="P0">
+            <Description>Scope 未声明 runtime 时继承父对象；声明 create/derive/bind 时收到父 runtime 与 typed bindings；最近 Scope 覆盖同名能力。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">祖先可见、最近覆盖、sibling 不可见均有 runtime tests</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 HalfcodeAppRuntime 与真实 Command dispatch" status="DONE" order="2" priority="P0">
+            <Description>提供 load/compile/assemble/dispatch/resolve/dispose actor；runtime-counter 通过 element Command 执行，不再手扫 raw domain。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">counter click/dispatch 连续两次得到 value 1/2 且测试无 raw command domain helper</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.4" name="保持可复用 Scope 的词法实例身份" status="DONE" order="3" priority="P0">
+            <Description>同一预定义 Scope 被多个 Elements/Capsule 边界采用时，每个树位置必须生成独立 runtime scope identity，不能因 definition id 相同而覆盖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.4-AC1" checked="true">重复采用同一 Scope ref 的 sibling/descendant 拥有独立 scope runtime，parentScopeId 与 render/dispatch scopeId 一致</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Effect 与 DataGraph typed materializers" status="DONE" order="2">
+        <Description>将 Scope sibling family bindings 编译并装配，复用真实 depa-data-graph 与 dg-cell-mvi effect loop。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>CallableEffect 与 MviEffectRequest 名称和职责分离</cdt:Criterion>
+          <cdt:Criterion>DataGraph 使用真实 GraphModule/NodeRef/GraphRuntime</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现 CallableEffect binding plan" status="DONE" order="0" priority="P0">
+            <Description>解析 EffectBindings/FuncEffect/InterfaceEffect 与 impl bundle，装配到 RuntimeObject，提供与 MviEffectRequest 的显式 adapter。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">basic-admin mock effect 通过强类型 runtime API 调用，不探测多个对象布局</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 DataGraph mount/extension plan" status="DONE" order="1" priority="P0">
+            <Description>解析 GraphObject/GraphMount/seed/node bindings，materialize 真实 GraphModule，并支持已有 graph extension。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">counter GraphModule 不再是 unknown，NodeRef 与 mounted graph 强类型贯通</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">counter Command 经 RuntimeObject graph API 更新 state 并派生 outputs</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="完成默认 RuntimeObject family 装配" status="DONE" order="2" priority="P0">
+            <Description>默认 RuntimeObject 必须保留并按最近 Scope 覆盖 config、commands、events、MessagePolicy、effects 与 dataGraphs，而不只是接收 assembly input。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">动态代码可从当前 RuntimeObject 读取最近 Scope 的全部 family binding，父级可见且 sibling 隔离</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Message bridge 与 canonical consumers" status="DONE" order="3">
+        <Description>保留 Command/Event kind，并让 Vue/Workbench 从 canonical root 消费 AppPlan/RuntimeObject。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Command/Event kind 在 dg-cell-mvi transport 中可判定</cdt:Criterion>
+          <cdt:Criterion>canonical root 不再混出 legacy schema/store renderer</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="实现 kind-preserving dg-cell-mvi bridge" status="DONE" order="0" priority="P0">
+            <Description>使用 registry/envelope/branded creators 保留 kind/payloadDef/policy；Event 禁止 handler，effect feedback 标为 Event。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">Command 请求与 Event 事实经过 dispatch/effect loop 后仍可无歧义识别</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="建立 canonical Vue renderer adapter" status="DONE" order="1" priority="P0">
+            <Description>Vue 直接消费 AppPlan/scope runtimes/dispatch；legacy schema/store exports 移到显式 legacy 边界。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">Vue counter UI 通过 canonical runtime 更新视图且 root exports 不含 legacy Render</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="迁移 Workbench 代表性消费入口" status="DONE" order="2" priority="P1">
+            <Description>迁移一个真实 counter/admin demo；其余历史 demo 只能显式 legacy import，更新 behavior registry。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">Workbench 至少一个真实入口使用 canonical bundle/runtime，新增代码不从 root import legacy Render</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="依赖健康与全量收口" status="DONE" order="4">
+        <Description>修复 P-08，执行跨包/跨仓库验证、残留扫描并回写 mission/track 状态。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>六个 fixtures 零 error load/compile</cdt:Criterion>
+          <cdt:Criterion>所有受影响测试被实际收集执行或有可复现外部阻塞</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="修复 depa-data-graph-core 解析门禁" status="DONE" order="0" priority="P0">
+            <Description>定位 workspace install/export/symlink 问题并采用最小工程修复，使 dg-cell-mvi-core 三类 suite 可运行。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">serverEventSource、streamSignalStore、effectRunner suites 全部被收集</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="执行 fixture 与 package 验证矩阵" status="DONE" order="1" priority="P0">
+            <Description>运行 contract/logic/support/vue/core/admin/Workbench tests 和 type/build gates，记录精确结果。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">受影响测试通过，六 fixtures 零 error，nameRef XNL scan 为零</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="Codument 与 mission 收口" status="DONE" order="2" priority="P0">
+            <Description>写 verification report、strict validate、回写 P1-P8 证据和 mission 被吸收/superseded 的任务。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">track strict validation 通过，P-01 至 P-08 均有关闭证据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

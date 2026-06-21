@@ -1,0 +1,8 @@
+<Config #counter-page-config [
+  <ConfigEntry #counter-page {
+    density = "comfortable"
+  }>
+  <ConfigEntry #counter-actions {
+    step = 1
+  }>
+]>

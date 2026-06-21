@@ -1,0 +1,5 @@
+<AppBundle #dg.demo.counter.App version="0.1.0" (
+  <Units [
+    <Unit kind="page" fqn="dg.demo.counter.CounterPage" src="vfs://./pages/counter/manifest.xnl">
+  ]>
+)>

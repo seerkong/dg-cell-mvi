@@ -1,0 +1,105 @@
+<Track id="add-halfcode-v3-unit-contract" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在 dg-cell-mvi-halfcode-contract 新增 v3 分层单元契约分区：App/Page/Component 单元类型、v3 元素实例节点、PageContract/ComponentContract/Requires、Route/Wire、统一 URI ref 与 scheme 对照表、红线校验与诊断码。</Goal>
+    <Description>mission redesign-halfcode-hierarchical-unit-dsl 的 G2-T1；权威规范为 mission analysis/v3-unit-dsl-spec-draft.md 与 decisions.md D1-D16；仅 contract 层，loader/compiler 由后续 track 承担。</Description>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-02T19:25:00Z</CreatedAt>
+    <UpdatedAt>2026-07-02T19:35:32Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mission-spec" domain="mission" path="vfs://@/codument/missions/active/redesign-halfcode-hierarchical-unit-dsl/analysis/v3-unit-dsl-spec-draft.md"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+    <MaterialBundle role="output" name="contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-v3-unit-contract" name="add-halfcode-v3-unit-contract" version="1">
+    <Description>三个 phase：单元与引用基础类型、契约与路由类型、校验红线与边界测试。</Description>
+    <SubNodes>
+
+      <TaskGroup id="P1" name="单元与统一引用基础类型" status="DONE" order="0">
+        <Description>src/unit/ 分区：common(UnitFqn/UnitKind/apiVersion)、refs(HalfcodeRef/parseHalfcodeRef/HALFCODE_SCHEME_TABLE)、unit(HalfcodeAppSpec/Page/Component manifest/UnitBundleRef)。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>v3 分区不 import v2 element/material 类型</cdt:Criterion>
+          <cdt:Criterion>HALFCODE_SCHEME_TABLE 为 domain↔scheme↔单文件区段唯一对照源</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="实现 unit/common 与 unit/refs" status="DONE" order="0" priority="P0">
+            <Description>UnitFqn 品牌类型 + parseUnitFqn；HalfcodeRef + parseHalfcodeRef（path/#id/#id/sub、vfs 直通、非法形态报错）；HALFCODE_SCHEME_TABLE 三列对照与内建 scheme（pages/components/routes）。对应决策 D7/D8/D10。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">parseHalfcodeRef 覆盖三种寻址形态与 vfs 直通，非法形态不静默通过</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">对照表含 def 伴生 scheme 且 app 专属域标注归属</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 unit/unit 单元类型" status="DONE" order="1" priority="P0">
+            <Description>HalfcodeAppSpec（product/routes/units/wiring refs）、HalfcodePageManifest（title/scopeRef/Ports 注册）、HalfcodeComponentManifest、UnitBundleRef{kind,path}、UnitDomainRegistration（显式注册允许缺省）。对应决策 D1/D9/D15/D17。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">Page/Component manifest 不含 route/mount/props；全部可序列化</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="契约、元素与路由类型" status="DONE" order="1">
+        <Description>src/unit/：contracts(PageContract/ComponentContract/ElementContract.Requires)、element(v3 实例节点/Capsule/Slot/内联 props 约束)、routes(RouteSpec/WireSpec)。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>PageContract 无 props/slots/exposes；Requires.state 为字段路径字符串数组</cdt:Criterion>
+          <cdt:Criterion>RouteSpec 携带 #id 与 app 视角元数据；WireSpec 寻址 route 实例</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 unit/contracts" status="DONE" order="0" priority="P0">
+            <Description>PageContractSpec{urlInputs,accepts,emits}、ComponentContractSpec{props,slots,accepts,emits,exposes}、v3 ElementContractSpec{accepts,emits,requires}、RequiresSpec。对应决策 D2/D5/D9/D14。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">类型层面 Page 无 props 通道；Requires 三段结构符合 D14/D20</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 unit/element 与 unit/routes" status="DONE" order="1" priority="P0">
+            <Description>UnitInstanceElement（FQN tag + 内联字面量 props + urlInputsRef for page embed）、CapsuleElement(v3)、SlotSpec、树容器；RouteSpec（children 嵌套）、WireSpec。对应决策 D3/D4/D6/D11/D12/D13。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">元素类型无 route/mount；实例 props 值类型排除函数</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="校验红线、诊断码与边界测试" status="DONE" order="2">
+        <Description>diagnostics codes、validation 纯函数、index 导出、v3 边界测试；v2 测试零修改。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>红线用例全绿：Page props 拒绝、contract input/output 拒绝、函数值拒绝</cdt:Criterion>
+          <cdt:Criterion>contract 包全部测试通过；v2 导出面不变</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现 diagnostics 与 validation" status="DONE" order="0" priority="P0">
+            <Description>九个 v3 诊断码常量；validateHalfcodeUnitContract 等纯校验（无 IO）。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">诊断码与 mission 规范 §7 清单一致</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="补边界测试并跑包测试矩阵" status="DONE" order="1" priority="P0">
+            <Description>unit-contract-boundary.test.ts、unit-refs.test.ts；bun run --cwd packages/dg-cell-mvi-halfcode-contract test 全绿；既有测试零修改。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">新旧测试全绿；对照表完整性有断言</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

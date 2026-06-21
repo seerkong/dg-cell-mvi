@@ -1,0 +1,4 @@
+<Wiring #embedded-admin-wiring [
+  <Wire from="route://#reports-route" message="event://#report.saved"
+        to="route://#home-route">
+]>

@@ -1,0 +1,17 @@
+<Scopes #reports-page-scopes [
+  <Scope #reports-page {
+    config = "config://#reports-page"
+    commands = "command://#reports-page-commands"
+    events = "event://#reports-page-events"
+  } (
+    <EffectBindings {
+      impls = "vfs://./effects/mock-admin.effect-impls.ts#adminEffectImpls"
+    }>
+  )>
+  <Scope #reports-admin-slot { config = "config://#reports-admin-slot" }>
+  <Scope #reports-table { config = "config://#reports-table" } (
+    <MessagePolicy #boundary { default = "bubble" } [
+      <MessageRule message="command://#reports.search" action="consume">
+    ]>
+  )>
+]>

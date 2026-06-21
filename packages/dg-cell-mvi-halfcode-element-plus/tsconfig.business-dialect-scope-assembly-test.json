@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "demo/schema-editor-business-dialect/presenters.ts",
+    "demo/schema-editor-business-dialect/sharedCapsule.ts",
+    "demo/schema-editor-business-dialect/fixture.ts",
+    "demo/schema-editor-business-dialect/boundedContextPresenters.ts",
+    "demo/schema-editor-business-dialect/boundedContext.ts",
+    "test/schemaEditorBusinessDialectScopeAssembly.test.ts"
+  ]
+}

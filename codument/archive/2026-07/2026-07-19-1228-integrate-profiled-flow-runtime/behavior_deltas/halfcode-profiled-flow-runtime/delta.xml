@@ -1,0 +1,33 @@
+<behavior-patch capability="halfcode-profiled-flow-runtime" version="1">
+  <upsert selector="behavior://halfcode-profiled-flow-runtime/requirements/profiled-flow-integration">
+    <requirement id="profiled-flow-integration">
+      <statement>Halfcode SHALL integrate canonical profile-aware Flow definitions through AppBundle registration, VFS resolution, Scope runtime binding, and explicit lifecycle dependencies without owning Flow grammar or scheduler semantics.</statement>
+      <suite id="typed-contracts" name="Typed Flow contracts">
+        <case id="ctrl-flow-contract">
+          <given>an InstantFlow, WorkFlow, or BizProcess unit is registered in an AppBundle</given>
+          <when>Halfcode loads and materializes the unit</when>
+          <then>the unit SHALL retain the unique upstream FlowContract and its input/output type references</then>
+        </case>
+      </suite>
+      <suite id="composition" name="Bundle-local composition">
+        <case id="sync-call-flow">
+          <given>an InstantFlow calls another CtrlFlow product by canonical product URI</given>
+          <when>the Scope-bound handle is invoked</when>
+          <then>Halfcode SHALL resolve the target definition and target VFS code in the same AppBundle</then>
+        </case>
+        <case id="durable-child">
+          <given>a WorkFlow or BizProcess calls a durable child</given>
+          <when>the parent starts and later refreshes</when>
+          <then>Halfcode SHALL use explicit child lifecycle dependencies and SHALL leave child facts in the upstream stores</then>
+        </case>
+      </suite>
+      <suite id="scope" name="Scope binding">
+        <case id="runtime-binding">
+          <given>the same Flow definition is visible in parent and child Scopes</given>
+          <when>each Scope invokes its bound handle</when>
+          <then>dynamic code SHALL receive that Scope's runtime object while sharing no implicit global runtime</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

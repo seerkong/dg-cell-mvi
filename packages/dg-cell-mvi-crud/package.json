@@ -1,0 +1,27 @@
+{
+  "name": "dg-cell-mvi-crud",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Framework-agnostic CRUD model + behavior on dg-cell-mvi-core / depa-data-graph.",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dg-cell-mvi-core": "^0.1.0",
+    "depa-data-graph-core": "^0.1.1",
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

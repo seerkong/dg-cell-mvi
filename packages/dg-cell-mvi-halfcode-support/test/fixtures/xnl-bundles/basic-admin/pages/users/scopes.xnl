@@ -1,0 +1,17 @@
+<Scopes #users-page-scopes [
+  <Scope #users-page {
+    config = "config://#users-page"
+    commands = "command://#users-page-commands"
+    events = "event://#users-page-events"
+  } (
+    <EffectBindings {
+      impls = "vfs://./effects/mock-admin.effect-impls.ts#adminEffectImpls"
+    }>
+  )>
+  <Scope #users-filter { config = "config://#users-filter" }>
+  <Scope #users-table  { config = "config://#users-table" } (
+    <MessagePolicy #boundary { default = "bubble" } [
+      <MessageRule message="command://#users.search" action="consume">
+    ]>
+  )>
+]>

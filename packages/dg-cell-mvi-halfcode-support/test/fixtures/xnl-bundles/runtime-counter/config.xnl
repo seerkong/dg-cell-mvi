@@ -1,0 +1,5 @@
+<Config #runtimeCounterConfig [
+  <ConfigEntry #app {
+    theme = "runtimeDemo"
+  }>
+]>

@@ -1,0 +1,150 @@
+<behavior-patch capability="halfcode-schema-editor-element-plus-presenters" version="1">
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/default-presenter-coverage">
+    <requirement id="default-presenter-coverage">
+      <statement>The Element Plus schema-editor capsule SHALL provide product-ready adapters for every default compiler presenter id and common scalar format aliases without an implicit JSON or raw-value fallback.</statement>
+      <suite id="coverage" name="Default presenter coverage">
+        <case id="compiler-default-ids">
+          <given>An EditorPlan contains object.group, scalar text/number/boolean/null/enum/const, collection.list, map.entries, union.select, schema.ref and unsupported presenter ids</given>
+          <when>The default Element Plus presenter registry resolves each id</when>
+          <then>Every id SHALL resolve to an explicit adapter and unsupported SHALL render an observable non-editable diagnostic</then>
+        </case>
+        <case id="common-format-aliases">
+          <given>Scalar fields use common email, password, multiline, URL, telephone, date, time, datetime, color or currency formats</given>
+          <when>The compiler emits scalar format presenter ids</when>
+          <then>The default registry SHALL resolve explicit Element Plus adapters whose emitted values remain contract-serializable</then>
+        </case>
+        <case id="unknown-format">
+          <given>A plan names an unregistered custom format presenter</given>
+          <when>The registry resolves the id</when>
+          <then>The renderer SHALL fail closed and SHALL NOT select a JSON textarea, raw editor or code editor</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/presentation-and-session-state">
+    <requirement id="presentation-and-session-state">
+      <statement>Each presenter SHALL render renderer-complete plan metadata and accepted session projection while enforcing visibility, read-only, required, pending and diagnostic state ahead of presenter options.</statement>
+      <suite id="metadata" name="Metadata and session projection">
+        <case id="field-presentation">
+          <given>A field has label, description, required, readOnly, visible, options and diagnostics metadata</given>
+          <when>Its presenter renders</when>
+          <then>The UI SHALL expose applicable labels, help, required and diagnostics, hide invisible content and disable writes for readOnly content</then>
+        </case>
+        <case id="pending-state">
+          <given>A SchemaEditorSession request is pending</given>
+          <when>A presenter renders the current projection</when>
+          <then>Write controls SHALL be disabled and the displayed value SHALL remain the last accepted snapshot</then>
+        </case>
+        <case id="safe-options">
+          <given>Presenter options attempt to replace model value, disabled state, event wiring, recursive slots or runtime capabilities</given>
+          <when>The adapter maps options to Element Plus props</when>
+          <then>The adapter SHALL ignore or reject unsafe options and preserve plan and session ownership</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/normalized-edit-operations">
+    <requirement id="normalized-edit-operations">
+      <statement>Element Plus presenters SHALL convert discoverable field, collection, map and union interactions into exactly the existing serializable normalized Schema Editor events and SHALL never modify accepted values directly.</statement>
+      <suite id="events" name="Normalized presenter events">
+        <case id="field-value-change">
+          <given>A writable scalar or reference control changes</given>
+          <when>The Element Plus component emits its native event</when>
+          <then>The presenter SHALL emit value.change with a serializable value payload and SHALL NOT mutate props.value</then>
+        </case>
+        <case id="collection-operations">
+          <given>A collection presenter receives accepted items and recursive child VNodes from the Vue renderer slot</given>
+          <when>The user inserts, removes, moves up or moves down an item</when>
+          <then>The presenter SHALL emit item.insert, item.remove or item.move with normalized indexes and defaults</then>
+        </case>
+        <case id="map-operations">
+          <given>A map presenter receives accepted own entries and recursive child VNodes from the Vue renderer slot</given>
+          <when>The user adds, removes or renames an entry</when>
+          <then>The presenter SHALL emit entry.set, entry.remove or entry.rename with normalized keys and defaults</then>
+        </case>
+        <case id="union-selection">
+          <given>A union presenter receives ordered alternative descriptors and the selected recursive child slot</given>
+          <when>The user selects an alternative</when>
+          <then>The presenter SHALL emit alternative.select with alternativeId and the descriptor initialValue</then>
+        </case>
+        <case id="renderer-owned-recursion">
+          <given>An object, collection, map or union presenter has recursive content</given>
+          <when>The presenter renders that content</when>
+          <then>All recursive child VNodes SHALL come only from the completed Vue renderer default slot</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/explicit-registry-composition">
+    <requirement id="explicit-registry-composition">
+      <statement>The Element Plus capsule SHALL construct frozen instance-local presenter registries and SHALL provide explicit composition in which caller-ordered business registries can override default presenters with a declared later-wins policy.</statement>
+      <suite id="composition" name="Presenter registry composition">
+        <case id="instance-isolation">
+          <given>Two applications create default presenter registries</given>
+          <when>One application composes business overrides</when>
+          <then>The other application registry SHALL remain unchanged and no module-global mutable registry SHALL exist</then>
+        </case>
+        <case id="business-later-wins">
+          <given>A default registry and ordered business registries bind the same stable presenter id</given>
+          <when>The caller explicitly chooses last-wins composition</when>
+          <then>The last business registry SHALL resolve for that composition only</then>
+        </case>
+        <case id="duplicate-reject">
+          <given>One default registry definition contains duplicate stable ids</given>
+          <when>The registry factory validates its entries</when>
+          <then>Creation SHALL fail closed with structured diagnostics</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/canonical-composition-and-kitchen-sink">
+    <requirement id="canonical-composition-and-kitchen-sink">
+      <statement>The Element Plus capsule SHALL provide a composition helper and a runnable kitchen-sink canonical bundle that reuse the existing lowering, loader, compiler, app runtime, canonical renderer, Vue schema-editor shell and scoped Session.</statement>
+      <suite id="canonical" name="Real canonical lifecycle">
+        <case id="composed-shell">
+          <given>An Element Plus canonical parent registry, default presenter registry and optional business presenter registries</given>
+          <when>The canonical composition helper binds component identity Editor</when>
+          <then>The sole schemaEditor.Editor shell SHALL resolve through the existing canonical renderer with the explicitly composed presenter registry</then>
+        </case>
+        <case id="kitchen-sink-coverage">
+          <given>The kitchen-sink schema, presentation and accepted initial value cover every presenter family, nested structures and presentation state</given>
+          <when>The bundle is lowered, loaded, compiled, mounted and interacted with</when>
+          <then>All controls and normalized edit operations SHALL run through the real canonical lifecycle with zero loader, compiler or runtime errors</then>
+        </case>
+        <case id="accepted-only-mutation">
+          <given>The kitchen-sink ValueHost produces pending, reject, conflict, stale and accepted outcomes</given>
+          <when>Users edit fields and structural values</when>
+          <then>The DOM SHALL advance only after an accepted snapshot and SHALL retain the prior accepted value for every non-accepted outcome</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/ownership-and-dependency-boundaries">
+    <requirement id="ownership-and-dependency-boundaries">
+      <statement>The Element Plus schema-editor capsule SHALL depend only on public Halfcode contract/support/Vue and Element Plus APIs and SHALL NOT own compilation, session lifecycle, recursive rendering, lowering, host mutation or persistence capabilities.</statement>
+      <suite id="boundaries" name="Ownership and package boundaries">
+        <case id="capability-isolation">
+          <given>Presenter props, component state, registry factories and canonical composition inputs</given>
+          <when>Ownership and dependency scans run</when>
+          <then>No presenter SHALL receive or capture runtime, Session, ValueHost, writer, Flow, XNL mutation, VFS, database or browser persistence capability</then>
+        </case>
+        <case id="no-parallel-runtime">
+          <given>The Element Plus package source graph</given>
+          <when>Public and dependency boundary tests run</when>
+          <then>The package SHALL NOT implement a second compiler, Session, recursive renderer, canonical renderer, loader or lowering path</then>
+        </case>
+        <case id="pure-data-boundary">
+          <given>StructureSchema, EditorPresentation, EditorPlan and lowered canonical source</given>
+          <when>Default or business presenters are composed</when>
+          <then>No component implementation, callback, registry object or runtime value SHALL be written into those serializable data structures</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

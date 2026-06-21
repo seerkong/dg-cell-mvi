@@ -1,0 +1,256 @@
+<Track id="migrate-workbench-flow-editor-to-schema-editor" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>将 Workbench 四产品 Flow Editor 从手写 NodeSchema 字段 runtime 迁移到通用 Schema Editor 基座，同时保留 Flow capsule、XnlMutation 和 VFS 唯一写入边界。</Goal>
+    <Description>以 RED contract 开始，依次落地 Workbench schema/presentation/dialect capsule、ValueHost/Session/canonical panel、四产品 flow/node 结构编辑、accepted-only XNL/VFS round-trip，以及真实浏览器与独立验证。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-17T09:41:10Z</CreatedAt>
+    <UpdatedAt>2026-07-17T20:38:00Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-owner-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="input" name="schema-editor-owner-packages" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="input" name="workbench-flow-editor" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/src/"/>
+    <MaterialBundle role="input" name="workbench-track-baselines" domain="codument" path="vfs://@/external/eidolon-workbench/codument/tracks/"/>
+    <MaterialBundle role="output" name="workbench-flow-editor" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/src/"/>
+    <MaterialBundle role="output" name="workbench-flow-tests" domain="test" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/tests/"/>
+    <MaterialBundle role="output" name="schema-editor-owner-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_migrate-workbench-flow-editor-to-schema-editor" name="migrate-workbench-flow-editor-to-schema-editor" version="1">
+    <Description>用一个 Workbench 业务 capsule 将四 Flow 产品接入已完成的通用 Schema Editor，删除旧字段 bundle/runtime，并以 accepted-only canonical persistence 和真实浏览器验收。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Characterization 与 RED contract" status="DONE" order="0">
+        <Description>由 fresh agents 固定现有 product capsule、mutation owner、layout 与异步 target identity 基线，并写出在旧 runtime 上必红的 Schema Editor 迁移合同。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>现有四产品 grammar、XnlMutation dry-run、VFS feedback、CtrlFlow/DAGFlow layout 基线可机械复跑。</cdt:Criterion>
+          <cdt:Criterion>目标测试因缺少 StructureSchema flow/node target、ValueHost/Session 集成、typed structural controls 或 legacy 删除而真实失败。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="冻结现有 owner 与画布行为" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 先补 characterization tests，固定 product adapter grammar、整批 XnlMutation dry-run/canonical reload、VFS commit feedback、目标 nodeId 捕获、CtrlFlow port order、DAG ports、layout/viewport/selection isolation；不把 JSON textarea 外形冻结为目标行为。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">四产品当前 mutation 与 reload owner 路径有可复跑的行为断言，失败能区分 code regression 与环境问题。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">CtrlFlow 与 DAGFlow 的 family、ports、positions、viewport、selection 基线由公开 projection 或真实 DOM 断言保护。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">analysis/findings.md 记录 flow-level 可编辑 root 字段、旧 runtime 删除清单和精确测试命令。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="建立 Schema Editor RED 合同" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 基于 behavior delta 写 type/unit/component architecture tests，要求 flow/node StructureSchema 与 presentation、业务 dialect、Session/ValueHost、typed collection/map/ref controls、accepted-only feedback、package-root imports 和旧 NodeSchema runtime 缺席，并记录预期失败。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">RED tests 覆盖 flow-level 与 node-level target、If/Fallback structural commands、DAG inputs/outputs/waitFor/refs/config、显式 raw-only 和 legacy residue。</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">至少一个目标 test 在未实现时因正确缺口失败，且 characterization baseline 仍通过。</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="true">测试禁止 Schema Editor 或 presenter 获得 XNL/VFS writer、ValueHost 或业务 runtime capability。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Workbench schema、presentation 与 dialect capsule" status="DONE" order="1">
+        <Description>将四产品 authoring facts 迁移为 StructureSchema 和可选 EditorPresentation，并建立 Workbench business dialect/presenter composition。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Flow 业务语义、presentation、transformer、presenter implementation 只存在于 Workbench capsule。</cdt:Criterion>
+          <cdt:Criterion>新 capsule 不把 StructureSchema 转回 NodeSchema，且只通过通用 Schema Editor package-root API 组合。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="定义 flow 与 node editor target contract" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 以 capsule public API 定义 discriminated flow/node target，携带 stable target identity、StructureSchema、optional EditorPresentation、accepted value/revision 和 product facts；将 concrete product adapter schema/default/validation/derived boundaries 迁移到该合同。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">InstantFlow、WorkFlow、BizProcess、EagerDataFlow 均能投影 product-owned flow-level 与 node-level target，schema contract validation 通过。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Structured object、array、map、union/ref 和 derived/read-only 字段保留明确类型，不以 free-form JSON 默认替代。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">共享 shell 不包含 product switch grammar，外部只 import capsule public entry。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现业务 dialect 与 presenter composition" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 组合 default、shared Flow、family、product 和 editor-instance dialect；为 code/flow/node/port/task refs 及必要业务字段提供 semantic transformers/presenters，Element Plus defaults 在前、业务 registry 后置且显式 last-wins。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">固定 base precedence 与 Scope isolation tests 通过，同一 semantic type 可由不同 product/editor Scope 独立覆盖。</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Business presenter 仅收到 toolkit-neutral props 并只发 normalized event，不获得 Session、ValueHost、runtime、XNL 或 VFS。</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">Raw JSON/code presenter 仅由明确 EditorPresentation 选择；未知 presenter 或 structure fail closed。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="ValueHost、Session 与 canonical panel 集成" status="DONE" order="2">
+        <Description>用公开 compiler/lowering/support/Vue/Element Plus API 装配唯一 canonical editor lifecycle，由 Workbench ValueHost 把 concrete commands 接入现有 Flow capsule，并在新 right panel 接管后清退旧 NodeSchema runtime。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Renderer 只消费 accepted Session projection，ValueHost 和 writer capability 不进入 renderer/presenter props。</cdt:Criterion>
+          <cdt:Criterion>Target switch、dispose、late response、rejection 和 conflict 都不能推进错误 panel snapshot。</cdt:Criterion>
+          <cdt:Criterion>Active code 不再存在 NodeSchema field compiler、bespoke session、JSON textarea fallback 或第二 renderer。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="装配 compiler、lowering 与 Scope Session" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 从 target schema/presentation 创建 isolated compiler runtime 和 EditorPlan，调用 lowerEditorPlan 生成 sources，经真实 resolver/loader/compiler/app runtime，并以 stable ids 将 ValueHost/Session 绑定到 Scope；使用 createElementPlusSchemaEditorCanonicalRegistry 与现有 CanonicalHalfcodeRenderer。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Flow/node target 均真实经过 compileEditorPlan、lowerEditorPlan 和 canonical loader/runtime，不注入 synthetic loaded bundle。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Canonical registry 只有一个 schemaEditor.Editor shell，registry/session/runtime lifecycle 可观测且 disposal 无泄漏。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="true">Plan diagnostics、pending 和 host diagnostics 在 panel 可见，accepted value 是唯一 renderer value source。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 Workbench Flow ValueHost" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 实现 pure command-to-candidate processor 和 Flow ValueHost port：捕获 target identity/expected revision，把 value/collection/map/union command 转为 product-validated candidate，再调用现有 Flow capsule/product runtime semantic edit port，并形成 accepted/rejected/conflict result。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">所有八类 SchemaEditorCommand 在 flow/node targets 上有行为测试，candidate processor 不修改 accepted snapshot。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">ValueHost source 不 import xnl-core writer、VFS client 或 persistence adapter，只调用 Workbench capsule/runtime public port。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">Selection race、revision conflict、rejection、throw、stale、duplicate 和 disposed late response 均保留旧 snapshot。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="替换 right panel lifecycle" ownerAccount="agent:impl" status="DONE" order="2" priority="P0">
+            <Description>Fresh agent 让 right panel 显式选择 flow 或 node target，装配新 capsule session，target identity 变化时替换并释放旧 runtime/session，保留 loading/missing/error UI 和 CanonicalHalfcodeRenderer；移除旧 refresh/revision bridge。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">Flow-level 与 selected-node panel 均可打开、切换、reset、dispose，旧 target late feedback 不污染新 target。</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">Panel 不维护 deep-cloned form truth，不手动 bump authoritative value revision，显示值只来自 Session accepted projection。</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC3" checked="true">Mounted component tests 通过真实 Element Plus presenters 发 normalized events 并观察 accepted-only DOM 更新。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="删除 NodeSchema field runtime" ownerAccount="agent:impl" status="DONE" order="3" priority="P0">
+            <Description>Fresh agent 在新 right panel 已接管且 RED contracts 保护下，删除 FieldSchema/NodeSchema renderer truth、field descriptors、manual LoadedHalfcodeUnitBundle、manual field commands、FlowNodeEditorInput、VueDraggable reorder UI、JSON coercion 和 bespoke runtime/session；只保留仍有非编辑器消费者且有证据的类型。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">Active Workbench source 不再调用 projectNodeSchemaToHalfcodeBundle、createFlowNodeEditorSession 或同构替代物。</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">No active NodeSchema to canonical field-bundle converter, JSON textarea fallback, second renderer, or compatibility feature flag remains.</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC3" checked="true">Legacy-focused tests are replaced by StructureSchema/EditorPlan behavior tests rather than weakened or skipped.</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="四产品 flow/node 完整编辑与结构操作" status="DONE" order="3">
+        <Description>在统一 Schema Editor 上完成三类 CtrlFlow 和 EagerDataFlow 的 flow/node typed authoring，覆盖结构增删改拖动排序、typed refs/maps/collections 和 product validation。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>四产品的 flow-level 与公共 node-level schema 均无默认 JSON textarea，正常字段可发现可编辑。</cdt:Criterion>
+          <cdt:Criterion>If/Fallback 与 DAG 结构操作通过标准 SchemaEditorCommand 进入 product capsule，不能直接改 graph 或 AST。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="完成 CtrlFlow typed structural authoring" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 为 InstantFlow、WorkFlow、BizProcess 完成 flow/node schemas 和 presentations；让 If branches 与 Fallback strategies 通过 collection insert/remove/value.set/move 完整编辑，stable id 保留 body，commit 后 capsule 重投影 CtrlFlow ports。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">If branch 可新增、删除、编辑 id/when/config 和拖动排序，duplicate/invalid refs 被拒绝且不推进 Session。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">Fallback strategy 可新增、删除、编辑和拖动排序，matching bodies 与 canonical order 保留。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC3" checked="true">Committed If order、canonical XNL order、right-side branch ports 和 reload 后 panel order 一致，VisualGraph 不读取 config 重排。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="完成 EagerDataFlow typed authoring" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 用 map/collection/ref presenters 完成 EagerDataFlow flow/node targets：inputs、outputs、waitFor、type/src/impl、flow 和 config 可发现可编辑，derived outputs 排除，exclusive alternatives 与 product refs 可校验。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">Inputs map 支持 entry add/remove/rename/value edit，outputs/waitFor 支持 typed item insert/remove/edit，且 canonical ports/edges 重投影正确。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">type/src/impl/flow refs 使用 product semantic controls，src/impl exclusive rule 与 SubFlow target validation 保持。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">EntryNode/SubFlowNode derived outputs 不可编辑，DAG panel 不出现 If/Fallback/branch controls。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="完成四产品 flow-level config" ownerAccount="agent:impl" status="DONE" order="2" priority="P0">
+            <Description>Fresh agent 根据 P1 characterization 为四种 canonical root 定义 authorable flow-level schema/presentation 与 mutation command，derived/identity/API facts 只读或排除，和 node target 复用同一 compiler/Session/ValueHost lifecycle。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">四产品各至少一个真实 flow-level authoring case 经 typed control、product validation、mutation、commit 和 reload 通过。</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">Flow identity、derived contract facts 或 loader-owned fields 不因表层 projection 被意外写入。</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">Flow 与 node target 切换复用同一 renderer capsule且无并存 runtime 或状态串扰。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="VFS、XNL mutation、dry-run 与 reload ownership" status="DONE" order="4">
+        <Description>把 accepted boundary 钉在现有 product capsule 到 exact XnlMutation batch、canonical candidate validation、VFS commit feedback 和 authoritative reload 上，禁止 Schema Editor 形成第二 writer。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>同一批 XnlMutation 用于 dry-run 与 commit，Schema Editor/ValueHost 不直接写 AST、XNL text 或 VFS。</cdt:Criterion>
+          <cdt:Criterion>只有 VFS success 后 canonical reload 的 snapshot/revision 可被 Session 接受。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="固定 exact mutation batch 与 canonical validation" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 将 flow/node ValueHost delegation 接到现有 adapter edit output，捕获一次 XnlMutation batch，在 cloned source 上 dry-run 并以完整 canonical bundle reload 验证，成功后把原 batch交给现有 semantic writer，不重算 mutation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">Tests 断言 dry-run 与 commit 是同一 mutation identity/content，candidate source 与 adapter output 一致。</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">Invalid schema/product config、mutation mismatch 或 loader diagnostic 在 VFS event 前 fail closed。</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC3" checked="true">Flow UI 无 raw file.write、direct AST mutation 或 second XNL serialization authoring bypass。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="对齐 VFS commit feedback 与 Session revision" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 让 semantic queue 返回 target-scoped persistence outcome 和 canonical reprojection；VFS success 生成 opaque accepted revision，failure/timeout/identity drift/revision drift 返回 rejected/conflict，且 delayed writes 不读取当前 selection。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">Accepted result 的 baseRevision 等于 dispatch expectedRevision，next revision 来自 committed canonical owner且不同于 base。</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC2" checked="true">VFS failure、timeout、stale response、target switch 和 concurrent command tests 均不推进错误 Session。</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC3" checked="true">Layout、definition 与 config 的既有 semantic write queue 不会使后续 mutation 基于 stale accepted snapshot。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="验证四产品 reload 与 owner residue" ownerAccount="agent:impl" status="DONE" order="2" priority="P0">
+            <Description>Fresh agent 对四产品 flow/node typed edits 与结构 edits 执行 isolated VFS save、fresh loader reload、panel reprojection；扫描 Schema Editor package、Workbench presenter、ValueHost 和 right panel 的 writer/import residue。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">四产品 reload 后 panel value、canonical XNL、ports/edges 和 product projection 一致且 loader error 为零。</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC2" checked="true">Schema Editor generic packages 不含 Flow/XNL mutation/VFS writer，Workbench presenter/right panel 不含 ValueHost 或 writer capability。</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC3" checked="true">Old NodeSchema bundle/runtime、implicit JSON textarea、direct writer 和 duplicate renderer scans 全部为零。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P6" name="Browser E2E、chaos、docs 与独立验证" status="DONE" order="5">
+        <Description>用真实可见控件、可重放 chaos、完整机械验证和 fresh 独立 verifier 证明四产品迁移；同步 owner/consumer 文档并明确 supersede 旧 JSON authoring 完成声明。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Deterministic browser、seeded chaos、unit、typecheck、build、strict validate 和 residue scans 全部通过。</cdt:Criterion>
+          <cdt:Criterion>Fresh verifier 从 live workspace 独立复跑，不依赖实现者完成自述且不修复代码。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T6.1" name="扩展真实 browser 四产品矩阵" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 用 Playwright 可见 flow/node controls 覆盖四产品：typed scalar/ref/map/collection、If/Fallback add/remove/edit/drag、DAG inputs/outputs/waitFor、flow-level config、rejection 与 reload；禁止 page.evaluate dispatch internal store command。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T6.1-AC1" checked="true">四产品均通过真实 controls 完成 flow-level 与 node-level edit 并在 browser reload 后保持 canonical value。</cdt:Criterion>
+              <cdt:Criterion id="T6.1-AC2" checked="true">If/Fallback drag 使用可见稳定 handle，重复运行无 timing flake，XNL/order/ports/reload 一致。</cdt:Criterion>
+              <cdt:Criterion id="T6.1-AC3" checked="true">pageerror 与 console.error 为零，失败保留截图、trace 和可诊断 target/revision context。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T6.2" name="扩展 seeded chaos 与 layout invariants" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 将 flow/node target switch、typed edits、structural operations、accept/reject/conflict、reload 与既有 layout/viewport/select actions 加入 deterministic action registry；每步检查 accepted-only state、family topology、DOM、browser errors 和 replay journal。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T6.2-AC1" checked="true">固定 seed corpus 覆盖 CtrlFlow/DAGFlow、四产品、flow/node targets、至少一种 rejection 和结构 reorder。</cdt:Criterion>
+              <cdt:Criterion id="T6.2-AC2" checked="true">非 topology config edits 不改变 layout/viewport，CtrlFlow branch 与 DAG dependency changes 只影响各自 family projection。</cdt:Criterion>
+              <cdt:Criterion id="T6.2-AC3" checked="true">相同 seed 可重放，失败 journal 含 action、target identity、revision、product/family、browser error 与截图。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T6.3" name="同步文档并执行完整机械验证" ownerAccount="agent:impl" status="DONE" order="2" priority="P1">
+            <Description>Fresh agent 更新 owner schema-editor docs 的 G4 status、Workbench capsule/API/extension docs 和 testing README；明确新 track supersede 旧 JSON authoring visual claim但不篡改旧 track history；运行 focused/full unit、typecheck、build、Playwright、chaos、dependency/residue scans、diff check 和 strict validate。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T6.3-AC1" checked="true">Docs 自包含说明 StructureSchema/presentation/dialect/ValueHost owner、flow/node target、explicit raw-only 和 test/replay entry。</cdt:Criterion>
+              <cdt:Criterion id="T6.3-AC2" checked="true">完整 unit、typecheck、production build、deterministic E2E、seeded chaos、package boundary/residue scans、git diff check 全部通过或记录可证环境 blocker。</cdt:Criterion>
+              <cdt:Criterion id="T6.3-AC3" checked="true">`codument validate migrate-workbench-flow-editor-to-schema-editor --strict` 通过。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T6.4" name="执行 fresh independent verification" ownerAccount="agent:verify" status="DONE" order="3" priority="P0">
+            <Description>Fresh independent verifier 只读 behavior/proposal/design/track 和 live owner/consumer workspaces，独立复跑最小充分 unit/typecheck/build/browser/chaos/strict validation，检查 DEPA/capsule/writer/layout/legacy boundaries 并写 reports/verify.md；发现问题只报告不修复。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T6.4-AC1" checked="true">Verifier 明确给出 PASS 或 issues-first FAIL，证据包含命令、测试计数、browser cases、residue 和 owner boundary。</cdt:Criterion>
+              <cdt:Criterion id="T6.4-AC2" checked="true">Verification 证明 typed authoring 而非 JSON round-trip，且四产品 flow/node persistence/reload 与 layout isolation 达成。</cdt:Criterion>
+              <cdt:Criterion id="T6.4-AC3" checked="true">Verifier 未修改 implementation、mission.xml 或 track completion status。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

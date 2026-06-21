@@ -1,0 +1,13 @@
+<Contracts #counter-page-contracts (
+  <PageContract #dg.demo.runtime.CounterPage {
+    urlInputs = { query = { seed = "number?" } }
+  }>
+) [
+  <ElementContract #increment-button (
+    <Requires {
+      commands = [ "command://#counter.increment" ]
+      config = [ "config://#counter-actions" ]
+    }>
+    <Sends [ <Command ref="command://#counter.increment"> ]>
+  )>
+]>

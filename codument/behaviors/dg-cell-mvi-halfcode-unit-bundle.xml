@@ -1,0 +1,67 @@
+<behaviors capability="dg-cell-mvi-halfcode-unit-bundle" version="1">
+  <requirement id="unit-registry-loading">
+    <statement>v3 bundle loader SHALL 从 bundle.xnl 的 Units 注册递归加载 page/component 单元：path 指向文件夹时读薄 manifest 与其注册的 domain 文件；指向 .xnl 文件时按单文件形态把区段节点映射为 domain（映射唯一来源为 contract 层 HALFCODE_SCHEME_TABLE）；并建 FQN 注册表。</statement>
+    <suite id="unit-loading" name="单元加载">
+      <case id="folder-unit">
+        <given>Units 注册 path 指向 pages/users/ 文件夹（page.xnl manifest + page.*.xnl domain 文件）</given>
+        <when>loader 加载 bundle</when>
+        <then>该单元 SHALL 以 manifest #FQN 注册，其显式注册的 domain 全部加载，缺省 domain 视为空</then>
+      </case>
+      <case id="single-file-unit">
+        <given>Units 注册 path 指向 components/status-badge.xnl 单文件（根节点 #FQN + 内联区段 + 数组段元素树）</given>
+        <when>loader 加载 bundle</when>
+        <then>区段节点 SHALL 按对照表映射为等价 domain，元素树取自数组段，与多文件形态产出同型结构</then>
+      </case>
+      <case id="fqn-conflict">
+        <given>两个单元声明相同 FQN</given>
+        <when>loader 建 FQN 注册表</when>
+        <then>SHALL 产出 HALFCODE_UNIT_FQN_CONFLICT 诊断，不静默覆盖</then>
+      </case>
+      <case id="kind-mismatch">
+        <given>Units 条目 kind=&quot;page&quot; 但目标 manifest 根是 Component</given>
+        <when>loader 加载该单元</when>
+        <then>SHALL 产出 HALFCODE_UNIT_KIND_MISMATCH 诊断</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="app-composition-loading">
+    <statement>loader SHALL 加载 app 组合根 domains：halfcode-routes（Route 树含 #id 与元数据）、halfcode-product、halfcode-wiring（Wire 列表）；路由 pageRef 与元素树中的 FQN tag SHALL 对照 FQN 注册表校验存在性（HALFCODE_UNIT_NOT_FOUND）。</statement>
+    <suite id="app-loading" name="App 组合">
+      <case id="routes-and-wiring">
+        <given>basic-admin 的 app.routes.xnl 与 app.wiring.xnl</given>
+        <when>loader 加载</when>
+        <then>RouteSpec 树（含嵌套与 menu/permissionRef/title 覆盖）与 WireSpec 列表 SHALL 结构化返回</then>
+      </case>
+      <case id="unknown-page-ref">
+        <given>Route.pageRef 指向未注册 FQN</given>
+        <when>loader 校验</when>
+        <then>SHALL 产出 HALFCODE_UNIT_NOT_FOUND 诊断</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="ref-privacy">
+    <statement>类别 scheme 引用 SHALL 只在所属单元（或 app 级文件对应 app domains）内解析：本地解析失败 SHALL 产出 HALFCODE_REF_UNRESOLVED；若该引用能在其他单元 domain 中解析到，SHALL 升级为 HALFCODE_REF_PRIVACY_VIOLATION。</statement>
+    <suite id="privacy" name="单元私有性">
+      <case id="local-resolution">
+        <given>users page 的 elements 引用 &quot;scopes://#users-filter&quot; 且本单元 scopes domain 含该 id</given>
+        <when>loader 建 ref 索引</when>
+        <then>解析 SHALL 成功且无诊断</then>
+      </case>
+      <case id="privacy-violation">
+        <given>page A 引用的 scope id 只存在于 page B 的 scopes domain</given>
+        <when>loader 解析</when>
+        <then>SHALL 产出 HALFCODE_REF_PRIVACY_VIOLATION（而非静默解析成功）</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="xnl-only-fixtures">
+    <statement>分层 fixtures SHALL 保持 XNL-only（无 JSON/XML 配置入口）；page 侧无 route/mount/props；elements 文件只含元素树；结构扫描测试 SHALL 守住这些不变量。</statement>
+    <suite id="fixture-scan" name="fixture 结构扫描">
+      <case id="no-json-xml">
+        <given>test/fixtures/xnl-unit-bundles 全目录</given>
+        <when>结构扫描测试运行</when>
+        <then>SHALL 不存在 .json/.xml 配置文件；page 域文件 SHALL 不含 route=/mount=/props 契约字段</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

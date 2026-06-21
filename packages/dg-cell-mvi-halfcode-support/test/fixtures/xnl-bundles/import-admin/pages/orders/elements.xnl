@@ -1,0 +1,12 @@
+<Imports [
+  <Import as="shared" src="vfs://../../../shared/crud-prefabs.xnl">
+]>
+<Elements #orders-page-elements (
+  <Scope ref="orders-page">
+) [
+  <h1 #orders-title { text = "订单管理" }>
+  <dg.materials.CrudTable #orders-table proto=SharedCrudTable {
+    entity = "orders"
+    props = "config://#orders-table"
+  }>
+]>

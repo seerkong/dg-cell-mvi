@@ -1,0 +1,13 @@
+<Elements #counter-page-elements (
+  <Scope ref="counter-page">
+) [
+  <h1 #counter-title { text = "Runtime Counter" }>
+  <elementPlus.Statistic #counter-value {
+    value = "scope-runtime://#counter/viewModel.value"
+    title = "scope-runtime://#counter/viewModel.label"
+  }>
+  <elementPlus.ElButton #increment-button {
+    text = "+1"
+    command = "command://#counter.increment"
+  }>
+]>

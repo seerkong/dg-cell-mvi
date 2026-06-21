@@ -1,0 +1,22 @@
+:root {
+  --dg-bg: #f5f7fa;
+  --dg-panel: #ffffff;
+  --dg-border: #ebeef5;
+  --dg-text-muted: #909399;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--dg-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #303133;
+}
+
+#app {
+  min-height: 100vh;
+}

@@ -1,0 +1,56 @@
+<behavior-patch capability="schema-editor-business-dialect-reuse" version="1">
+  <upsert selector="behavior://schema-editor-business-dialect-reuse/requirements/scoped-business-property-reuse">
+    <requirement id="scoped-business-property-reuse">
+      <statement>The Schema Editor SHALL reuse business property classifiers, transformers, and presenters through code-side scoped bindings while keeping StructureSchema and EditorPresentation serializable and business implementation free.</statement>
+      <suite id="business-scope" name="Business-scoped property presentation">
+        <case id="same-phone-schema-different-business-experience">
+          <given>two editors consume the same StructureSchema field annotated as user.phone</given>
+          <when>business A and business B assemble their own Scope dialect and presenter layers</when>
+          <then>each editor SHALL render and validate its own bounded-context phone experience without changing or copying the shared schema</then>
+        </case>
+        <case id="editor-instance-later-wins">
+          <given>a bounded-context binding and an editor-instance binding target the same stable semantic or presenter id</given>
+          <when>the editor runtime is assembled with explicit later-wins composition</when>
+          <then>the editor-instance implementation SHALL apply only to that editor and SHALL NOT alter sibling Scope registries</then>
+        </case>
+        <case id="presentation-remains-data">
+          <given>a business editor selects a custom property presenter</given>
+          <when>its schema and EditorPresentation are inspected and contract-validated</when>
+          <then>they SHALL contain only stable ids and serializable options and SHALL NOT contain functions, components, runtime instances, callbacks, or writers</then>
+        </case>
+      </suite>
+      <suite id="shared-capabilities" name="Shared property capability reuse">
+        <case id="reuse-address-ref-enum">
+          <given>multiple editors require shared address, reference, and enum property experiences</given>
+          <when>their runtimes compose the shared business property capsule</when>
+          <then>the editors SHALL reuse the same transformer and presenter implementations without copying them into each bounded context</then>
+        </case>
+      </suite>
+      <knowledge-hint target="schema-editor-docs" href="behavior://schema-editor-business-dialect-reuse/scoped-business-property-reuse" strength="hint"/>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://schema-editor-business-dialect-reuse/requirements/canonical-accepted-interaction">
+    <requirement id="canonical-accepted-interaction">
+      <statement>Business property demos SHALL execute through the canonical Halfcode Schema Editor lifecycle, emit only normalized presenter events, and display only Session-accepted snapshots.</statement>
+      <suite id="runtime-proof" name="Canonical runtime and accepted-state proof">
+        <case id="canonical-a-b-demo">
+          <given>business A and B editor bundles are lowered to canonical Halfcode sources and loaded into isolated Scope runtimes</given>
+          <when>their visible property controls are rendered</when>
+          <then>both editors SHALL resolve their scoped presenter implementations through the canonical renderer without synthetic loaded bundles or a global registry</then>
+        </case>
+        <case id="accepted-only-interaction">
+          <given>a business presenter emits a normalized value event</given>
+          <when>the ValueHost accepts, rejects, conflicts, or delays the command</when>
+          <then>the visible value SHALL advance only for a current matching accepted snapshot and SHALL remain unchanged for every other outcome</then>
+        </case>
+        <case id="generic-packages-stay-neutral">
+          <given>the business demo and reusable property capsule are implemented</given>
+          <when>generic package source and public surfaces are scanned</when>
+          <then>the contract, logic, support, Vue, and default Element Plus packages SHALL NOT contain business A/B policy, host writers, or demo-only service location</then>
+        </case>
+      </suite>
+      <knowledge-hint target="schema-editor-docs" href="behavior://schema-editor-business-dialect-reuse/canonical-accepted-interaction" strength="hint"/>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

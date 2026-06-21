@@ -1,0 +1,21 @@
+<EagerDataFlow #dg.demo.flow.WelcomeData apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.WelcomeData {
+    inputPorts = ["input"]
+    outputPorts = ["output"]
+  }>
+  <FlowAuthoring #dg.demo.flow.WelcomeData { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #entry { x = 80 y = 120 }>
+    <NodeLayout #message { x = 360 y = 120 }>
+    <NodeLayout #return { x = 640 y = 120 }>
+  ]>
+) [
+  <EntryNode #entry>
+  <TransformNode #message {
+    inputs = { input = "flow-port://#entry/input" }
+    outputs = ["output"]
+    src = "vfs://./flow-code/welcome.data.ts#makeWelcomeMessage"
+  }>
+  <ReturnNode #return {
+    inputs = { output = "flow-port://#message/output" }
+  }>
+]>

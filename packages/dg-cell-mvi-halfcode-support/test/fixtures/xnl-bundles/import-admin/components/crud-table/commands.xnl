@@ -1,0 +1,3 @@
+<Commands #crud-table-commands [
+  <Command #table.refresh>
+]>

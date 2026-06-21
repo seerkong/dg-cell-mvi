@@ -1,0 +1,74 @@
+<behavior-patch capability="workbench-flow-structure-authoring" version="1">
+  <upsert selector="behavior://workbench-flow-structure-authoring/requirements/adapter-projected-actions">
+    <requirement id="adapter-projected-actions">
+      <statement>Flow product adapters SHALL project stable renderer-neutral structure action references for authorable root, sequence, child-body, data-output, and completion positions, and the shared visual renderer SHALL return those references without interpreting Flow grammar.</statement>
+      <suite id="projection-boundary" name="Adapter projection boundary">
+        <case id="opaque-visual-action">
+          <given>A CtrlFlow or DAGFlow adapter projects an authorable canvas position</given>
+          <when>The shared visual editor renders and activates that position</when>
+          <then>The editor SHALL emit the projected action reference unchanged and SHALL NOT infer domain meaning from node ids, pin ids, labels, or edge geometry</then>
+        </case>
+        <case id="reject-stale-or-foreign-action">
+          <given>An action reference belongs to another adapter, product, or canonical revision</given>
+          <when>The current adapter receives a structure command using it</when>
+          <then>The adapter SHALL reject the command before producing a persistence effect</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://workbench-flow-structure-authoring/requirements/atomic-node-insertion">
+    <requirement id="atomic-node-insertion">
+      <statement>Node creation SHALL combine insertion context, node identity, node kind, and schema-driven initial configuration into one product command and one exact XnlMutation batch.</statement>
+      <suite id="atomic-create" name="Atomic node creation">
+        <case id="no-placeholder-persistence">
+          <given>The user activates an insertion position and edits a new-node draft</given>
+          <when>The draft is incomplete, invalid, or cancelled</when>
+          <then>No placeholder node, edge, AST edit, XNL mutation, or VFS write SHALL occur</then>
+        </case>
+        <case id="single-batch-commit">
+          <given>The new-node draft is valid</given>
+          <when>The user commits it</when>
+          <then>The product adapter SHALL create the node and its sequence, body, input, or waitFor relationship in one desired candidate and one exact mutation batch used for both dry-run and commit</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://workbench-flow-structure-authoring/requirements/family-structure-semantics">
+    <requirement id="family-structure-semantics">
+      <statement>CtrlFlow and DAGFlow SHALL share the structure command protocol while preserving distinct adapter-owned sequence, containment, data dependency, and completion dependency semantics.</statement>
+      <suite id="family-semantics" name="Family-specific structure semantics">
+        <case id="ctrlflow-insert-and-remove">
+          <given>An InstantFlow, WorkFlow, or BizProcess canvas exposes a next or child-body action</given>
+          <when>The user inserts or removes a node</when>
+          <then>The adapter SHALL update ordered statement containment, splice simple sequences, and handle owned structural subtrees without persisting visual edges</then>
+        </case>
+        <case id="dagflow-insert-and-remove">
+          <given>An EagerDataFlow canvas exposes a data-output or completion action</given>
+          <when>The user inserts or removes a node</when>
+          <then>The adapter SHALL update typed inputs or waitFor facts and SHALL clean or reject affected references as one canonical candidate</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://workbench-flow-structure-authoring/requirements/accepted-only-structure-feedback">
+    <requirement id="accepted-only-structure-feedback">
+      <statement>Flow structure authoring SHALL use the existing MVI, adapter, exact-mutation dry-run, canonical validation, VFS feedback, and canonical reprojection chain, and rejected operations SHALL preserve the prior accepted graph.</statement>
+      <suite id="feedback-chain" name="Accepted-only structure feedback">
+        <case id="persist-and-reload">
+          <given>A valid structure command is dispatched through a visible canvas control</given>
+          <when>The exact mutation batch passes dry-run and VFS commit</when>
+          <then>The graph SHALL advance only from canonical reload and SHALL reproduce the inserted or removed structure after browser reload</then>
+        </case>
+        <case id="preserve-on-rejection">
+          <given>Adapter validation, dry-run, canonical loading, revision, or VFS persistence rejects a structure command</given>
+          <when>Feedback returns to the editor</when>
+          <then>The accepted XNL, graph topology, selection, and layout SHALL remain at the prior revision and diagnostics SHALL identify the rejection</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

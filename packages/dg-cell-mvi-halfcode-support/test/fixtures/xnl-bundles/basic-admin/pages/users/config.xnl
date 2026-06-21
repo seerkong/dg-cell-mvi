@@ -1,0 +1,19 @@
+<Config #users-page-config [
+  <ConfigEntry #users-page {
+    density = "comfortable"
+  }>
+  <ConfigEntry #users-filter {
+    keywordInput = { placeholder = "搜索用户" clearable = true }
+    statusSelect = { placeholder = "状态" options = [ "enabled" "disabled" ] }
+  }>
+  <ConfigEntry #users-table {
+    columns = [
+      { field = "name" label = "姓名" }
+      { field = "score" label = "评分" }
+      { field = "status" label = "状态" }
+    ]
+  }>
+  <ConfigEntry #resources {
+    usersPage = { source = "mock" collection = "users" }
+  }>
+]>

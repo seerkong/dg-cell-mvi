@@ -1,0 +1,65 @@
+<Track id="add-structured-value-modal-presenter" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>为通用 Schema Editor 增加 vanilla-jsoneditor 与 Monaco 双模式 structured-value Modal。</Goal>
+    <Description>Element Plus presenter capsule 直接持有并动态加载两个引擎，以本地 draft 和单次 Apply 保持 host/domain writer 的唯一权威。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-18T14:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-18T15:37:07Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-element-plus" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/"/>
+    <MaterialBundle role="output" name="structured-value-presenter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/"/>
+  </Ports>
+  <TaskSpace id="space_add-structured-value-modal-presenter" name="add-structured-value-modal-presenter" version="1">
+    <Description>以 RED contracts 建立双模式 local-draft presenter，并完成 package 级验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="RED contracts 与依赖" status="DONE" order="0">
+        <Description>固定行为、依赖和 capsule 边界。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="建立 structured-value RED tests" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>覆盖 registry、tabs、invalid JSON、rootKind、single Apply、Cancel、engine failure 和 explicit-only selection。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">RED tests 覆盖 behavior delta 的全部 cases。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">Element Plus 直接声明 vanilla-jsoneditor/monaco-editor，并更新 bun.lock 与 pnpm-lock.yaml。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">dependency tests 禁止 contract/logic/support/Vue 和 Workbench wrapper 泄漏；旧 blanket JSON/code-editor ban 只对 structured-value internals 做窄化例外。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC4" checked="true">registry composition runtime 显式承载 frozen engine loader Effects；accepted value/input、options/config、component-local runtime 归位有 contract tests。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="双模式 presenter 实现" status="DONE" order="1">
+        <Description>实现 local draft、双引擎、校验和释放。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="实现 modal presenter" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>增加 `structured-value.modal` registry entry，动态加载两个引擎并实现同步、diagnostic、Apply/Cancel。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Visual/JSON 共享 draft，无效文本不丢失，Apply 一次，Cancel 零事件。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">options/rootKind/engine failure fail closed，无 textarea fallback。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">关闭与 unmount 释放所有 editor/model/subscription instance，且无 module-global mutable cache。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Package 验证" status="DONE" order="2">
+        <Description>完成 unit、typecheck、dependency 和 diff 验证。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="验证 Element Plus presenter capsule" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>运行目标/全量 tests、typecheck、lockfile 与 public-boundary scans。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Element Plus tests/typecheck 全部通过。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">直接依赖、动态加载、root registry 和 capsule 边界验证通过。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

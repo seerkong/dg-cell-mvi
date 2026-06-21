@@ -1,0 +1,6 @@
+<Elements #crud-table-elements [
+  <div #table-shell [
+    <div #table-toolbar>
+    <table #table-body { props = "config://#crud-table/table" }>
+  ]>
+]>

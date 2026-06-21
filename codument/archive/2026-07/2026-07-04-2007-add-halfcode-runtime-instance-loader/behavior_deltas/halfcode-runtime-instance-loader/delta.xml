@@ -1,0 +1,50 @@
+<behavior-patch capability="halfcode-runtime-instance-loader" version="1">
+  <upsert selector="behavior://halfcode-runtime-instance-loader/requirements/loader-projection">
+    <requirement id="loader-projection">
+      <statement>系统 SHALL parse RuntimeInstance declarations from the runtime domain into loader output without executing code.</statement>
+      <suite id="projection" name="运行时声明投影">
+        <case id="runtime-instance">
+          <given>a bundle contains a RuntimeInstance declaration</given>
+          <when>the loader reads the bundle</when>
+          <then>the loader SHALL expose serializable runtime instance data without executing its code</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-runtime-instance-loader/requirements/scope-binding-projection">
+    <requirement id="scope-binding-projection">
+      <statement>系统 SHALL parse Scope runtime/config/command bindings into loader output without interpreting runtime object internals.</statement>
+      <suite id="scope-projection" name="Scope 绑定投影">
+        <case id="scope-bindings">
+          <given>a Scope contains runtime, config, or command bindings</given>
+          <when>the loader projects the Scope</when>
+          <then>the output SHALL remain serializable binding data</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-runtime-instance-loader/requirements/source-exclusivity">
+    <requirement id="source-exclusivity">
+      <statement>系统 SHALL validate RuntimeInstance source exclusivity at loader time.</statement>
+      <suite id="source-validation" name="实例来源校验">
+        <case id="one-source-family">
+          <given>a RuntimeInstance declaration</given>
+          <when>the loader validates its source</when>
+          <then>exactly one source family SHALL be accepted</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-runtime-instance-loader/requirements/scheme-collection">
+    <requirement id="scheme-collection">
+      <statement>系统 SHALL include dotted halfcode schemes in loader reference collection.</statement>
+      <suite id="references" name="引用收集">
+        <case id="runtime-schemes">
+          <given>a bundle contains a supported runtime-domain reference</given>
+          <when>the loader collects references</when>
+          <then>the reference SHALL be included in the loader output</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

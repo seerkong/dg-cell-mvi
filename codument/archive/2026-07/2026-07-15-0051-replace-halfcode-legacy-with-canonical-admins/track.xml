@@ -1,0 +1,106 @@
+<Track id="replace-halfcode-legacy-with-canonical-admins" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 Workbench 以 canonical runtime 运行四套 admin bundle，并彻底删除 legacy Halfcode renderer 依赖闭包。</Goal>
+    <Description>补齐 config binding、unit composition、route/admin host 与真实 E2E；随后删除 schema/store renderer、旧对象 CRUD DSL、兼容出口及其 demos/tests。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-14T19:27:59Z</CreatedAt>
+    <UpdatedAt>2026-07-14T21:51:05Z</UpdatedAt>
+    <gap-round>2</gap-round>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="canonical-runtime-track" domain="track" path="vfs://@/codument/tracks/complete-halfcode-canonical-runtime/"/>
+    <MaterialBundle role="input" name="admin-fixtures" domain="fixture" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/fixtures/xnl-bundles/"/>
+    <MaterialBundle role="output" name="halfcode-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="halfcode-vue" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/"/>
+    <MaterialBundle role="output" name="halfcode-element-plus" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/"/>
+    <MaterialBundle role="output" name="legacy-packages" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="workbench" domain="code" path="vfs://@/../ai/eidolon/eidolon-workbench/frontend/packages/bastard/"/>
+  </Ports>
+  <TaskSpace id="space_replace-halfcode-legacy-with-canonical-admins" name="replace-halfcode-legacy-with-canonical-admins" version="1">
+    <Description>先闭合 canonical admin 主链，再迁移 Workbench，之后删除 legacy，最后跨仓验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Canonical admin renderer/runtime" status="DONE" order="0">
+        <Description>补齐 config binding、Component/Page composition、route render context 与 Element Plus canonical registry。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="建立 admin renderer 红测试" status="DONE" order="0" priority="P0">
+            <Description>使用真实四套 fixtures 固定 config props、component/page embed、graph projection 和 route 行为。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T1.1-AC1" checked="true">测试不使用 fake plan/runtime，且在实现前能暴露 counter-only 缺口</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 runtime config binding 与 recursive unit composition" status="DONE" order="1" priority="P0">
+            <Description>预解析 element config refs；renderer 从 render plan registry 渲染 Component/Page target unit，保持目标 Scope runtime。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T1.2-AC1" checked="true">basic/embedded/import 真实 DOM 显示配置和嵌套 unit 内容</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="实现 canonical Element Plus admin materials" status="DONE" order="2" priority="P0">
+            <Description>提供全量 Element Plus identity resolver 和 DataTable/StatisticGroup adapters，graph refs 可响应式刷新。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T1.3-AC1" checked="true">data-graph-admin users/dashboard projections 在 DOM 中可观测</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Workbench four-admin showcase" status="DONE" order="1">
+        <Description>用 generic resolver/runtime factory 和 production showcase 替换 counter-only demo。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="建立四 app fixture catalog 与 generic runtime factory" status="DONE" order="0" priority="P0">
+            <Description>Vite glob 真实 fixture XNL/TS，按 app id 创建 resolver/runtime，统一 config/symbol resolution。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.1-AC1" checked="true">四 app 均零 load/compile/assembly error，切换时正确 dispose</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 admin showcase 与 route navigation" status="DONE" order="1" priority="P0">
+            <Description>替换 counter HTML/entry，提供 app/route tabs 和 canonical bundle view。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.2-AC1" checked="true">production 入口可访问四 app 的全部 routes</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现四套真实 E2E" status="DONE" order="2" priority="P0">
+            <Description>分别验证 Effect Command、embedded composition、imported prefab 和 DataGraph projections。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.3-AC1" checked="true">四套 app E2E 全部通过且不使用 fake runtime/plan</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Legacy renderer removal" status="DONE" order="2">
+        <Description>删除跨包 legacy schema/store renderer 和 Workbench 依赖资产，不保留兼容出口。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="删除 dg-cell-mvi legacy contracts/logic/renderers" status="DONE" order="0" priority="P0">
+            <Description>删除 old schema/state/events/effects/store/compiler compatibility、Vue renderer、web registry 和 `/legacy` package exports/tests。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.1-AC1" checked="true">canonical package tests/typecheck 通过且旧 API 不再可导入</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="删除旧 DgHalfcodeCrud 对象 DSL" status="DONE" order="1" priority="P0">
+            <Description>删除 component/adapter/fixtures/tests，element-plus package 只保留 canonical registry/materials。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.2-AC1" checked="true">DgHalfcodeCrud 与旧 CRUD DSL symbols/source files 为零</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="删除或迁移 Workbench legacy consumers" status="DONE" order="2" priority="P0">
+            <Description>删除旧 HTML/Tiptap/CRUD Halfcode demos/tests；移除 app source 中 Render/createRender consumers 和 aliases。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.3-AC1" checked="true">Workbench 生产源码、tests、fixtures/demos 中 `/legacy` 与旧 renderer symbols 为零</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Cross-repository verification" status="DONE" order="3">
+        <Description>执行测试、类型、build、残留扫描与 Codument 收口。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="运行 canonical package 与 fixture gates" status="DONE" order="0" priority="P0">
+            <Description>contract/logic/support/vue/element-plus/admin tests、typecheck 和 fixture corpus。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.1-AC1" checked="true">受影响 dg-cell-mvi gates 全通过</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="运行 Workbench E2E/type/build 与零残留扫描" status="DONE" order="1" priority="P0">
+            <Description>四 admin E2E、tsc、production build、legacy symbols/path scan、git diff check。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.2-AC1" checked="true">Workbench gates 全通过且 legacy 有效引用为零</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="写 verification 并 strict validate" status="DONE" order="2" priority="P0">
+            <Description>记录命令/结果，回写所有 acceptance 和 track 终态。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.3-AC1" checked="true">Codument strict validation 与 GapLoop 收口通过</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

@@ -1,0 +1,15 @@
+<Scopes #orders-page-scopes [
+  <Scope #orders-page {
+    config = "config://#orders-page"
+    commands = "command://#orders-page-commands"
+  } (
+    <EffectBindings {
+      impls = "vfs://./effects/mock-admin.effect-impls.ts#adminEffectImpls"
+    }>
+  )>
+  <Scope #orders-table { config = "config://#orders-table" } (
+    <MessagePolicy #boundary { default = "bubble" } [
+      <MessageRule message="command://#orders.search" action="consume">
+    ]>
+  )>
+]>

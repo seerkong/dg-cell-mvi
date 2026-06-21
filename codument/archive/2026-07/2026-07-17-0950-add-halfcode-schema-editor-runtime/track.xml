@@ -1,0 +1,138 @@
+<Track id="add-halfcode-schema-editor-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>把 renderer-complete EditorPlan 接入纯 canonical shell 与 host-owned revision-gated session。</Goal>
+    <Description>在 support 实现 command resolver、ValueHost/session actor、Scope runtime bridge、pure source lowering、真实 loader/compiler/runtime E2E 与边界文档。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-16T23:55:00Z</CreatedAt>
+    <UpdatedAt>2026-07-17T06:50:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="input" name="schema-editor-compiler" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/schema-editor/"/>
+    <MaterialBundle role="input" name="canonical-support-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/"/>
+    <MaterialBundle role="output" name="schema-editor-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/schema-editor/"/>
+    <MaterialBundle role="output" name="support-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-schema-editor-runtime" name="add-halfcode-schema-editor-runtime" version="1">
+    <Description>先冻结 resolver/session contracts，再实现 session 与 Scope bridge，随后以真实 source lifecycle 实现 pure lowering，最后收口 public truth 和验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Command resolution contracts" status="DONE" order="0">
+        <Description>冻结 dispatch snapshot、safe lookup、wildcard materialization、optional arguments 和 diagnostics。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Resolver 是无 mutation effect 的三参数 Processor。</cdt:Criterion>
+          <cdt:Criterion>所有 value sources 使用同一 dispatch snapshot。</cdt:Criterion>
+          <cdt:Criterion>不完整/非法 command 只产生 diagnostics。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 command resolver 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 event/value/literal、safe own-property lookup、wildcards、optional argument omission、required/type diagnostics、snapshot capture 和 no mutation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明当前 support 无 command-template runtime semantics</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 command resolver 与 public result contracts" status="DONE" order="1" priority="P0">
+            <Description>实现纯 resolver、structured diagnostics、wildcard bindings、safe path traversal 和 final command validation，并从 support root 导出。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">全部 command kinds 可正确求值，失败不返回 partial command</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">Processor arity为3且不读取host/global mutable state</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="ValueHost session and Scope bridge" status="DONE" order="1">
+        <Description>实现 host-owned revision envelopes、accepted projection Actor、subscription/pending/dispose 与 scoped capability binding。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Session 不做 optimistic mutation。</cdt:Criterion>
+          <cdt:Criterion>stale/rejected/conflict/malformed/late responses 不推进 projection。</cdt:Criterion>
+          <cdt:Criterion>ValueHost 从 typed Scope runtime capability 解析，不使用 plan provenance/global registry。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="编写 ValueHost/session/Scope 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 accepted/rejected/conflict、乱序/重复、pending、immutable subscription、dispose、parent inheritance/child override 和 binding ids。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.1-AC1" checked="true">红测试证明当前 support 无 accepted-snapshot Actor 与 scoped host port</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 revision-gated SchemaEditorSession" status="DONE" order="1" priority="P0">
+            <Description>实现 snapshot/apply envelopes、ValueHost三参数Effect port、session dispatch/pending/subscription/diagnostics/dispose 和 stale gate。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">仅 current-revision accepted response 推进 cloned projection</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">session 不本地应用 Command，dispose 后忽略 late response</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 typed Scope runtime bridge" status="DONE" order="2" priority="P0">
+            <Description>把 stable host/session ids 投影到现有 Scope runtime bind/derive 机制，支持继承覆盖，不重扫 source tree。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">父子 Scope host capability 按现有runtime规则可见/覆盖</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">EditorPlan/provenance 不含 runtime capability 实现或 service locator ids</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Pure canonical shell lowering" status="DONE" order="2">
+        <Description>以真实 generated sources lifecycle 实现 deterministic schemaEditor.Editor shell。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Lowering只消费EditorPlan和serializable config。</cdt:Criterion>
+          <cdt:Criterion>输出真实经过resolver/loader/compiler/app runtime。</cdt:Criterion>
+          <cdt:Criterion>单shell atom与plan/runtime bindings无损可解析。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="编写 canonical shell lifecycle 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖deterministic source bundle、single atom、plan round-trip、UI library identity、Scope bridge、no synthetic loaded bundle/host capture。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.1-AC1" checked="true">红测试通过真实loader/compiler/runtime证明lowering缺失</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 lowerEditorPlan 与 app-runtime lifecycle" status="DONE" order="1" priority="P0">
+            <Description>生成canonical XNL sources/config bindings，复用memory resolver与loadHalfcodeAppRuntime，提供dispose-safe lifecycle。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">同输入产生同source，真实runtime零diagnostics且只有一个schemaEditor.Editor atom</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">输出无ValueHost/snapshot/callback/component implementation</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Public surface and documentation" status="DONE" order="3">
+        <Description>收口support root API、dependency boundaries、runtime docs和中立demo。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Support root是唯一公共入口且无renderer/host mutation依赖。</cdt:Criterion>
+          <cdt:Criterion>文档准确区分runtime已实现与Vue/Element/Workbench未实现。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="增加 public/dependency boundary tests" status="DONE" order="0" priority="P0">
+            <Description>验证root exports、三参数ports、contract/logic/runtime依赖和无Vue/Element/Flow/XNL writer/VFS/database泄漏。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.1-AC1" checked="true">公共入口与dependency scans通过</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="更新 Schema Editor runtime 文档" status="DONE" order="1" priority="P1">
+            <Description>记录resolver/session/Scope/lowering API、时序/失败语义、三档集成和当前未实现renderer边界。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.2-AC1" checked="true">文档示例与真实support root API/E2E一致且不声称UI已实现</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="Verification" status="DONE" order="4">
+        <Description>独立验证resolver/session/lowering/Scope、三包回归、DEPA边界和Codument状态。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Contract/logic/support tests与typecheck全绿。</cdt:Criterion>
+          <cdt:Criterion>真实canonical lifecycle与revision concurrency语义通过。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="运行 runtime 验证矩阵并记录报告" status="DONE" order="0" priority="P0">
+            <Description>运行focused/full tests、typecheck、strict validate、dependency/stale/ownership scans、diff check并写reports/verification.md。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T5.1-AC1" checked="true">报告逐项映射五个behavior并记录给Vue renderer的runtime输出</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

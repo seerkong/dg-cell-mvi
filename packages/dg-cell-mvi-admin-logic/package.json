@@ -1,0 +1,26 @@
+{
+  "name": "dg-cell-mvi-admin-logic",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "DEPA admin chassis logic layer — pure reducer/projector (data-ownership actors) + menu/breadcrumb projection + permission resolve + auth flow. Zero IO/browser/vue/el.",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dg-cell-mvi-admin-contract": "^0.1.0",
+    "dg-cell-mvi-core": "^0.1.0",
+    "depa-data-graph-core": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

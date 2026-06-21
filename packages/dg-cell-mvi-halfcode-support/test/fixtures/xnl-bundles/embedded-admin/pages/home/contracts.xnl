@@ -1,0 +1,5 @@
+<Contracts #home-page-contracts (
+  <PageContract #dg.admin.embedded.HomePage (
+    <Accepts [ <Event ref="event://#report.saved"> ]>
+  )>
+)>

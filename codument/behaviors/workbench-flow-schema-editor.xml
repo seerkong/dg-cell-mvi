@@ -1,0 +1,147 @@
+<behaviors capability="workbench-flow-schema-editor" version="1">
+  <requirement id="schema-driven-flow-and-node-config">
+    <statement>Workbench Flow Editor SHALL render both flow-level and node-level authoring from product-owned StructureSchema plus optional EditorPresentation through the canonical Schema Editor compiler, lowering, Session, and renderer lifecycle.</statement>
+    <suite id="canonical-lifecycle" name="Canonical schema-editor lifecycle">
+      <case id="compile-flow-and-node-targets">
+        <given>A supported Flow product exposes an authorable flow target or selected node target</given>
+        <when>The right configuration panel opens that target</when>
+        <then>The panel SHALL compile StructureSchema and optional EditorPresentation to EditorPlan, lower it to the canonical schemaEditor.Editor shell, and render it through the existing CanonicalHalfcodeRenderer</then>
+      </case>
+      <case id="replace-legacy-runtime">
+        <given>The migration is complete</given>
+        <when>The active Workbench source and dependency graph are inspected</when>
+        <then>The hand-written NodeSchema field bundle, bespoke field commands, bespoke runtime/session, and direct field renderer SHALL NOT remain as an active or fallback path</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="business-presentation-override">
+    <statement>Workbench SHALL own Flow-specific schema annotations, EditorPresentation overlays, SchemaEditorDialect classifiers and transformers, and business presenter registries inside a capsule without leaking Flow concepts into the reusable dg-cell-mvi Schema Editor base.</statement>
+    <suite id="scoped-composition" name="Scoped business composition">
+      <case id="later-business-layer">
+        <given>The default dialect and ordered Workbench product dialects classify the same schema field</given>
+        <when>The compiler resolves the field presenter</when>
+        <then>The fixed base precedence and later scoped business layer SHALL select the product presentation without mutating another editor Scope</then>
+      </case>
+      <case id="public-api-boundary">
+        <given>The Workbench schema-editor capsule dependency graph is inspected</given>
+        <when>Imports are resolved</when>
+        <then>Workbench SHALL use package-root Schema Editor APIs and reusable packages SHALL NOT import Workbench Flow modules or presenters</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="typed-structural-controls">
+    <statement>Workbench SHALL expose typed recursive scalar, object, collection, map, union, and reference controls for normal Flow authoring and SHALL NOT use an implicit JSON textarea or raw/code presenter fallback.</statement>
+    <suite id="typed-defaults" name="Typed structural defaults">
+      <case id="recursive-collection-and-map">
+        <given>A Flow field declares nested array, object, or map structure</given>
+        <when>The schema-only or presentation-overlay editor is rendered</when>
+        <then>The user SHALL discover recursive item or entry controls and standard insert, remove, edit, move, add, remove, or rename operations as applicable</then>
+      </case>
+      <case id="explicit-raw-only">
+        <given>A product intentionally requires advanced raw JSON or code editing</given>
+        <when>The field is compiled</when>
+        <then>A raw/code control SHALL appear only when EditorPresentation explicitly selects its stable presenter id and unsupported implicit cases SHALL render diagnostics instead</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="accepted-only-mutation-owner">
+    <statement>The Workbench Flow ValueHost SHALL translate one concrete SchemaEditorCommand into the existing Flow capsule mutation path and SchemaEditorSession SHALL advance only from current-revision accepted canonical persistence feedback.</statement>
+    <suite id="host-ownership" name="Host mutation ownership">
+      <case id="delegate-to-flow-adapter">
+        <given>A presenter event resolves to a valid SchemaEditorCommand for a captured flow or node target</given>
+        <when>The Session dispatches it to the Workbench ValueHost</when>
+        <then>The ValueHost SHALL delegate through the existing product capsule and SHALL NOT directly import or call an XNL or VFS writer</then>
+      </case>
+      <case id="retain-on-non-acceptance">
+        <given>Validation, canonical reload, VFS persistence, revision, identity, stale response, or host execution fails</given>
+        <when>The ValueHost returns rejected or conflict feedback</when>
+        <then>The Session and rendered panel MUST retain the previous accepted snapshot and authoritative revision</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="ctrlflow-structural-authoring">
+    <statement>InstantFlow, WorkFlow, and BizProcess SHALL support typed If branch and Fallback strategy insertion, removal, field editing, and drag reordering while preserving matching child bodies and canonical CtrlFlow port order.</statement>
+    <suite id="if-and-fallback" name="If and Fallback structure">
+      <case id="edit-if-branches">
+        <given>An If node has structured branches with id, when, and optional config</given>
+        <when>The user inserts, removes, edits, or drags a branch</when>
+        <then>The owning product adapter SHALL emit structural XnlMutation operations that preserve matching branch bodies and the committed branch order SHALL drive the reloaded right-side CtrlFlow ports</then>
+      </case>
+      <case id="edit-fallback-strategies">
+        <given>A Fallback node has ordered strategies</given>
+        <when>The user inserts, removes, edits, or drags a strategy</when>
+        <then>The owning product adapter SHALL preserve matching strategy bodies and persist the requested canonical order</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="dag-typed-authoring">
+    <statement>EagerDataFlow SHALL expose discoverable typed controls for inputs, outputs, waitFor, implementation references, flow references, and config while keeping derived fields non-authorable.</statement>
+    <suite id="dag-fields" name="DAG field authoring">
+      <case id="edit-data-and-wait-dependencies">
+        <given>An EagerDataFlow node declares inputs, outputs, or waitFor</given>
+        <when>The user edits map entries or collection items</when>
+        <then>The editor SHALL preserve port names and typed flow-port or flow-node references and canonical reload SHALL reproduce the corresponding DAG ports and edges</then>
+      </case>
+      <case id="edit-refs-and-config">
+        <given>An EagerDataFlow node declares type, src, impl, flow, or config fields</given>
+        <when>The user opens the schema editor</when>
+        <then>The fields SHALL use discoverable semantic controls or explicitly selected advanced presenters and derived outputs SHALL remain unavailable for mutation</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="flow-level-config">
+    <statement>Each supported Flow product SHALL expose product-owned flow-level StructureSchema and optional EditorPresentation for canonical root facts that are authorable, using the same Session and ValueHost protocol as node config.</statement>
+    <suite id="flow-target" name="Flow-level editor target">
+      <case id="edit-flow-config">
+        <given>A loaded InstantFlow, WorkFlow, BizProcess, or EagerDataFlow has authorable root configuration</given>
+        <when>The user selects the flow-level configuration target and edits a field</when>
+        <then>The edit SHALL use the product root schema, canonical mutation path, accepted feedback, and reload projection without fabricating derived fields</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="four-product-persistence-reload">
+    <statement>InstantFlow, WorkFlow, BizProcess, and EagerDataFlow schema-editor operations SHALL persist through the existing exact XnlMutation batch, dry-run, canonical validation, VFS commit, and browser reload lifecycle.</statement>
+    <suite id="round-trip" name="Four-product persistence">
+      <case id="same-batch-commit">
+        <given>A valid flow-level or node-level schema-editor command produces an XnlMutation batch</given>
+        <when>The candidate is validated and persisted</when>
+        <then>The exact dry-run batch SHALL be committed without recomputation and the accepted snapshot SHALL come from canonical reprojection after VFS success</then>
+      </case>
+      <case id="reload-all-products">
+        <given>Typed and structural edits have been accepted in each of the four products</given>
+        <when>The browser reloads the VFS-backed workspace</when>
+        <then>The canonical loader SHALL report no errors and the panel, XNL, graph ports, and product projection SHALL reproduce the committed values and order</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="layout-isolation">
+    <statement>Schema-editor target switching, config editing, rejection, acceptance, and reload SHALL NOT take ownership of or corrupt CtrlFlow or DAGFlow layout, viewport, selection, renderer family, edge, or position facts.</statement>
+    <suite id="canvas-isolation" name="Canvas isolation">
+      <case id="non-topology-edit">
+        <given>A CtrlFlow or DAGFlow canvas has stable layout and viewport facts</given>
+        <when>A non-topology config command is accepted, rejected, or reloaded</when>
+        <then>The family-specific layout and viewport projection MUST remain unchanged</then>
+      </case>
+      <case id="family-specific-topology">
+        <given>CtrlFlow branch order or DAG dependency fields change through canonical semantic mutation</given>
+        <when>The owning capsule reprojects the committed graph</when>
+        <then>Only that product family's canonical topology MAY change and the other family SHALL NOT receive foreign controls or layout semantics</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="browser-chaos-independent-verification">
+    <statement>The migration SHALL be verified with real browser interactions, seeded chaos, full mechanical checks, legacy-residue scans, documentation, and a fresh independent verification that does not repair implementation.</statement>
+    <suite id="verification" name="Independent product verification">
+      <case id="real-controls">
+        <given>The four Flow products are loaded in an isolated browser workspace</given>
+        <when>Playwright edits visible flow/node controls, performs structural add/remove/edit/drag operations, and reloads</when>
+        <then>The test SHALL use real controls, observe no page or console errors, and assert canonical persistence rather than dispatching internal store commands</then>
+      </case>
+      <case id="seeded-chaos-and-audit">
+        <given>The deterministic scenarios pass</given>
+        <when>Seeded chaos and a fresh verifier run against the live repositories</when>
+        <then>Family invariants, accepted-only state, package boundaries, no implicit JSON fallback, no legacy runtime, unit tests, typecheck, build, strict Codument validation, and replay artifacts SHALL be independently checked</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

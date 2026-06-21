@@ -1,0 +1,31 @@
+{
+  "name": "dg-cell-mvi-halfcode-vue",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Canonical Vue renderer for compiled dg-cell-mvi-halfcode plans and assembled app runtimes.",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dg-cell-mvi-core": "^0.1.0",
+    "dg-cell-mvi-halfcode-contract": "^0.1.0",
+    "dg-cell-mvi-halfcode-support": "^0.1.0"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3"
+  },
+  "devDependencies": {
+    "jsdom": "^27.4.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "vue": "^3.5.22"
+  }
+}

@@ -1,0 +1,12 @@
+<Scopes #dashboard-page-scopes [
+  <Scope #dashboard-page {
+    config = "config://#dashboard-page"
+  } (
+    <DataGraphBindings [
+      <GraphExtension #dashboard-summary {
+        src = "vfs://./graph-code/dashboard.quick-graph.ts#installDashboardSummaryGraph"
+        config = "config://#dashboard-summary"
+      }>
+    ]>
+  )>
+]>

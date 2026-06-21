@@ -1,0 +1,13 @@
+<InstantFlow #dg.demo.flow.WelcomeCtrl apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.WelcomeCtrl {
+    input = "vfs://./flow-code/welcome.contracts.ts#WelcomeCtrlInput"
+    output = "vfs://./flow-code/welcome.contracts.ts#WelcomeCtrlOutput"
+  }>
+  <FlowAuthoring #dg.demo.flow.WelcomeCtrl { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #message { x = 80 y = 100 }>
+  ]>
+) [
+  <Return #message {
+    src = "vfs://./flow-code/welcome.ctrl.ts#makeWelcomeMessage"
+  }>
+]>

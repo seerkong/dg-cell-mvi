@@ -1,0 +1,6 @@
+<Config #basic-admin-config {
+  locale = "zh-CN"
+  theme = { preset = "light" primary = "#2563eb" }
+} [
+  <ConfigEntry #api { baseUrl = "/api" }>
+]>

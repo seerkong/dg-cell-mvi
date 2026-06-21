@@ -1,0 +1,7 @@
+<AppBundle #dg.admin.embedded.App version="2.0.0" (
+  <Units [
+    <Unit kind="page" fqn="dg.admin.embedded.HomePage" src="vfs://./pages/home/manifest.xnl">
+    <Unit kind="page" fqn="dg.admin.embedded.ReportsPage" src="vfs://./pages/reports/manifest.xnl">
+    <Unit kind="component" fqn="dg.materials.CrudTable" src="vfs://./components/crud-table.xnl">
+  ]>
+)>

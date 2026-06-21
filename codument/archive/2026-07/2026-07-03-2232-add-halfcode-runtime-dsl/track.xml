@@ -1,0 +1,65 @@
+<Track id="add-halfcode-runtime-dsl" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>修订 halfcode runtime DSL 暂缓边界，移除旧 live state MVP 和投影通道假设。</Goal>
+    <Description>在 docs/halfcode/dsl-bundle 中保留 std/runtime 与 spec/runtime，但只声明暂缓边界、core EffectHandler 事实形态、以及与 scope effect 的桥接约束。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-03T19:11:37Z</CreatedAt>
+    <UpdatedAt>2026-07-03T19:32:12Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-runtime-dsl" name="add-halfcode-runtime-dsl" version="1">
+    <Description>新增 runtime DSL family 的标准文档与示例。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="标准范围与术语收敛" status="DONE" order="0">
+        <Description>确认 runtime DSL 与 frontend/effect/resource 的边界。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="盘点 MVI runtime vocabulary" status="DONE" order="0">
+            <Description>从 dg-cell-mvi-core 提取 AppEvent、Reduce、EffectRequest、EffectHandler 的事实形态；不冻结 DSL 术语映射。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">analysis/findings.md 补充最终术语映射。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="确定 runtime 域集合" status="DONE" order="1">
+            <Description>确认 runtime 域集合暂不定稿；记录 effects/ports/resources/workflow 不进入当前 runtime 边界。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="编写 runtime L2/L3 标准" status="DONE" order="1">
+        <Description>新增 std/runtime 与 spec/runtime 文档。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="新增 std/runtime/axioms.md" status="DONE" order="0"/>
+          <Task id="T2.2" name="新增 spec/runtime/domains.md" status="DONE" order="1"/>
+          <Task id="T2.3" name="新增 spec/runtime/nodes.md" status="DONE" order="2"/>
+          <Task id="T2.4" name="新增 spec/runtime/files.md 与 refs.md" status="DONE" order="3"/>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="示例与诊断收敛" status="DONE" order="2">
+        <Description>用最小 runtime bundle 示例验证规范可读可生成。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="编写最小 MVI runtime XNL 示例" status="DONE" order="0"/>
+          <Task id="T3.2" name="定义 runtime 诊断码" status="DONE" order="1"/>
+          <Task id="T3.3" name="更新 dsl-bundle README 阅读顺序" status="DONE" order="2"/>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P4" name="验证收口" status="DONE" order="3">
+        <Description>自检文档一致性与行为 delta 覆盖。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="运行文本一致性检查" status="DONE" order="0"/>
+          <Task id="T4.2" name="对照 behavior delta 验收" status="DONE" order="1"/>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:HumanConfirm/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Hooks/>
+</Track>

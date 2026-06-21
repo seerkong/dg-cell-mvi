@@ -1,0 +1,16 @@
+<Component #dg.materials.CrudTable version="1.0.0" (
+  <Contracts (
+    <Props { pageSize = "number?" entity = "string?" }>
+    <Accepts [ <Command ref="command://#table.refresh"> ]>
+    <Sends [ <Event ref="event://#table.rowSelected"> ]>
+  )>
+  <Commands [
+    <Command #table.refresh>
+]>
+  <Events [
+    <Event #table.rowSelected>
+  ]>
+  <Config [ <ConfigEntry #crud-table { table = { density = "compact" stripe = true } }> ]>
+) [
+  <span #table-placeholder { props = "config://#crud-table/table" }>
+]>

@@ -1,0 +1,7 @@
+<ConfigDef #basic-admin-config-def [
+  <ConfigDef #basic-admin-config {
+    locale = "string"
+    theme = { preset = "string" primary = "string" }
+  }>
+  <ConfigDef #api { baseUrl = "string" }>
+]>

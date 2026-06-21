@@ -1,0 +1,143 @@
+<Mission id="evolve-halfcode-non-frontend-dsl" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>active</Status>
+    <Goal>实现 halfcode runtime 对象系统，并在其上逐步落地 data graph 与其它 DSL family 的运行时能力。</Goal>
+    <Description>基于 RuntimeInstance + Scope assembly 的最新 DSL 设计，拆分 runtime contracts、bundle loader、scope assembly、dynamic execution、Command/Event protocol、data graph binding 和 demo verification tracks。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>7</Revision>
+    <CreatedAt>2026-07-03T19:11:37Z</CreatedAt>
+    <UpdatedAt>2026-07-14T18:45:12Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+    <MaterialBundle role="output" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="support-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="contract-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+  </Ports>
+  <TaskSpace id="space_evolve-halfcode-non-frontend-dsl" name="evolve-halfcode-non-frontend-dsl" version="1" cdt:child-mode="dag">
+    <Description>RuntimeInstance 运行时实现 mission。先证据与切片，再用真实 tracks 落地 runtime object foundation；data graph 必须在代码事实盘点后实现。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="证据盘点与 track 切片刷新" status="DONE" order="0">
+        <Description>把已保存的 DSL 变动映射到实现切片，确认旧 runtime track 只作为设计保存点，不再代表可执行运行时。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="盘点最新 DSL 与实现缺口" status="DONE" order="0">
+            <Description>读取 commit e1fc301、docs/halfcode/dsl-bundle、runtime-counter fixture、support/contract 当前代码，写 analysis/runtime-implementation-gap.md。</Description>
+          </Task>
+          <Task id="G1-T2" name="冻结首批 runtime implementation tracks" status="DONE" order="1">
+            <Description>把 runtime object foundation 拆成 contract、loader、assembly、execution、demo verification tracks，写 reports/runtime-track-slicing.md。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2" name="Runtime object foundation tracks" status="DONE" order="1">
+        <Description>实现 RuntimeInstance 的真实运行时底座。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="创建并执行 runtime object contracts track" status="DONE" order="0">
+            <Description>新增 runtime object/types/protocol diagnostics：RuntimeInstance、RuntimeScopeAssembly、HalfcodeRuntimeObject、create/derive protocol。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-runtime-object-contracts"/>
+          </Task>
+          <Task id="G2-T2" name="创建并执行 RuntimeInstance loader track" status="DONE" order="1">
+            <Description>让 loader/projection 读取 runtime.xnl 与 Scope.runtime，输出可供 assembly 使用的 runtime instance graph 与 scope runtime binding。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-runtime-instance-loader"/>
+          </Task>
+          <Task id="G2-T3" name="创建并执行 scope runtime assembly track" status="DONE" order="2">
+            <Description>解析 src/create/prototype/derive，把 Scope sibling bindings 汇成 assembly input，并创建/派生当前 scope runtime object。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-scope-runtime-assembly"/>
+          </Task>
+          <Task id="G2-T4" name="创建并执行 dynamic execution track" status="DONE" order="3">
+            <Description>实现 command handler/effect impl 等动态代码以 runtime 为首参调用，并接入 config 与错误诊断。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-runtime-dynamic-execution"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2R" name="Runtime 收口增量（review 缺口修复）" status="DONE" order="1">
+        <Description>replan-003：修复 runtime demo 与 DEPA review 发现的高/中缺口。G3 需等待本组完成，因为 scope-derived reference 语义是 runtime/effect/data graph 的共同前置。</Description>
+        <SubNodes>
+          <Task id="G2R-T1" name="创建并执行 loader 新词汇升级 track" status="DONE" order="0">
+            <Description>由 complete-halfcode-canonical-runtime 吸收：loader/source AST 使用 FrontendApp 裸语义字段，拒绝旧 XxxRef 方言，并真实加载六套 canonical fixtures。</Description>
+            <cdt:TrackLink state="bound" id="complete-halfcode-canonical-runtime"/>
+          </Task>
+          <Task id="G2R-T2" name="创建并执行 runtime demo 收口 track" status="DONE" order="1">
+            <Description>由 complete-halfcode-canonical-runtime 吸收：HalfcodeAppRuntime 贯通 load、compile、parent-first assemble 与 compiled Command dispatch；runtime-counter 连续执行得到 1/2，并验证 scope.runtime 投影。</Description>
+            <cdt:TrackLink state="bound" id="complete-halfcode-canonical-runtime"/>
+          </Task>
+          <Task id="G2R-T3" name="创建并执行 runtime 边界对齐 track" status="DONE" order="2">
+            <Description>对齐 RuntimeInstance 与 workbench behavior registry，修复 scope-derived ref visibility、config resolver diagnostics、portable domain loading、FrontendApp/loader version contract 和 Runtime DSL guardrails；不设计 data graph binding。</Description>
+            <cdt:TrackLink state="bound" id="align-halfcode-runtime-boundaries"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2C" name="Command / Event 通信协议迁移" status="DONE" order="2">
+        <Description>将 canonical FrontendApp 的 MVI 局部消息词汇替换为可前后端统一的 Command / Event / Message 协议；Scope 装配、runtime-first handler 与跨 route wiring 一并对齐。</Description>
+        <SubNodes>
+          <Task id="G2C-T1" name="创建并执行 Command/Event protocol track" status="DONE" order="0">
+            <Description>使用 commands/events concrete domains、MessagePolicy、contract Sends 与 identity-preserving Wire.message，迁移当前 docs、loader/runtime/compiler、canonical fixtures 与测试；历史 legacy codec 保持隔离。</Description>
+            <cdt:TrackLink state="bound" id="migrate-halfcode-intent-to-command-event"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2D" name="消息旧协议彻底清理" status="DONE" order="3">
+        <Description>删除旧消息 codec、旧 fixture 与活动 full-code API 命名；Command/Event 成为唯一可执行消息协议。</Description>
+        <SubNodes>
+          <Task id="G2D-T1" name="执行旧消息协议清理 track" status="DONE" order="0">
+            <Description>删除旧 XNL message branches、legacy fixture trees 与旧 command-dispatch API，并验证两个仓库。</Description>
+            <cdt:TrackLink state="bound" id="remove-halfcode-legacy-message-codecs"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G3" name="Data graph binding 重新设计与实现" status="DONE" order="3">
+        <Description>从 depa-data-graph 与 dg-cell-mvi 代码事实重新设计 data graph runtime binding，再落地。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="盘点 data graph 全代码使用模式" status="DONE" order="0">
+            <Description>由 complete-halfcode-canonical-runtime 的 findings/knowledge 与实现证据吸收：以真实 GraphModule、NodeRef、mountGraph、GraphRuntime 和 dg-cell-mvi 使用模式作为 conformance source。</Description>
+            <cdt:TrackLink state="bound" id="complete-halfcode-canonical-runtime"/>
+          </Task>
+          <Task id="G3-T2" name="创建并执行 data graph runtime binding track" status="DONE" order="1">
+            <Description>由 complete-halfcode-canonical-runtime 吸收：GraphObject/GraphMount/seed/node impls materialize 为真实 mounted graph，并支持 existing graph extension 与唯一 runtime.graph(name) API。</Description>
+            <cdt:TrackLink state="bound" id="complete-halfcode-canonical-runtime"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G4" name="DSL family integration tracks" status="ACTIVE" order="4">
+        <Description>在 runtime assembly 上整合 effect/Command/Event/config/contracts/frontend composition 的三档写法；为后续 product/resource/CRUD/workflow 做准备。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 runtime fixture demo track" status="SUPERSEDED" order="0">
+            <Description>已由 replan-002 上移至 G2R-T2（runtime-counter demo 不依赖 data graph，无需等待 G3）；TrackLink 随任务移交，避免双权威。</Description>
+          </Task>
+          <Task id="G4-T2" name="补齐 product/resource/CRUD/workflow 候选 track proposal" status="NOT_STARTED" order="1">
+            <Description>在 runtime/data graph 底座之后，刷新 product/material、resource/backend-flow、CRUD、workflow 的 proposal 与依赖关系。</Description>
+          </Task>
+          <Task id="G4-T3" name="整合核心 Scope family bindings" status="DONE" order="2">
+            <Description>complete-halfcode-canonical-runtime 已将 config、Command/Event、MessagePolicy、CallableEffect 与 DataGraph 编译为独立 typed plans，并统一由 Scope 装配到 RuntimeObject；未覆盖 G4-T2 的后续产品域。</Description>
+            <cdt:TrackLink state="bound" id="complete-halfcode-canonical-runtime"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY" name="验证与收口" status="NOT_STARTED" order="5">
+        <Description>验证 runtime object foundation、data graph binding 和 demo execution 是否满足 mission 成功判据。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="验证 mission 成功判据" status="NOT_STARTED" order="0">
+            <Description>运行 halfcode support 测试；确认所有 bound tracks 可解析且完成；写 reports/mission-verify.md。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_evolve-halfcode-non-frontend-dsl">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G2R"><After ref="G2"/></Node>
+      <Node id="G2C"><After ref="G2"/></Node>
+      <Node id="G3"><After ref="G2"/><After ref="G2R"/></Node>
+      <Node id="G4"><After ref="G3"/><After ref="G2C"/><After ref="G2D"/></Node>
+      <Node id="VERIFY"><After ref="G4"/><After ref="G2R"/><After ref="G2C"/><After ref="G2D"/></Node>
+    </Dag>
+  </Schedule>
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-rounds="3" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

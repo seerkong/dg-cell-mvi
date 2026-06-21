@@ -1,0 +1,114 @@
+<behavior-patch capability="halfcode-schema-editor-vue-renderer" version="1">
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/controlled-presenter-registry">
+    <requirement id="controlled-presenter-registry">
+      <statement>The Vue schema-editor capsule SHALL resolve stable presenter ids through an explicitly composed UI-toolkit-neutral SchemaEditorPresenterRegistry without exposing ValueHost, session, runtime or persistence capabilities to presenter components.</statement>
+      <suite id="registry" name="Controlled presenter registry">
+        <case id="stable-id-resolution">
+          <given>A registry contains probe adapters for stable presenter ids</given>
+          <when>The recursive renderer resolves plan presenters</when>
+          <then>Each id SHALL resolve deterministically to its scoped adapter/component implementation and unknown ids SHALL produce diagnostics without an implicit raw fallback</then>
+        </case>
+        <case id="capability-isolation">
+          <given>A presenter component is mounted by the renderer</given>
+          <when>Its public props and emitted events are inspected</when>
+          <then>It SHALL receive renderer projection data and a normalized-event listener only, and SHALL NOT receive ValueHost, SchemaEditorSession, app runtime, host writer or global registry capabilities</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/recursive-plan-rendering">
+    <requirement id="recursive-plan-rendering">
+      <statement>The Vue renderer SHALL recursively render all EditorPlan node kinds from the current immutable accepted snapshot without reopening StructureSchema, rerunning dialect selection or mutating the plan.</statement>
+      <suite id="recursive-render" name="Recursive plan rendering">
+        <case id="all-node-kinds">
+          <given>A renderer-complete plan containing group, field, collection, map, union and custom nodes</given>
+          <when>The plan is rendered with probe presenters</when>
+          <then>The renderer SHALL project typed metadata, values, options, diagnostics and recursive children from EditorPlan and the accepted snapshot only</then>
+        </case>
+        <case id="missing-presenter">
+          <given>A plan references an unregistered presenter id</given>
+          <when>The renderer reaches that node</when>
+          <then>It SHALL fail closed with an observable diagnostic and SHALL NOT select JSON textarea or another implicit component</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/dynamic-wildcard-materialization">
+    <requirement id="dynamic-wildcard-materialization">
+      <statement>Collection and map rendering SHALL materialize immutable wildcard templates from each accepted snapshot using ordered concrete wildcard bindings and stable renderer-only Vue identities.</statement>
+      <suite id="templates" name="Dynamic collection and map templates">
+        <case id="nested-wildcards">
+          <given>A nested collection/map plan whose templates contain multiple wildcard segments</given>
+          <when>Accepted values are rendered and a nested presenter emits an event</when>
+          <then>Wildcards SHALL bind outer-to-inner to actual indexes or keys for value lookup and session dispatch without creating static plan children</then>
+        </case>
+        <case id="stable-render-identity">
+          <given>A collection uses property identity with ephemeral fallback or explicit ephemeral identity</given>
+          <when>deep-cloned accepted insert, remove, move and reorder snapshots are published</when>
+          <then>Valid unique property identities SHALL win and renderer-local fallback keys SHALL reconcile by descriptor-safe structural occurrence without entering domain values or ValueHost requests</then>
+        </case>
+        <case id="nested-render-identity">
+          <given>An outer collection reorder changes accepted array indexes while a nested collection retains the same projected outer item</given>
+          <when>The nested collection is rendered from the next accepted snapshot</when>
+          <then>Its identity scope SHALL use renderer-local outer keys while presenter events SHALL expose only actual ordered wildcard indexes or map keys</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/session-event-bridge">
+    <requirement id="session-event-bridge">
+      <statement>The renderer SHALL convert a descriptor-safe normalized presenter event into exactly one matching plan-owned Command template dispatch and SHALL rerender values only from SchemaEditorSession accepted projections.</statement>
+      <suite id="event-bridge" name="Normalized event to session dispatch">
+        <case id="matched-dispatch">
+          <given>A presenter emits a serializable event whose name matches one node Command binding</given>
+          <when>The event bridge runs</when>
+          <then>It SHALL call session.dispatch with that template, payload and current wildcard bindings, and SHALL NOT call ValueHost or apply the command locally</then>
+        </case>
+        <case id="fail-closed-event">
+          <given>An event is malformed, unknown or matches duplicate bindings</given>
+          <when>The event bridge runs</when>
+          <then>It SHALL fail closed observably and SHALL NOT dispatch a partial or guessed command</then>
+        </case>
+        <case id="accepted-only-render">
+          <given>A host request is pending, rejected, conflicted, stale or accepted</given>
+          <when>session state changes</when>
+          <then>Only the session's accepted snapshot SHALL change rendered values; pending and diagnostics MAY change presentation state without optimistic value mutation</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/canonical-shell-and-lifecycle">
+    <requirement id="canonical-shell-and-lifecycle">
+      <statement>The existing CanonicalHalfcodeRenderer SHALL resolve the sole schemaEditor.Editor atom through controlled component registry integration and SHALL own only Vue subscriptions and renderer-local projections.</statement>
+      <suite id="canonical-lifecycle" name="Canonical shell and Vue lifecycle">
+        <case id="real-canonical-shell">
+          <given>A real lowered Schema Editor source bundle and scoped runtime capabilities</given>
+          <when>The sources pass the real loader, compiler and app runtime and the existing canonical renderer mounts the resulting plan</when>
+          <then>The sole schemaEditor.Editor atom SHALL resolve to the Schema Editor shell without a parallel renderer, loader, runtime or lowering path</then>
+        </case>
+        <case id="subscription-cleanup">
+          <given>The shell is mounted, replaced, unmounted and remounted while host work may complete late</given>
+          <when>Vue lifecycle hooks run</when>
+          <then>Each mounted shell SHALL have exactly one active session subscription, old listeners SHALL be removed, and the shell SHALL NOT dispose a Scope-owned shared session</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-schema-editor-vue-renderer/requirements/renderer-ownership-boundaries">
+    <requirement id="renderer-ownership-boundaries">
+      <statement>The Vue schema-editor capsule SHALL depend only on public contract/support/Vue APIs and SHALL NOT own Element Plus presenters, Flow/XNL/VFS/database mutation, direct ValueHost execution, optimistic accepted state or a global registry.</statement>
+      <suite id="boundaries" name="Renderer ownership boundaries">
+        <case id="public-and-dependency-scan">
+          <given>The Vue package root, schema-editor source graph and tests</given>
+          <when>public-surface, dependency and forbidden-capability checks run</when>
+          <then>The capsule SHALL expose stable root APIs, preserve three-parameter processor boundaries and contain no deep imports or excluded ownership</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

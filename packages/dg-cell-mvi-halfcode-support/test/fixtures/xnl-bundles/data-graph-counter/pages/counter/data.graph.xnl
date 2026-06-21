@@ -1,0 +1,21 @@
+<DataGraph #counter-graphs [
+  <GraphModule #counter.core {
+    src = "vfs://./graph-code/counter.graph.types.ts#CounterGraphModule"
+  } (
+    <Slots (
+      <State [
+        <SignalNode #count {
+          initial = 0
+        }>
+      ]>
+      <Outputs [
+        <ComputedNode #value {
+          deps = ["state.count"]
+        }>
+        <ComputedNode #label {
+          deps = ["state.count"]
+        }>
+      ]>
+    )>
+  )>
+]>

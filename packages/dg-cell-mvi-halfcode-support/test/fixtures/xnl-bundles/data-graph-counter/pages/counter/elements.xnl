@@ -1,0 +1,13 @@
+<Elements #counter-page-elements (
+  <Scope ref="counter-page">
+) [
+  <h1 #counter-title { text = "Counter Graph Demo" }>
+  <elementPlus.Statistic #counter-value {
+    value = "scope-data-graph://#counter/outputs.value"
+    title = "scope-data-graph://#counter/outputs.label"
+  }>
+  <elementPlus.ElButton #increment-button {
+    text = "+1"
+    command = "command://#counter.increment"
+  }>
+]>

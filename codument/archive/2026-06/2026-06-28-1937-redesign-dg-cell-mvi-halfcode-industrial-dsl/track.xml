@@ -1,0 +1,390 @@
+<Track id="redesign-dg-cell-mvi-halfcode-industrial-dsl" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>将 dg-cell-mvi-halfcode 重设计为符合 DEPA 与 dg-cell-mvi 产品线工业化方向的 canonical DSL、compiler、runtime preview 与 authoring artifact pipeline。</Goal>
+    <Description>重构 halfcode contract/logic/support/vue/element-plus/web 边界，隔离 legacy schema，建立产品物料与编译层。</Description>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-06-27T18:00:14Z</CreatedAt>
+    <UpdatedAt>2026-06-28T16:37:30Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_redesign-dg-cell-mvi-halfcode-industrial-dsl" name="redesign-dg-cell-mvi-halfcode-industrial-dsl" version="1">
+    <Description>按产品线契约、编译流水线、runtime ownership、CRUD/admin material compilers、authoring artifact pipeline、compatibility quarantine 六个切片重设计 halfcode DSL。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="产品线契约与 legacy 隔离" status="DONE" order="0">
+        <Description>建立 canonical HalfcodeDocument 与 material contract，隔离 LegacyHalfcodeSchema。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>canonical 类型、legacy 类型和 compiler 类型边界清晰</cdt:Criterion>
+          <cdt:Criterion>旧 demo 输入仍有兼容入口</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="设计并新增 canonical document 类型" status="DONE" order="0" priority="P0">
+            <Description>新增 HalfcodeDocument、ProductSpec、ModuleSpec、StateModelSpec、ResourceSpec、EffectSpec、ExtensionSpec。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">canonical contract 不包含函数、direct fetch、component constructor 或任意顶层逃逸字段</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="设计并新增 material 类型" status="DONE" order="1" priority="P0">
+            <Description>新增 AdminShellMaterial、CrudMaterial、ViewMaterial、WorkflowMaterial 与公共 material identity/version 字段。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">material 类型可序列化且 UI-library neutral</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="隔离 legacy schema" status="DONE" order="2" priority="P0">
+            <Description>将现有 HalfcodeSchema 明确降级为 LegacyHalfcodeSchema 或 compatibility input，并维持旧导出兼容策略。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">canonical surface 不依赖 LegacyHalfcodeSchema</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.4" name="补 contract 边界测试" status="DONE" order="3" priority="P0">
+            <Description>覆盖 canonical contract 的不可包含项、legacy 隔离和 package dependency boundary。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="DSL compiler pipeline" status="DONE" order="1">
+        <Description>实现 legacy/raw input 到 canonical document，再到 typed plans 的编译流水线。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>P1 的 canonical contract 已稳定</cdt:Criterion>
+          <cdt:Criterion>compiler diagnostics 可定位 unsupported legacy feature</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="新增 compiler 输入输出契约" status="DONE" order="0" priority="P0">
+            <Description>定义 CompileInput、CompileResult、Diagnostics、RenderPlan、CrudPlan、AdminShellPlan、EffectPlan。</Description>
+          </Task>
+          <Task id="T2.2" name="实现 legacy/raw 到 canonical parser" status="DONE" order="1" priority="P0">
+            <Description>把现有 legacy HalfcodeSchema 和 Halfcode 入口收敛到 compiler/legacy adapter。</Description>
+          </Task>
+          <Task id="T2.3" name="实现 document validation" status="DONE" order="2" priority="P0">
+            <Description>校验 canonical document 的事实层、owner、effect descriptor、material 引用与 extension 边界。</Description>
+          </Task>
+          <Task id="T2.4" name="实现 material projectors" status="DONE" order="3" priority="P0">
+            <Description>从 canonical document 派生 RenderPlan、CrudPlan、AdminShellPlan、EffectPlan。</Description>
+          </Task>
+          <Task id="T2.5" name="补 compiler 测试" status="DONE" order="4" priority="P0">
+            <Description>覆盖 legacy migration、diagnostics、render plan、crud/admin plan、unsupported feature。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="runtime ownership 与 binding plan" status="DONE" order="2">
+        <Description>把 schema seed、live runtime state、binding path、event dispatch 的 owner 边界收口到 MVI。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>runtime state 只由 MVI events 写入</cdt:Criterion>
+          <cdt:Criterion>renderer 不拥有 raw path 语义</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="定义 StateModelSpec 映射" status="DONE" order="0" priority="P0">
+            <Description>定义 state field、owner、默认快照、reset/load 语义到 dg-cell-mvi-core state graph 的映射。</Description>
+          </Task>
+          <Task id="T3.2" name="收敛 schema seed 行为" status="DONE" order="1" priority="P0">
+            <Description>避免 schema 更新隐式覆盖 live runtime state，改为显式 load/reset event。</Description>
+          </Task>
+          <Task id="T3.3" name="定义 typed binding plan" status="DONE" order="2" priority="P0">
+            <Description>把 legacy raw path string 降级到 compiler 处理，canonical path 使用 typed binding plan。</Description>
+          </Task>
+          <Task id="T3.4" name="更新 Vue binding/preview runtime" status="DONE" order="3" priority="P1">
+            <Description>让 canonical preview 通过 event/command 写入，而不是 renderer-local path 决策。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="CRUD 与 admin material compilers" status="DONE" order="3">
+        <Description>把 halfcode 产品物料编译到现有 dg-cell-mvi-crud 与 admin chassis 能力。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Element Plus adapter 不再拥有 direct fetch/request closure</cdt:Criterion>
+          <cdt:Criterion>CRUD/admin runtime 能力复用现有包</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="实现 CrudMaterial compiler" status="DONE" order="0" priority="P0">
+            <Description>将 CrudMaterial 编译为 dg-cell-mvi-crud options plan、resource descriptors 和 effect descriptors。</Description>
+          </Task>
+          <Task id="T4.2" name="拆分 Halfcode-to-CRUD adapter" status="DONE" order="1" priority="P0">
+            <Description>把 request/hook construction 从 halfcode-element-plus 移到 compiler/support boundary。</Description>
+          </Task>
+          <Task id="T4.3" name="实现 AdminShellMaterial compiler" status="DONE" order="2" priority="P1">
+            <Description>将 route/menu/permission/settings/theme/i18n shell material 编译到 admin chassis 输入。</Description>
+          </Task>
+          <Task id="T4.4" name="收窄 element-plus 包职责" status="DONE" order="3" priority="P0">
+            <Description>Element Plus 包只保留 material registry、preview shell 与 Element-specific render adapter。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="authoring artifact pipeline" status="DONE" order="4">
+        <Description>建立编辑命令、document mutation、artifact port、XNL/VFS 候选接入和 preview loop。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>编辑器不直接持久化 UI JSON 或 VNode/schema</cdt:Criterion>
+          <cdt:Criterion>artifact IO 通过 support port 注入</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="定义 ArtifactPort" status="DONE" order="0" priority="P0">
+            <Description>定义 load/save/diff/mutate/list/import 等 artifact IO seam，保持 contract 层无具体 IO。</Description>
+          </Task>
+          <Task id="T5.2" name="实现基础 artifact adapter" status="DONE" order="1" priority="P1">
+            <Description>提供 memory 或 browser storage adapter；XNL/VFS adapter 根据范围做最小实现或预留。</Description>
+          </Task>
+          <Task id="T5.3" name="定义 authoring command 与 document mutation" status="DONE" order="2" priority="P0">
+            <Description>编辑器命令产出 document mutation 或 artifact mutation，preview 消费 compiler derived plans。</Description>
+          </Task>
+          <Task id="T5.4" name="连接 preview loop" status="DONE" order="3" priority="P1">
+            <Description>document mutation -> compiler affected plans -> MVI preview runtime。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P6" name="compatibility quarantine 与验收收口" status="DONE" order="5">
+        <Description>隔离旧 Render/Halfcode/expression 入口，补 demo/test/docs，并通过 gap-loop 验收。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>legacy 输入通过 compat adapter 进入</cdt:Criterion>
+          <cdt:Criterion>canonical demo 使用 HalfcodeDocument 与 derived plans</cdt:Criterion>
+          <cdt:Criterion>关键测试和 demo 覆盖新旧路径</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T6.1" name="整理 legacy adapter" status="DONE" order="0" priority="P0">
+            <Description>旧 Render、Halfcode、legacy expression 只在 legacy/compat 路径出现。</Description>
+          </Task>
+          <Task id="T6.2" name="新增 canonical demos" status="DONE" order="1" priority="P1">
+            <Description>新增 canonical HalfcodeDocument 和 compiled plan preview demo，旧 demo 继续验证兼容。</Description>
+          </Task>
+          <Task id="T6.3" name="补集成测试与类型检查" status="DONE" order="2" priority="P0">
+            <Description>覆盖 contract/compiler/runtime/CRUD/admin/artifact/compat 关键链路；记录无法收口的 workspace baseline 问题。</Description>
+          </Task>
+          <Task id="T6.4" name="更新分析与实现文档" status="DONE" order="3" priority="P1">
+            <Description>将稳定设计收敛进 track analysis、proposal/design 后续修订或 owner 文档候选。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P7" name="XNL core artifact pipeline 与核心/扩展域分离补齐" status="DONE" order="6">
+        <Description>补齐用户明确要求的 xnl.ts core/path/mutation/loader/import 能力复用，并沿用 flow-editor-mvi/pipeline-debug 的 core XNL + halfcodeExt/graphExt 分域思想。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>halfcode canonical core 能以 xnl-core XNL 文本表示、解析、格式化与 roundtrip</cdt:Criterion>
+          <cdt:Criterion>document mutation 使用 xnl-core path/mutation 能力生成或应用变更证据</cdt:Criterion>
+          <cdt:Criterion>xnl-core loader/import 被真实调用，支持 prefab/export/import 的低代码物料扩展</cdt:Criterion>
+          <cdt:Criterion>halfcode artifact 明确分离 core XNL 与 halfcodeExt/graphExt 扩展域，扩展不反写 canonical core</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T7.1" name="新增 XNL DSL codec" status="DONE" order="0" priority="P0">
+            <Description>在 support 层实现 HalfcodeDocument 与 xnl-core XNL 文本/AST 的 parse/stringify/roundtrip codec。</Description>
+          </Task>
+          <Task id="T7.2" name="接入 xnl-core path/mutation" status="DONE" order="1" priority="P0">
+            <Description>将 authoring artifact mutation 映射到 xnl-core path/mutation/diff/apply 能力，并输出 XNL mutation 证据。</Description>
+          </Task>
+          <Task id="T7.3" name="接入 xnl-core loader/import" status="DONE" order="2" priority="P0">
+            <Description>支持 XNL Prefabs/export 与 Imports resolver，验证物料定义可从 vfs:// 风格源导入。</Description>
+          </Task>
+          <Task id="T7.4" name="实现 core/extension 三域 artifact port" status="DONE" order="3" priority="P0">
+            <Description>参照 flow-editor-mvi/pipeline-debug，将 core XNL、halfcodeExt、graphExt 作为独立 artifact 域载入/保存，保持 DEPA 事实源边界。</Description>
+          </Task>
+          <Task id="T7.5" name="补 XNL 集成验收测试与文档证据" status="DONE" order="4" priority="P0">
+            <Description>覆盖 parse/stringify、path resolve/set、mutation diff/apply、loader prefab、import resolver、三域分离，并更新 findings。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P8" name="XNL-only asset bundle 与 folder loader" status="DONE" order="7">
+        <Description>新增只接受 XNL 配置的 halfcode asset bundle/folder loader，统一 core、halfcodeExt、graphExt 与 imports 的 xnl-core loader/import/path 规范，并用多个 bundle E2E 验证可驱动 admin shell + CRUD plans。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>bundle/folder loader 能从 vfs://@/、vfs://./、vfs://../ 路径读取 XNL-only 制品</cdt:Criterion>
+          <cdt:Criterion>bundle manifest、core、halfcodeExt、graphExt 均使用 XNL 数据格式，不引入 JSON/XML 配置</cdt:Criterion>
+          <cdt:Criterion>loader 真实调用 xnl-core import/loader，并将 bundle 编译为 HalfcodeDocument 与扩展域</cdt:Criterion>
+          <cdt:Criterion>多个 asset bundle E2E 测试能编译出 admin shell + CRUD plans</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T8.1" name="定义 XNL-only bundle contract" status="DONE" order="0" priority="P0">
+            <Description>定义 HalfcodeXnlAssetBundle、BundleManifest、BundleResolver、BundleLoadResult，约束 manifest/ext/core 均为 XNL。</Description>
+          </Task>
+          <Task id="T8.2" name="实现 folder loader 与 vfs path 解析" status="DONE" order="1" priority="P0">
+            <Description>在 support 层实现 loadHalfcodeXnlAssetBundle，支持 vfs://@/、vfs://./、vfs://../ 与 bundle 相对路径。</Description>
+          </Task>
+          <Task id="T8.3" name="实现 XNL ext codec 与 import/loader 集成" status="DONE" order="2" priority="P0">
+            <Description>解析 app.halfcodeExt.xnl、app.graphExt.xnl，并对 core XNL 运行 xnl-core import/loader，禁止 JSON/XML 配置入口。</Description>
+          </Task>
+          <Task id="T8.4" name="编写多个 asset bundle fixtures" status="DONE" order="3" priority="P0">
+            <Description>新增至少两个 XNL-only bundle：基础 admin CRUD 与含 shared import/prefab 的 admin CRUD。</Description>
+          </Task>
+          <Task id="T8.5" name="编写 bundle E2E 测试" status="DONE" order="4" priority="P0">
+            <Description>覆盖 folder load -> XNL parse/import/loader -> HalfcodeDocument -> compileHalfcode -> adminShellPlans/crudPlans/renderPlans。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P9" name="DEPA 对齐的 bundle domain registry 与 runtime profile DSL" status="DONE" order="8">
+        <Description>修正 P8 中 halfcodeExt/graphExt 固定域、runtime 粗分域和 adapter ctx 签名等 DEPA gap，建立基于 MaterialBundle domain registry 的 bundle DSL、拆分 runtime config/state-seed/profile，并将 adapter 统一为外部脚本引用的 Processor。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>bundle manifest 不再依赖 halfcodeExt/graphExt 固定字段，改为 Ports/MaterialBundle domain registry</cdt:Criterion>
+          <cdt:Criterion>runtime 域拆分为 app.config.xnl、app.state-seed.xnl、app.runtime-profile.xnl，state seed 不作为 live state 真源</cdt:Criterion>
+          <cdt:Criterion>RuntimeProfile adapter 只通过 vfs src 引用外部脚本，统一表达为 run(runtime,input,config)-&gt;output 的 Processor，不保留内联 adapter</cdt:Criterion>
+          <cdt:Criterion>loader 返回 domains map，compiler 只消费 halfcode-core，editor/dev/runtime domains 不反写 core</cdt:Criterion>
+          <cdt:Criterion>E2E 覆盖新 fixtures、domain loading、adapter src validation 与 admin/CRUD compile</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T9.1" name="重构 bundle manifest contract 为 domain registry" status="DONE" order="0" priority="P0">
+            <Description>更新 support loader 的 manifest 类型与解析逻辑，支持 HalfcodeBundle + Ports/MaterialBundle，识别 halfcode-core 与任意 XNL domain 文件。</Description>
+          </Task>
+          <Task id="T9.2" name="拆分 runtime 与 editor/dev fixture domains" status="DONE" order="1" priority="P0">
+            <Description>迁移 fixtures：新增 app.config.xnl、app.state-seed.xnl、app.runtime-profile.xnl、editor.workspace.xnl、dev.fixtures.xnl；删除固定 app.halfcodeExt.xnl/app.graphExt.xnl 依赖。</Description>
+          </Task>
+          <Task id="T9.3" name="实现 RuntimeProfile adapter src 校验" status="DONE" order="2" priority="P0">
+            <Description>解析 runtime-profile 中 Processing/Adapter，校验 stage/lang/src/entry 和 vfs 路径，只解析不执行，禁止内联 adapter。</Description>
+          </Task>
+          <Task id="T9.4" name="更新 loader 返回结构与兼容边界" status="DONE" order="3" priority="P0">
+            <Description>返回 core/document/domains，保留必要兼容字段时明确标记 deprecated；compileHalfcode E2E 只从 halfcode-core document 进入。</Description>
+          </Task>
+          <Task id="T9.5" name="补 DEPA 分域 E2E 测试" status="DONE" order="4" priority="P0">
+            <Description>覆盖新 bundle folder load、vfs imports、runtime/editor/dev domain loading、adapter src validation、不执行 adapter、admin shell + CRUD plans。</Description>
+          </Task>
+          <Task id="T9.6" name="更新 track 证据与收口校验" status="DONE" order="5" priority="P1">
+            <Description>更新 findings，运行 halfcode 测试矩阵、codument validate 与 diff check。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P10" name="Element / Scope / Contract / Intent DSL 契约重设计" status="DONE" order="9">
+        <Description>将 halfcode core 从物料列表升级为 Element 树 DSL，并建立 Scope、frontend ElementContract 与 Intent 冒泡的 canonical contract；Contract 不再使用 input/output。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>app.halfcode.xnl 的目标职责收敛为 Element tree + refs，不再承载 runtime/effect/resource/editor/dev 杂项</cdt:Criterion>
+          <cdt:Criterion>page、component、capsule 均被建模为复合 Element；atomic element、children、slots 有统一机制</cdt:Criterion>
+          <cdt:Criterion>Scope 作为 runtime/config/state/effects/intents 封装边界，全部通过外部 XNL ref 表达</cdt:Criterion>
+          <cdt:Criterion>frontend Contract 仅包含 props、slots、accepted intents、emitted intents、exposes，不出现 input/output</cdt:Criterion>
+          <cdt:Criterion>Intent consume/bubble/unhandled diagnostics 的 contract 与编译目标明确</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T10.1" name="定义 Element tree canonical 类型" status="DONE" order="0" priority="P0">
+            <Description>新增或修订 PageElement、ComponentElement、CapsuleElement、AtomicElement、Children、Slots、ElementRef 等 contract 类型，保留可序列化 XNL 表达。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T10.1-AC1" checked="true">复合 Element 和原子 Element 共用统一 identity/ref/contractRef/scopeRef 机制</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T10.2" name="定义 Scope registry 与外部 domain refs" status="DONE" order="1" priority="P0">
+            <Description>定义 Scope、ScopeRef、Scope parent、runtimeProfileRef、configRef/configDefRef、stateSeedRef/stateDefRef、effectsRef/effectsDefRef、intentsRef/intentsDefRef 等字段。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T10.2-AC1" checked="true">Scope 中不内联 runtime/config/state/effects/intents 具体定义，只保存 ref</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T10.3" name="定义 frontend ElementContract" status="DONE" order="2" priority="P0">
+            <Description>定义 ElementContract、propsDefRef、slotsDefRef、acceptsRef、emitsRef、exposesRef，并移除或禁止 frontend contract input/output 语义。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T10.3-AC1" checked="true">contract 类型、fixtures、测试中不出现 frontend Contract.input 或 Contract.output 字段</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T10.4" name="定义 Intent registry 与冒泡策略" status="DONE" order="3" priority="P0">
+            <Description>定义 Intent、IntentPolicy、OnIntent、consume/bubble/transform/reject/unhandled diagnostics，并映射到 MVI command/event/effect request plan。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T10.4-AC1" checked="true">至少覆盖 consume、bubble、unhandled 三种 intent 处理结果的结构测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T10.5" name="更新 XNL codec 支持新 DSL 节点" status="DONE" order="4" priority="P0">
+            <Description>让 support XNL codec 能 parse/stringify/roundtrip ElementTree、Scopes、ElementContracts、Intents 的 XNL 数据格式。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P11" name="Bundle domain 拆分与 fixtures 迁移" status="DONE" order="10">
+        <Description>按新 Element/Scope/Contract/Intent 设计迁移 XNL bundle fixtures，移除 app.halfcode.xnl 中的 effects/resource/http/editor/dev 杂项，并补齐 config/state/effects/intents/contracts 等独立 domain。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>bundle.xnl 显式注册 halfcode-core、halfcode-scopes、halfcode-contracts、runtime-config、runtime-state-seed、runtime-profile、runtime-effects、halfcode-intents 等 domain</cdt:Criterion>
+          <cdt:Criterion>app.halfcode.xnl 主要表达 ElementTree 和 refs，不保存 effects、HTTP method/path、resource request 实现或 editor/dev 数据</cdt:Criterion>
+          <cdt:Criterion>fixtures 全部保持 XNL-only，不引入 JSON/XML 配置入口</cdt:Criterion>
+          <cdt:Criterion>至少两个 bundle fixture 覆盖 Page 独立挂载和内嵌 admin shell 两种形态</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T11.1" name="扩展 bundle manifest domain registry" status="DONE" order="0" priority="P0">
+            <Description>更新 loader domain allowlist/validation，识别 halfcode-scopes、halfcode-contracts、halfcode-contract-defs、runtime-config-def、runtime-state-def、runtime-effects、runtime-effects-def、halfcode-intents、halfcode-intent-defs。</Description>
+          </Task>
+          <Task id="T11.2" name="迁移 basic-admin bundle" status="DONE" order="1" priority="P0">
+            <Description>将 basic-admin 改为 app.halfcode.xnl ElementTree + app.scopes.xnl/app.contracts.xnl/app.intents.xnl/app.effects.xnl 等外部 domain。</Description>
+          </Task>
+          <Task id="T11.3" name="迁移 import-admin bundle 与 shared prefab" status="DONE" order="2" priority="P0">
+            <Description>保留 xnl-core import/loader 能力，验证 shared prefab 可用于 Element tree、Scope 或 Contract domain，而不是只服务旧 CrudMaterial。</Description>
+          </Task>
+          <Task id="T11.4" name="新增 page-as-component 或 embedded-admin fixture" status="DONE" order="3" priority="P1">
+            <Description>新增一个 fixture，覆盖 Page 可独立页面也可作为 admin shell 子树内嵌的语义。</Description>
+          </Task>
+          <Task id="T11.5" name="补 fixture 结构扫描测试" status="DONE" order="4" priority="P0">
+            <Description>扫描 xnl-bundles，确保 app.halfcode.xnl 不含 runtime/effects/resource/http/editor/dev 杂项，Contract 不含 input/output，配置目录无 JSON/XML。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P12" name="Element DSL 编译投影与验收收口" status="DONE" order="11">
+        <Description>将新 Element/Scope/Contract/Intent DSL 接入 compiler/runtime projection，产出 render/admin/crud/intent binding plans，并通过 E2E 验证 asset bundle 可驱动 admin 壳与 CRUD 应用。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>compileHalfcode 或新 compiler path 能从 ElementTree 派生 RenderPlan/AdminShellPlan/CrudPlan</cdt:Criterion>
+          <cdt:Criterion>Scope refs 能在编译阶段解析到 runtime/config/state/effects/intents domains，但 live state owner 仍归 MVI runtime</cdt:Criterion>
+          <cdt:Criterion>Intent binding plan 覆盖消费、冒泡、未处理 diagnostics，不静默丢弃 intent</cdt:Criterion>
+          <cdt:Criterion>旧 CrudMaterial 兼容路径被隔离或明确迁移，不再作为新 app.halfcode.xnl 的核心形态</cdt:Criterion>
+          <cdt:Criterion>低代码四包测试矩阵、bundle E2E、codument validate 均通过或记录明确环境限制</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T12.1" name="实现 ElementTree 到 RenderPlan 投影" status="DONE" order="0" priority="P0">
+            <Description>从 Page/Component/Capsule/AtomicElement 树生成 renderer 可消费的 typed render plan，保持 renderer 不解释 raw XNL path。</Description>
+          </Task>
+          <Task id="T12.2" name="实现 Page/admin shell 投影" status="DONE" order="1" priority="P0">
+            <Description>将 PageElement route/title/admin embedding 语义投影到 AdminShellPlan，并支持 page standalone 与 admin embedded 两类装配。</Description>
+          </Task>
+          <Task id="T12.3" name="实现 CRUD component 迁移投影" status="DONE" order="2" priority="P0">
+            <Description>将旧 CrudMaterial 的运行时行为迁移为 ComponentElement + Scope + effects/intents/config/state domain 的组合投影，必要时保留 legacy adapter diagnostics。</Description>
+          </Task>
+          <Task id="T12.4" name="实现 Intent binding plan" status="DONE" order="3" priority="P0">
+            <Description>编译 Element Contract 与 IntentPolicy，产出 typed intent binding plan，覆盖 consume、bubble、transform/reject 与 unhandled diagnostics。</Description>
+          </Task>
+          <Task id="T12.5" name="补 E2E 与回归测试矩阵" status="DONE" order="4" priority="P0">
+            <Description>覆盖 folder load -> domains resolve -> ElementTree compile -> admin shell + CRUD plans + intent diagnostics；复跑 halfcode contract/logic/support/element-plus 测试。</Description>
+          </Task>
+          <Task id="T12.6" name="更新 findings/reports 并收口校验" status="DONE" order="5" priority="P1">
+            <Description>将实现证据写回 findings/reports，运行 codument validate 与 diff check；如发现 DEPA 偏离，触发 gap-loop。</Description>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

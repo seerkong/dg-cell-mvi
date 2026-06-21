@@ -1,0 +1,58 @@
+<Track id="add-halfcode-scope-runtime-assembly" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>实现 RuntimeInstance 到 scope runtime object 的可执行装配层。</Goal>
+    <Description>G2-T3：基于 loader projection 创建/派生 runtime object，并绑定 Scope.runtime。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-04T17:07:59Z</CreatedAt>
+    <UpdatedAt>2026-07-04T17:09:52Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="support-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-scope-runtime-assembly" name="add-halfcode-scope-runtime-assembly" version="1">
+    <Description>Executable runtime object assembly.</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Assembly API" status="DONE" order="0">
+        <Description>Add support module and exports.</Description>
+        <SubNodes>
+          <Task id="T1.1" name="Add runtime assembly module" status="DONE" order="0">
+            <Description>Implement assembleHalfcodeRuntimeUnit and typed options/result.</Description>
+          </Task>
+          <Task id="T1.2" name="Export runtime assembly API" status="DONE" order="1">
+            <Description>Export functions/types from package root.</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Runtime semantics" status="DONE" order="1">
+        <Description>Implement src/create/prototype and scope binding semantics.</Description>
+        <SubNodes>
+          <Task id="T2.1" name="Assemble RuntimeInstance objects" status="DONE" order="0">
+            <Description>Resolve src/create/derive and call factories with output = fn(runtime, input, config).</Description>
+          </Task>
+          <Task id="T2.2" name="Bind Scope.runtime objects" status="DONE" order="1">
+            <Description>Resolve runtime:// refs and call bindScope/deriveScope when available.</Description>
+          </Task>
+          <Task id="T2.3" name="Emit runtime diagnostics" status="DONE" order="2">
+            <Description>Report missing symbols, missing prototypes, protocol mismatch and scope binding failures.</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Tests" status="DONE" order="2">
+        <Description>Add runtime assembly tests and run package tests.</Description>
+        <SubNodes>
+          <Task id="T3.1" name="Add assembly tests" status="DONE" order="0">
+            <Description>Cover create, derive, src, scope binding and diagnostics.</Description>
+          </Task>
+          <Task id="T3.2" name="Run tests" status="DONE" order="1">
+            <Description>Run support tests.</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Hooks/>
+</Track>

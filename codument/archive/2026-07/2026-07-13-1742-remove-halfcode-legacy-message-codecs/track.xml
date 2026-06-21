@@ -1,0 +1,86 @@
+<Track id="remove-halfcode-legacy-message-codecs" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>彻底删除 halfcode 与 active full-code API 中的 Intent 兼容层和旧词汇。</Goal>
+    <Description>Command/Event 成为唯一活动协议；删除旧 codec、旧 fixture、旧 contract 分支，并将仍在使用的命令分发 API 改名为 commands。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-13T00:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-13T14:42:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="halfcode-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="crud-api" domain="code" path="vfs://@/packages/dg-cell-mvi-crud/"/>
+    <MaterialBundle role="output" name="workbench" domain="code" path="vfs://@/../ai/eidolon/eidolon-workbench/"/>
+  </Ports>
+  <TaskSpace id="space_remove-halfcode-legacy-message-codecs" name="remove-halfcode-legacy-message-codecs" version="1">
+    <Description>删除 active Intent compatibility surface，迁移仍在用的 command-dispatch APIs，并验证两仓库。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contract 与 codec 清理" status="DONE" order="0">
+        <Description>从 contract、refs、diagnostics、XNL loader/asset/artifact/compiler 中移除 Intent 模型和兼容分支。</Description>
+        <cdt:Gate><cdt:Criterion>active halfcode contract/support/logic 不再暴露或解析 Intent vocabulary</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="补充清理红测试" status="DONE" order="0" priority="P0">
+            <Description>调整 contract/support/logic 测试，使其证明旧兼容导出和旧 domain 不存在，并保持 canonical Command/Event 正例。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T1.1-AC1" checked="true">测试覆盖 no legacy export、canonical Command/Event 和 malformed canonical declarations</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="删除 Intent contract 与 loader 分支" status="DONE" order="1" priority="P0">
+            <Description>删除旧类型、域别名、专用诊断、legacy scope/contract/wiring reader 和 asset/artifact Intent projections。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T1.2-AC1" checked="true">三包生产源码不含 Intent type、legacy domain、intents scheme 或专用 compatibility branch</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Fixture 与旧测试删除" status="DONE" order="1">
+        <Description>删除历史 fixture 树和旧 codec 测试，让 canonical xnl-bundles 成为唯一示例来源。</Description>
+        <cdt:Gate><cdt:Criterion>canonical fixtures 全部使用 Command/Event 且所有相关回归测试通过</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="删除历史 fixture 与专属测试" status="DONE" order="0" priority="P0">
+            <Description>移除 xnl-bundles-legacy、xnl-unit-bundles 和仅服务于它们的旧测试/fixture 引用。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.1-AC1" checked="true">旧 fixture 目录和旧 Intent XNL 不再存在，canonical bundle loader tests 覆盖所有样本</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="更新 halfcode 回归测试" status="DONE" order="1" priority="P0">
+            <Description>保留 Command/Event 正反例、runtime-first handler、identity wire 和 malformed declaration 验证，去除旧 Intent 文本。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.2-AC1" checked="true">support、contract、logic tests 全部通过且无旧词汇 fixture</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Active API vocabulary migration" status="DONE" order="2">
+        <Description>将全代码 CRUD 和 workbench flow-editor 中仍暴露的 intents 命令分发 API 改为 commands。</Description>
+        <cdt:Gate><cdt:Criterion>active consumers 使用 commands/CrudCommands/EmitCommand，行为保持不变</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="迁移 dg-cell-mvi command APIs" status="DONE" order="0" priority="P0">
+            <Description>迁移 CRUD contract、Vue adapter、Element Plus components/admin examples 的 intents 参数、类型、返回字段与注释。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.1-AC1" checked="true">dg-cell-mvi active source 不再暴露 CrudIntents 或 intents command-dispatch property</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="迁移 workbench command APIs" status="DONE" order="1" priority="P0">
+            <Description>迁移 flow editor runtime、pipeline-debug view/contract 和 graph command ids 的 Intent 命名。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.2-AC1" checked="true">workbench active source 不再暴露 Intent/EmitIntent/makeIntent 或 core.intents</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P4" name="全量验证与残留封口" status="DONE" order="3">
+        <Description>执行两个仓库的相关测试、类型/构建检查和 active root 残留扫描。</Description>
+        <cdt:Gate><cdt:Criterion>active source/docs/fixtures 扫描无 Intent vocabulary，测试和 XML 校验通过</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="运行 package 与 workbench 验证" status="DONE" order="0" priority="P0">
+            <Description>运行 halfcode contract/support/logic、CRUD/Vue/Element Plus 和 workbench flow-editor 的可用测试命令，记录缺失验证。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.1-AC1" checked="true">所有受影响测试通过或每个无法运行项有明确证据说明</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="active vocabulary scan 与 Codument 收口" status="DONE" order="1" priority="P0">
+            <Description>扫描 active source/docs/fixtures，校验 track XML/delta，更新 findings、verification 和 track status。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.2-AC1" checked="true">active roots 无旧 Intent vocabulary，codument validate strict 通过</cdt:Criterion></cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

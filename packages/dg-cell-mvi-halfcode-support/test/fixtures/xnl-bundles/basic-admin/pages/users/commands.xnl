@@ -1,0 +1,8 @@
+<Commands #users-page-commands [
+  <Command #users.search {
+    payloadDef = "command-def://#users.search"
+    handler = "vfs://./command-handlers/users.command-handlers.ts#searchUsers"
+  }>
+  <Command #users.filter.reset { payloadDef = "command-def://#users.filter.reset" }>
+  <Command #users.refresh>
+]>

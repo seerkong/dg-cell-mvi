@@ -1,0 +1,8 @@
+<DevFixtures #import-admin-fixtures {
+  mockRecords = {
+    orders-table = [
+      { id = "o-1" name = "Order A" score = 91 status = "paid" }
+      { id = "o-2" name = "Order B" score = 78 status = "pending" }
+    ]
+  }
+}>

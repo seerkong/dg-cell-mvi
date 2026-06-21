@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "test/schemaEditorBoundary.test.ts",
+    "test/schemaEditorCanonicalComposition.typecheck.ts",
+    "test/schemaEditorPresenterRegistry.typecheck.ts"
+  ]
+}

@@ -1,0 +1,60 @@
+<behavior-patch capability="halfcode-message-cleanup" version="1">
+  <upsert selector="behavior://halfcode-message-cleanup/requirements/no-intent-compatibility">
+    <requirement id="no-intent-compatibility">
+      <statement>Active halfcode contracts, loaders, codecs, compilers, fixtures, and runtime assembly SHALL contain no Intent compatibility model, alias, domain, URI scheme, or dedicated retired-vocabulary branch.</statement>
+      <suite id="canonical-boundary" name="Canonical boundary">
+        <case id="command-event-only">
+          <given>a canonical FrontendApp or unit bundle is loaded</given>
+          <when>the loader builds contract and runtime inputs</when>
+          <then>only Command/Event/Message vocabulary SHALL be present in the active model</then>
+        </case>
+        <case id="no-retired-codec">
+          <given>the support and logic packages are compiled</given>
+          <when>their public exports and source are inspected</when>
+          <then>no Intent type, legacy domain, or compatibility codec SHALL be exported or referenced</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-message-cleanup/requirements/sole-canonical-fixtures">
+    <requirement id="sole-canonical-fixtures">
+      <statement>Canonical test fixtures SHALL use only Commands, Events, commands://, events://, Sends, MessagePolicy, and identity-preserving Wire.message; historical Intent fixture directories SHALL be removed.</statement>
+      <suite id="fixture-regression" name="Fixture regression">
+        <case id="all-canonical-bundles-load">
+          <given>the canonical xnl-bundles sample set</given>
+          <when>support tests load every sample</when>
+          <then>the bundles SHALL load and retain runtime-first Command and Event behavior</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-message-cleanup/requirements/active-command-api">
+    <requirement id="active-command-api">
+      <statement>Active full-code command-dispatch APIs SHALL use commands terminology, including CRUD adapters and flow-editor runtime objects; AppEvent SHALL remain the generic value envelope.</statement>
+      <suite id="api-naming" name="Active command API">
+        <case id="crud-commands">
+          <given>a full-code CRUD consumer creates a Vue or Element Plus adapter</given>
+          <when>it receives the dispatch API</when>
+          <then>the API SHALL expose CrudCommands through a commands property</then>
+        </case>
+        <case id="flow-commands">
+          <given>a workbench flow editor invokes a runtime command</given>
+          <when>the command is sent to the graph/runtime boundary</when>
+          <then>the public runtime object SHALL expose commands and command-named helpers</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-message-cleanup/requirements/no-active-token-residue">
+    <requirement id="no-active-token-residue">
+      <statement>After cleanup, active source, halfcode documentation, and canonical fixtures SHALL contain no retired Intent vocabulary; Codument audit history MAY retain it as historical record only.</statement>
+      <suite id="residue-scan" name="Retired vocabulary scan">
+        <case id="scan-active-roots">
+          <given>the active source, docs, and fixture roots of both repositories</given>
+          <when>a case-insensitive scan searches for Intent, OnIntent, IntentPolicy, intents://, or related fields</when>
+          <then>the scan SHALL return no matches outside the explicit track being implemented</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

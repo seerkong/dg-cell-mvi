@@ -1,0 +1,219 @@
+<behaviors capability="halfcode-flow-units" version="1">
+  <requirement id="heterogeneous-app-bundle">
+    <statement>Halfcode SHALL 使用 AppBundle 注册 page、component、ctrl-flow 与 data-flow 一等单元，并以 Unit kind、目标根 tag 和 FQN 的一致性作为 canonical identity contract。</statement>
+    <suite id="unit-registry" name="Heterogeneous unit registry">
+      <case id="register-four-kinds">
+        <given>一个 AppBundle 同时声明 Page、Component、CtrlFlow 与 DataFlow units</given>
+        <when>support loader 加载 bundle</when>
+        <then>loader SHALL 在各 typed registry 中注册四类 unit，并为 kind/root/FQN 冲突产生稳定 diagnostics</then>
+      </case>
+      <case id="reject-frontend-app-root">
+        <given>迁移完成后的 canonical fixture corpus</given>
+        <when>扫描 app manifest 与运行 loader tests</when>
+        <then>canonical inputs SHALL 全部使用 AppBundle，且 loader SHALL 不维护 FrontendApp compatibility branch</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="singular-uri-schemes">
+    <statement>AppBundle 的所有 URI scheme SHALL 使用其所引用领域实体的单数 kebab-case 名；XNL 复数集合 tag、dotted domain key 或文件名 SHALL 不直接决定 scheme 词形。</statement>
+    <suite id="singular-uri-contract" name="Canonical singular URI schemes">
+      <case id="singular-unit-and-route-registries">
+        <given>Page、Component、Route、CtrlFlow 与 DataFlow 的公开 registry 引用</given>
+        <when>contract、loader、fixture 或文档表达这些引用</when>
+        <then>引用 SHALL 分别使用 page://、component://、route://、ctrl-flow:// 与 data-flow://</then>
+      </case>
+      <case id="singular-local-domain-refs">
+        <given>contract、scope、command、event 或 scope effect binding 引用</given>
+        <when>引用进入 canonical XNL、transport descriptor 或 authoring plan</when>
+        <then>引用 SHALL 分别使用 contract://、scope://、command://、event:// 与 scope-effect://；def facet SHALL 使用 contract-def://、command-def:// 或 event-def://</then>
+      </case>
+      <case id="hyphenate-multiword-schemes">
+        <given>config def、DataGraph module/seed、scope runtime/effect/data graph 或 flow authoring 引用</given>
+        <when>引用进入 canonical XNL、plan、transport 或 resolver</when>
+        <then>引用 SHALL 分别使用 config-def://、data-graph://、data-graph-seed://、scope-runtime://、scope-effect://、scope-data-graph:// 与 flow-authoring://，scheme 中 SHALL 不出现点</then>
+      </case>
+      <case id="reject-plural-scheme-aliases">
+        <given>输入使用迁移前的任一复数 scheme 或含点 scheme</given>
+        <when>contract validation 或 loader 解析该引用</when>
+        <then>系统 SHALL 返回稳定 unresolved/scheme diagnostic，不得注册 compatibility alias、自动改写或双读</then>
+      </case>
+      <case id="preserve-singular-existing-schemes">
+        <given>config、runtime、product、wiring、flow-node、flow-port 或 vfs 引用</given>
+        <when>进行全量 scheme migration</when>
+        <then>这些已经是单数的 scheme SHALL 保持原 identity 与解析语义</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="node-owned-type-information">
+    <statement>Effect、DataGraph 与 Flow 的类别 SHALL 由实际 node tag 表达，代码签名 SHALL 作为该节点的 vfs type 配置，Halfcode SHALL 不创建 EffectType、GraphLogicType、FlowLogicType catalog 或对应逻辑 URI scheme。</statement>
+    <suite id="node-owned-type-shape" name="Node-owned type information">
+      <case id="tag-expresses-semantic-kind">
+        <given>一个 function/interface effect、computed/processor graph node 或 transform/sink flow node</given>
+        <when>作者声明其领域或执行类别</when>
+        <then>类别 SHALL 由 FuncEffect/InterfaceEffect、ComputedNode/ProcessorNode、TransformNode/SinkNode 等 tag 表达，不得复制到 Type catalog</then>
+      </case>
+      <case id="quick-code-ref-needs-no-type-uri">
+        <given>Quick DSL 节点直接以 vfs src 指向类型化代码 export</given>
+        <when>loader 生成 authoring plan</when>
+        <then>节点 SHALL 不被要求额外创建 type catalog 或 type URI</then>
+      </case>
+      <case id="compact-and-split-type-config">
+        <given>Compact 或 Split/Public 节点需要显式 TypeScript 输入输出/函数签名</given>
+        <when>作者声明该代码类型</when>
+        <then>节点 SHALL 直接使用 type=&quot;vfs://...#Type&quot;；Compact 同节点携带 src/impl，Split/Public 由 Scope 按稳定节点 identity 绑定实现</then>
+      </case>
+      <case id="remove-type-catalog-schemes">
+        <given>既有 EffectType、DataGraphLogicTypes 或先前设计的 FlowLogicTypes catalog 及引用</given>
+        <when>迁移到 canonical AppBundle</when>
+        <then>catalog SHALL 被删除，节点 SHALL 吸收所需 tag/type 信息，effect.types、data.graph.logic.types 与 flow.logic.types scheme SHALL 无替代 alias</then>
+      </case>
+      <case id="closed-options-remain-enums">
+        <given>consume/bubble/reject 或 create/prototype 等由父节点 schema 定义的有限选项</given>
+        <when>作者配置该选项</when>
+        <then>DSL SHALL 使用裸字符串 enum，不得创建 declaration node、registry 或 URI</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="canonical-xnl-slot-shape">
+    <statement>CtrlFlow 与 DataFlow SHALL 遵循 XNL 固定槽位：metadata slot 只放系统信息，attributes 只放节点业务属性，single-child segment 只放每类唯一子域，list segment 直接承载有序或重复子节点。</statement>
+    <suite id="flow-root-shape" name="Canonical Flow root shape">
+      <case id="direct-root-children">
+        <given>CtrlFlow 的直接语句或 DataFlow 的直接图节点</given>
+        <when>作者编写、loader 解析或 editor 保存 Flow XNL</when>
+        <then>这些节点 SHALL 直接位于 Flow 根的 list segment，canonical docs、fixtures 与保存结果 SHALL 不包含根 Block 或 Nodes wrapper</then>
+      </case>
+      <case id="slot-ownership">
+        <given>Flow 节点同时具有系统信息、业务属性、子域和直接子节点</given>
+        <when>系统 parse、stringify 或 mutation 该节点</when>
+        <then>apiVersion/version SHALL 只位于 metadata slot，业务属性 SHALL 只位于 attributes，槽位顺序与 direct-child order SHALL 在 round-trip 后保持</then>
+      </case>
+      <case id="unique-child-domain">
+        <given>一个父节点具有多个同类 branch、binding 或其它子域条目</given>
+        <when>该子域被表示在 single-child segment</when>
+        <then>每类子域概念 SHALL 只出现一次，并 SHALL 使用唯一复数容器及其 list segment 承载多个条目</then>
+      </case>
+      <case id="reject-invalid-segment-shape">
+        <given>Flow XNL 使用重复单件子域、错误槽位或无语义 Block/Nodes wrapper</given>
+        <when>loader 校验 canonical Flow unit</when>
+        <then>loader SHALL 返回稳定 slot 或 sequence-wrapper diagnostic，不得静默归一化为另一棵树</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="data-flow-topology-contract">
+    <statement>DataFlow SHALL 以根 list segment 的直接节点、唯一 FlowContract、当前 Flow 私有 flow-node 与 flow-port registries、显式数据边和显式 waitFor 依赖边表达可校验的节点依赖 DAG。</statement>
+    <suite id="data-flow-structure" name="DataFlow structure and edges">
+      <case id="entry-return-contract">
+        <given>一个 canonical DataFlow 与其 FlowContract</given>
+        <when>loader 编译 DataFlowAuthoringPlan</when>
+        <then>DataFlow SHALL 恰好包含一个 EntryNode 和一个 ReturnNode，Entry ports SHALL 来自 contract inputPorts，Return inputs SHALL 完整匹配 contract outputPorts</then>
+      </case>
+      <case id="data-and-wait-for-edges">
+        <given>节点 inputs 使用 flow-port URI，waitFor 使用 flow-node URI</given>
+        <when>compiler 投影 topology</when>
+        <then>compiler SHALL 分别生成 dataEdges 与 waitForEdges，每个显式 waitFor SHALL 一对一保留且不得因同 source-target 已有 data edge 而被静默删除或归一化，并 SHALL 校验两类边合并后的图无环</then>
+      </case>
+      <case id="migrate-wait-node-keys">
+        <given>历史 GraphConfig 使用 waitNodeKeys 表达节点完成依赖</given>
+        <when>复杂 DataFlow 样例迁移到 canonical XNL 并进行 round-trip</when>
+        <then>每个 waitNodeKeys 条目 SHALL 迁移为 flow-node URI 的 waitFor 条目，并在 DataFlowAuthoringPlan 中保留为同 source-target identity 的 waitForEdges；connectedInputs SHALL 迁移为 flow-port URI</then>
+      </case>
+      <case id="reject-ref-scheme-position-mismatch">
+        <given>inputs 使用 flow-node URI，或 waitFor 使用 flow-port URI</given>
+        <when>loader 校验节点依赖引用</when>
+        <then>loader SHALL 返回稳定的引用 scheme/type mismatch diagnostic，不得根据 fragment 形状猜测或自动改写引用类型</then>
+      </case>
+      <case id="node-kind-port-rules">
+        <given>EntryNode、TransformNode、SinkNode、SubFlowNode 与 ReturnNode</given>
+        <when>loader 校验各节点属性</when>
+        <then>TransformNode SHALL 显式声明 outputs，SinkNode SHALL 无 outputs，ReturnNode SHALL 只组装输出而不隐式 transform，所有 node id 与 output port SHALL 唯一</then>
+      </case>
+      <case id="keep-data-flow-node-names-distinct-from-data-graph">
+        <given>同一 AppBundle 同时包含 DataGraph 与 DataFlow</given>
+        <when>文档、fixture、loader、compiler 或 editor 表达图节点</when>
+        <then>DataGraph SHALL 保留 ComputedNode/ConsumerNode，DataFlow SHALL 使用 TransformNode/SinkNode；canonical DataFlow SHALL 不接受或输出 ComputeNode/ConsumeNode</then>
+      </case>
+    </suite>
+    <suite id="data-flow-subflow" name="Typed DataFlow composition">
+      <case id="derive-subflow-ports">
+        <given>SubFlowNode.flow 指向 data-flow FQN 且提供 inputs</given>
+        <when>loader 解析目标 DataFlow</when>
+        <then>SubFlowNode inputs SHALL 匹配目标 inputPorts，outputs SHALL 从目标 outputPorts 派生，调用点不得重复声明 outputs</then>
+      </case>
+      <case id="reject-subflow-cycle">
+        <given>当前 bundle 中可见的 DataFlow units 形成递归 subflow 引用</given>
+        <when>compiler 构建 subflowEdges</when>
+        <then>compiler SHALL 返回稳定 cycle diagnostic，不得创建 executable recursion</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="flow-typed-refs">
+    <statement>CtrlFlow 与 DataFlow SHALL 使用独立 typed registry refs、稳定 node identity 和可校验 topology；DataFlow subflow SHALL 通过 `data-flow://` FQN 引用。</statement>
+    <suite id="typed-flow-refs" name="Typed flow references">
+      <case id="resolve-main-subflow">
+        <given>TransformMain 的 SubFlowNode 引用 `data-flow://dg.demo.flow.TransformSub`</given>
+        <when>bundle 被加载并编译</when>
+        <then>compiler SHALL 解析到 data-flow unit，并拒绝未解析、kind 不匹配或裸 subFlow 字符串</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="serializable-authoring-plans">
+    <statement>Flow compiler SHALL 分别产出 serializable CtrlFlowAuthoringPlan 与 DataFlowAuthoringPlan，保留编辑所需 topology、code refs、source spans 和 diagnostics，但不得解析或执行动态代码。</statement>
+    <suite id="plan-boundary" name="Authoring plan boundary">
+      <case id="compile-without-execution">
+        <given>flow nodes 包含 direct src、typed logic ref、ports、waitFor edges 与 subflow refs</given>
+        <when>compiler 生成 authoring plan</when>
+        <then>plan SHALL 可 JSON round-trip，且不得包含函数、module、RuntimeObject、GraphRuntime 或 executable handler</then>
+      </case>
+      <case id="reject-inline-code">
+        <given>Flow XNL 包含 inline ExprCode、StatementCode 或 clazz+methodName</given>
+        <when>loader 校验 flow unit</when>
+        <then>loader SHALL 返回 HALFCODE_FLOW_INLINE_CODE_FORBIDDEN 或等价稳定错误，而不是接受历史方言</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="canonical-flow-showcase">
+    <statement>仓库 SHALL 提供一个 canonical flow-showcase AppBundle，同时覆盖最小 Welcome 与原复杂 CtrlFlow/DataFlow main/subflow 语义。</statement>
+    <suite id="showcase-corpus" name="Flow showcase corpus">
+      <case id="load-five-units">
+        <given>WelcomeCtrl、WelcomeData、ComplexCtrl、TransformMain 与 TransformSub 五个 units</given>
+        <when>运行 fixture loader/compiler tests</when>
+        <then>五个 units SHALL 零 error 加载，复杂分支、循环、ports、connected inputs、waitFor edges 和 main/subflow ref SHALL 无损进入 authoring plans</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="workbench-authoring-projection">
+    <statement>Workbench Flow Editor SHALL 从 canonical AppBundle/authoring plans 投影视图并通过 owner command 写回，不拥有平行 flow schema 或重复语义事实源。</statement>
+    <suite id="editor-projection" name="Canonical editor projection">
+      <case id="browse-and-edit-five-units">
+        <given>Workbench 导入 canonical flow-showcase bundle</given>
+        <when>用户切换五个 flow units、选择节点并修改语义字段或布局</when>
+        <then>语义 SHALL 写回 core flow XNL，durable 布局 SHALL 写入独立单写入者的 flow.authoring XNL 业务属性，临时 UI state SHALL 只留在 runtime，组合 view model SHALL 保持只读</then>
+      </case>
+      <case id="no-sidecar-truth">
+        <given>Flow Editor production source、fixtures 与 tests</given>
+        <when>扫描 persistence 与 seed 路径</when>
+        <then>硬编码 flow semantic seed、graph.json、halfcode.json 和重复 formModel semantic owner SHALL 为零</then>
+      </case>
+      <case id="flow-authoring-domain">
+        <given>用户保存 viewport、node position、pin folding 或 editor grouping</given>
+        <when>flow.authoring owner 持久化布局</when>
+        <then>布局 SHALL 使用 flow.authoring.xnl、flow.authoring scheme 与 FlowAuthoring 根三投影，字段 SHALL 写入业务 attributes 而不是 XNL metadata slot</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="no-flow-execution-surface">
+    <statement>本阶段 Halfcode SHALL 不导出 Flow execution API，不解析或调用 flow code refs，也不得借用 DataGraph runtime 模拟执行。</statement>
+    <suite id="runtime-exclusion" name="Runtime exclusion">
+      <case id="no-execution-export">
+        <given>Halfcode contract/support 的 public exports</given>
+        <when>检查本 track 新增的 Flow API</when>
+        <then>系统 SHALL 只暴露 unit contract、loader、diagnostics 与 authoring plans，不得暴露 runFlow、executor 或 scheduler</then>
+      </case>
+      <case id="do-not-import-code-ref">
+        <given>flow authoring plan 含有效 vfs code refs</given>
+        <when>bundle 被加载、编译或在 Workbench 中编辑</when>
+        <then>系统 SHALL 不 import、resolve 或调用对应 export</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

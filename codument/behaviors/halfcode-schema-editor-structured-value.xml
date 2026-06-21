@@ -1,0 +1,47 @@
+<behaviors capability="halfcode-schema-editor-structured-value" version="1">
+  <requirement id="dual-mode-modal">
+    <statement>The Schema Editor SHALL provide an explicitly selected structured-value modal with vanilla-jsoneditor Visual and Monaco JSON modes sharing one local draft, and SHALL emit exactly one normalized value change only when the user applies a valid draft.</statement>
+    <suite id="draft" name="Structured value draft">
+      <case id="tab-sync">
+        <given>A serializable value is open.</given>
+        <when>The user edits Visual and switches to JSON, or enters valid JSON and switches to Visual.</when>
+        <then>Both modes SHALL project the same local draft without emitting a host command.</then>
+      </case>
+      <case id="invalid-json">
+        <given>The Monaco text is invalid JSON.</given>
+        <when>The user switches to Visual or applies.</when>
+        <then>The presenter SHALL preserve the text, remain in JSON, expose a diagnostic, and emit no command.</then>
+      </case>
+      <case id="apply-once">
+        <given>The draft is serializable and satisfies rootKind.</given>
+        <when>The user applies.</when>
+        <then>The presenter SHALL emit exactly one value change and leave acceptance to the host/domain writer through ValueHost feedback.</then>
+      </case>
+      <case id="cancel">
+        <given>The local draft differs from accepted value.</given>
+        <when>The user cancels or closes.</when>
+        <then>The presenter SHALL discard the draft and emit no command.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="explicit-fail-closed-binding">
+    <statement>The presenter SHALL be referenced only by stable id and serializable options, SHALL load its directly declared engines lazily, and SHALL fail closed without an implicit raw-text fallback.</statement>
+    <suite id="boundary" name="Presenter boundary">
+      <case id="explicit-only">
+        <given>A structure has no explicit structured-value presentation.</given>
+        <when>The compiler selects a presenter.</when>
+        <then>It SHALL retain the structural presenter or diagnostic and SHALL NOT select the modal implicitly.</then>
+      </case>
+      <case id="engine-failure">
+        <given>An editor engine cannot load or presenter options are illegal.</given>
+        <when>The modal opens.</when>
+        <then>The presenter SHALL expose an actionable diagnostic, disable Apply, and SHALL NOT fall back to textarea.</then>
+      </case>
+      <case id="dependency-boundary">
+        <given>The Element Plus package is consumed without Workbench.</given>
+        <when>The presenter engines are resolved.</when>
+        <then>They SHALL resolve from direct package dependencies and contract/logic/support/Vue SHALL remain engine-free.</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

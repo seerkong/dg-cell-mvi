@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "dg-cell-mvi-core": ["../dg-cell-mvi-core/src/index.ts"],
+      "depa-data-graph-core": ["../../../depa-data-graph/packages/core/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

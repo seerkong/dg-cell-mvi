@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "test/schemaEditorBusinessDialectBoundary.test.ts",
+    "test/schemaEditorBusinessDialectDemo.red.test.ts",
+    "test/schemaEditorBusinessDialectDemo.typecheck.ts"
+  ]
+}

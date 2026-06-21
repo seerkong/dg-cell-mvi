@@ -1,0 +1,21 @@
+<Elements #users-page-elements (
+  <Scope ref="users-page">
+) [
+  <h1 #users-title { text = "用户管理" }>
+  <Capsule #users-filter (
+    <Scope ref="users-filter">
+  ) [
+    <elementPlus.ElInput #keyword-input {
+      props = "config://#users-filter/keywordInput"
+      command = "command://#users.search"
+    }>
+    <elementPlus.ElSelect #status-select {
+      props = "config://#users-filter/statusSelect"
+      command = "command://#users.search"
+    }>
+  ]>
+  <elementPlus.DataTable #users-table {
+    props = "config://#users-table"
+    rows = "scope-runtime://#users-page/fixtures.users-table"
+  }>
+]>

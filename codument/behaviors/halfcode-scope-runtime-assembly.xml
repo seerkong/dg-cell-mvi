@@ -1,0 +1,42 @@
+<behaviors capability="halfcode-scope-runtime-assembly" version="1">
+  <requirement id="runtime-object-assembly">
+    <statement>系统 SHALL assemble runtime objects from RuntimeInstance src/create/prototype declarations using injected code-symbol resolution.</statement>
+    <suite id="assembly" name="运行时对象装配">
+      <case id="source-resolution">
+        <given>a RuntimeInstance declaration uses src, create, or prototype</given>
+        <when>the Scope runtime is assembled</when>
+        <then>the runtime object SHALL be created through injected symbol resolution</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="depa-runtime-factory">
+    <statement>系统 SHALL call runtime factories and derive functions with the DEPA shape output = fn(runtime, input, config).</statement>
+    <suite id="factory-protocol" name="运行时函数协议">
+      <case id="runtime-first">
+        <given>a runtime factory or derive function is invoked</given>
+        <when>the assembly pipeline calls it</when>
+        <then>the call SHALL use the runtime-first DEPA argument order</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="scope-runtime-map">
+    <statement>系统 SHALL bind Scope.runtime declarations to runtime objects and expose the resulting scope runtime map.</statement>
+    <suite id="scope-map" name="Scope runtime 映射">
+      <case id="bound-runtime-visible">
+        <given>a Scope contains runtime declarations</given>
+        <when>assembly succeeds</when>
+        <then>the resolved runtime objects SHALL be available through that Scope runtime map</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="assembly-diagnostics">
+    <statement>系统 SHALL report recoverable runtime assembly failures as HALFCODE_RUNTIME_* diagnostics.</statement>
+    <suite id="diagnostics" name="装配诊断">
+      <case id="recoverable-failure">
+        <given>runtime object assembly fails in a recoverable way</given>
+        <when>the Scope is assembled</when>
+        <then>the result SHALL contain a HALFCODE_RUNTIME_* diagnostic</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

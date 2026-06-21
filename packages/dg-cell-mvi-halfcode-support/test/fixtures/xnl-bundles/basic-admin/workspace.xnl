@@ -1,0 +1,7 @@
+<EditorWorkspace #basic-admin-workspace {
+  inspector = { selectedUnit = "dg.admin.basic.UsersPage" activePanel = "elements" }
+  formStates = {
+    users-filter = { collapsed = false }
+    users-table = { collapsed = false activeTab = "table" }
+  }
+}>

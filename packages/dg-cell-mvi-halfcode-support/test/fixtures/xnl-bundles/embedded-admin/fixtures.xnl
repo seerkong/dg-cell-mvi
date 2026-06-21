@@ -1,0 +1,8 @@
+<DevFixtures #embedded-admin-fixtures {
+  mockRecords = {
+    reports-table = [
+      { id = "r-1" name = "日报" score = 88 }
+      { id = "r-2" name = "周报" score = 92 }
+    ]
+  }
+}>

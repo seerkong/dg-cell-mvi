@@ -1,0 +1,25 @@
+{
+  "name": "dg-cell-mvi-admin-contract",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "DEPA admin chassis contract layer — ports (Http/Storage/Router/I18n/Theme) + actor/store/event/mailbox schema + types. Pure declarations; the bottom of the admin stack.",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dg-cell-mvi-core": "^0.1.0",
+    "depa-data-graph-core": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

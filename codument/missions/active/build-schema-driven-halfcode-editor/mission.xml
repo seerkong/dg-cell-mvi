@@ -1,0 +1,165 @@
+<Mission id="build-schema-driven-halfcode-editor" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>in_progress</Status>
+    <Goal>在 dg-cell-mvi 建立通用 schema-driven editor 基座，并让 Workbench Flow Editor 通过同一单向 mutation 链路完成配置与图结构 authoring。</Goal>
+    <Description>在既有 StructureSchema/EditorPresentation/EditorPlan、递归 compiler、Halfcode runtime/lowering、Flow 配置与结构 authoring 之上，补齐双模式 structured-value presenter、CtrlFlow If branch 语义修正与 predicate VFS 引用/源码编辑。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>23</Revision>
+    <CreatedAt>2026-07-16T17:47:28Z</CreatedAt>
+    <UpdatedAt>2026-07-18T15:38:11Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+    <MaterialBundle role="output" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="schema-editor-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="schema-editor-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="schema-editor-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="schema-editor-renderers" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/"/>
+    <MaterialBundle role="output" name="schema-editor-components" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/"/>
+    <MaterialBundle role="output" name="workbench-flow-editor" domain="code" path="vfs://@/../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/"/>
+  </Ports>
+  <TaskSpace id="space_build-schema-driven-halfcode-editor" name="build-schema-driven-halfcode-editor" version="1" cdt:child-mode="dag">
+    <Description>以 contract/IR 为底座，逐步实现递归 dialect compiler、Halfcode lowering/runtime、Flow Editor 迁移与业务复用证明。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="Schema Editor contracts 与 EditorPlan IR" status="DONE" order="0">
+        <Description>冻结语义 schema、纯数据 presentation、dialect protocol、renderer-neutral plan 和结构化 edit Command 边界。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="创建并执行 Schema Editor contracts track" status="DONE" order="0">
+            <Description>设计并实现 StructureSchema、EditorPresentation、SchemaEditorDialect protocol、EditorPlan、ValuePath/Command 与 contract validation；文档写明三档用法和无 JSON fallback 红线。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-schema-editor-contracts"/>
+          </Task>
+          <Task id="G1-T2" name="验证 contracts 的 DEPA 与 renderer-neutral 边界" status="DONE" order="1">
+            <Description>确认 schema/presentation 不含组件实现或函数，EditorPlan 不依赖 Vue/Element Plus，结构化 commands 不拥有持久化 effect。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2" name="递归 compiler 与业务 Dialect" status="DONE" order="1">
+        <Description>以 attribute-grammar 风格实现 runtime 驱动的递归 compile、分类、transformer 解析、dialect 组合和 diagnostics。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="创建并执行 Schema Editor compiler track" status="DONE" order="0">
+            <Description>实现 compileEditorPlan、runtime.compile 递归消息、object/array/map/union plan、默认 dialect、scoped business dialect 与固定解析优先级。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-schema-editor-compiler"/>
+          </Task>
+          <Task id="G2-T2" name="验证递归、覆盖和 provenance" status="DONE" order="1">
+            <Description>覆盖深层 object、collection item template、同 semantic type 不同 Scope transformer、presentation 显式覆盖及 unsupported diagnostics。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G3" name="Halfcode lowering、runtime 与默认 presenters" status="DONE" order="2">
+        <Description>按 contract feedback、pure canonical-shell lowering/session、Vue renderer、Element Plus presenters 四层顺序建立可运行 Schema Editor。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="修订 Schema Editor render/runtime contracts" status="DONE" order="0">
+            <Description>补足 label/description/required、enum/const、union/ref、collection stable-key/default-item 等 renderer-neutral plan metadata，并由 compiler 生成。</Description>
+            <cdt:TrackLink state="bound" id="revise-schema-editor-render-runtime-contracts"/>
+          </Task>
+          <Task id="G3-T2" name="创建并执行 Schema Editor runtime/lowering track" status="DONE" order="1">
+            <Description>实现 command-template resolver、pure canonical-shell lowering、ValueHost/session actor、accepted snapshot 与 Scope runtime bridge；真实经过 loader/compiler/runtime。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-schema-editor-runtime"/>
+          </Task>
+          <Task id="G3-T3" name="创建并执行 Schema Editor Vue renderer track" status="DONE" order="2">
+            <Description>实现 SchemaEditorPresenterRegistry、递归 EditorPlan renderer、dynamic wildcard template materialization 与 normalized event bridge。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-schema-editor-vue-renderer"/>
+          </Task>
+          <Task id="G3-T4" name="创建并执行 Element Plus presenters track" status="DONE" order="3">
+            <Description>实现 object/scalar/collection/map/union/ref/unsupported 默认 presenters、registry composition、交互测试和 kitchen-sink demo。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-schema-editor-element-plus-presenters"/>
+          </Task>
+          <Task id="G3-T5" name="验证 canonical bundle 与 mutation owner" status="DONE" order="4">
+            <Description>证明 renderer 只消费 plans/runtime/registry，presenter 只能发 Command，ValueHost 成功反馈后才推进 accepted snapshot。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G4" name="Workbench Flow Editor 完整迁移" status="DONE" order="3">
+        <Description>让 flow-level 与 node-level config 都由 StructureSchema + 可选 EditorPresentation 生成编辑器，并保持 Flow/XNL owner 边界。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 Flow Editor schema-editor migration track" status="DONE" order="0">
+            <Description>迁移四 Flow 产品；实现 If branches、Fallback strategies、DAG inputs/outputs/waitFor、refs/config 的可发现编辑体验，并以 Flow adapter 转换为同批 XnlMutation。</Description>
+            <cdt:TrackLink state="bound" id="migrate-workbench-flow-editor-to-schema-editor"/>
+          </Task>
+          <Task id="G4-T2" name="修订旧 Flow authoring 完成声明并验证四产品" status="DONE" order="1">
+            <Description>修订或明确取代 complete-four-flow-definition-authoring 的失真验收；真实浏览器完成 flow/node 配置增删改移、刷新和 canonical loader round-trip。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G5" name="跨业务 transformer 与属性组件复用" status="DONE" order="4">
+        <Description>用中立业务 demo 证明每次沉淀的属性 presenter/transformer 可跨 editor 重用，并可按 Scope 覆盖。</Description>
+        <SubNodes>
+          <Task id="G5-T1" name="创建并执行 business dialect reuse demo track" status="DONE" order="0">
+            <Description>同一 user.phone schema 在业务 A/B 使用不同 classifier/transformer/component；shared address/ref/enum 等 presenter 在多个 editor 重用。</Description>
+            <cdt:TrackLink state="bound" id="add-schema-editor-business-dialect-demo"/>
+          </Task>
+          <Task id="G5-T2" name="验证 scoped override 与无业务泄漏" status="DONE" order="1">
+            <Description>确认业务实现不进入通用 schema/presentation，Scope 覆盖不污染其他 editor，组件复用有独立测试与可运行 demo。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY" name="Mission 验证与收口" status="DONE" order="5">
+        <Description>对通用基座、业务扩展和 Flow Editor 进行独立 DEPA、测试与手动体验验收。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="验证 mission 成功判据" status="DONE" order="0">
+            <Description>验证所有 bound tracks、package boundaries、unit/typecheck/build、browser E2E/chaos、业务 A/B demo 和无 legacy/JSON fallback 残留，写 reports/mission-verify.md。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G6" name="Flow 图结构 Authoring" status="DONE" order="6">
+        <Description>用 adapter 投影的结构操作位置与原子 FlowStructureCommand，补齐 CtrlFlow 和 DAGFlow 在端口、next、根位置新增节点及删除节点的完整编辑能力。</Description>
+        <SubNodes>
+          <Task id="G6-T1" name="创建并执行 Flow 结构 authoring track" status="DONE" order="0">
+            <Description>建立 renderer-neutral authoring action ref、adapter command compiler、Schema Editor 驱动的新节点初始配置、整批 XnlMutation dry-run/commit，以及四产品 browser/chaos 验证。</Description>
+            <cdt:TrackLink state="bound" id="add-flow-structure-authoring"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY2" name="Mission 增量验证与再次收口" status="DONE" order="7">
+        <Description>独立验证配置 authoring 与图结构 authoring 共用一条 mutation owner 链路，并且 CtrlFlow 与 DAGFlow 的 family semantics 保持隔离。</Description>
+        <SubNodes>
+          <Task id="VERIFY2-T1" name="验证 Flow 结构 authoring 成功判据" status="DONE" order="0">
+            <Description>复跑 unit、typecheck、build、四产品 browser E2E、seeded chaos、strict Codument validation 与 writer residue scan。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G7" name="Structured value 与 predicate VFS authoring" status="ACTIVE" order="8">
+        <Description>在通用 Schema Editor 中加入 vanilla-jsoneditor + Monaco 双模式 Modal，并在 Workbench 纠正 If branch、接入 predicate reference/source editing。</Description>
+        <SubNodes>
+          <Task id="G7-T1" name="创建并执行 structured value modal presenter track" status="DONE" order="0">
+            <Description>在 dg-cell-mvi Element Plus capsule 中实现双引擎 presenter，保持 local draft、ValueHost bridge 与 host/domain writer 的单向边界。</Description>
+            <cdt:TrackLink state="bound" id="add-structured-value-modal-presenter"/>
+          </Task>
+          <Task id="G7-T2" name="创建并执行 Flow predicate VFS editing companion track" status="ACTIVE" order="1">
+            <Description>在 Workbench 删除 If Branch.config，并以实例 runtime actor ports 接入 predicate reference 与 source editing。</Description>
+            <cdt:TrackLink state="bound" id="add-flow-predicate-vfs-editing"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY3" name="Mission structured authoring 增量验证" status="NOT_STARTED" order="9">
+        <Description>独立验证双模式 structured-value、If branch canonical shape、predicate VFS 编辑与 Ctrl/DAG 隔离。</Description>
+        <SubNodes>
+          <Task id="VERIFY3-T1" name="验证 G7 成功判据" status="NOT_STARTED" order="0">
+            <Description>复跑 package、Workbench unit/typecheck/build/browser E2E、strict Codument validation 与 mutation owner residue scan。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_build-schema-driven-halfcode-editor">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G3"/></Node>
+      <Node id="G5"><After ref="G3"/></Node>
+      <Node id="VERIFY"><After ref="G4"/><After ref="G5"/></Node>
+      <Node id="G6"><After ref="VERIFY"/></Node>
+      <Node id="VERIFY2"><After ref="G6"/></Node>
+      <Node id="G7"><After ref="VERIFY2"/></Node>
+      <Node id="VERIFY3"><After ref="G7"/></Node>
+    </Dag>
+  </Schedule>
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-rounds="3" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

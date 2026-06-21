@@ -1,0 +1,43 @@
+<behavior-patch capability="halfcode-runtime-object-contracts" version="1">
+  <upsert selector="behavior://halfcode-runtime-object-contracts/requirements/runtime-instance-contract">
+    <requirement id="runtime-instance-contract">
+      <statement>Halfcode contract layer SHALL expose serializable RuntimeInstance contract types for src/create/prototype/derive based runtime objects.</statement>
+      <suite id="source-shape" name="Runtime instance source shape">
+        <case id="exclusive-source">
+          <given>A RuntimeInstanceSpec is authored for a runtime object.</given>
+          <when>The spec is validated.</when>
+          <then>The system SHALL require exactly one source family among src, create, or prototype.</then>
+        </case>
+        <case id="prototype-derive">
+          <given>A RuntimeInstanceSpec uses prototype.</given>
+          <when>The spec is validated.</when>
+          <then>The system SHALL allow an optional derive entry without declaring runtime internals in XNL.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-runtime-object-contracts/requirements/scope-assembly-contract">
+    <requirement id="scope-assembly-contract">
+      <statement>Halfcode contract layer SHALL expose a RuntimeScopeAssembly contract that carries scope config and sibling bindings into runtime code.</statement>
+      <suite id="assembly-shape" name="Scope assembly shape">
+        <case id="bindings-are-data">
+          <given>A Scope contains effect, data graph, intent, config, and runtime bindings.</given>
+          <when>The loader projects that Scope for runtime assembly.</when>
+          <then>The projected assembly SHALL remain serializable data and SHALL NOT execute code.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-runtime-object-contracts/requirements/canonical-runtime-domains">
+    <requirement id="canonical-runtime-domains">
+      <statement>The unit contract scheme table SHALL include canonical halfcode domains for runtime, effect, config, and data graph families.</statement>
+      <suite id="scheme-table" name="Scheme table">
+        <case id="new-domains-present">
+          <given>The support loader reads the contract scheme table.</given>
+          <when>It resolves canonical domain names.</when>
+          <then>The table SHALL contain config, effect.types, data.graph, data.graph.logic.types, data.graph.seed, and runtime.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

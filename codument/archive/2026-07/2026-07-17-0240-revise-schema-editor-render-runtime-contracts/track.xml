@@ -1,0 +1,139 @@
+<Track id="revise-schema-editor-render-runtime-contracts" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 EditorPlan 成为 renderer 可完整消费的中立 IR，并统一两种 EditorPresentation overlay 写法。</Goal>
+    <Description>修订 schema-editor contracts 和 compiler：增加 typed render metadata、default/identity/union/ref facts、path overlay normalization、文档与边界验证。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-16T21:34:07Z</CreatedAt>
+    <UpdatedAt>2026-07-16T23:40:35Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="input" name="schema-editor-compiler" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/schema-editor/"/>
+    <MaterialBundle role="output" name="revised-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="output" name="revised-compiler" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/schema-editor/"/>
+    <MaterialBundle role="output" name="contract-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/test/"/>
+    <MaterialBundle role="output" name="logic-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/test/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+  </Ports>
+
+  <TaskSpace id="space_revise-schema-editor-render-runtime-contracts" name="revise-schema-editor-render-runtime-contracts" version="1">
+    <Description>先以 renderer-complete 红测收紧 contract，再实现 compiler 传播和 overlay normalization，最后收口文档与独立验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Renderer-neutral contract revision" status="DONE" order="0">
+        <Description>定义并验证 renderer 完整消费所需的 typed plan metadata、schema defaults 和 collection identity hints。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Plan metadata 按 node kind 强类型并完全 serializable。</cdt:Criterion>
+          <cdt:Criterion>Collection/map/union/ref 所需事实不再要求 renderer 回读 raw schema。</cdt:Criterion>
+          <cdt:Criterion>Contract 不包含 component、callback、runtime、writer 或 host effect。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 renderer-complete contract 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 common field/display、scalar enum/const/default、constraints、collection identity/item default、map key、union descriptors/discriminator、ref 和非法 ownership values。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明当前 plan 丢失 renderer 必需事实</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试不引用 renderer、host、Flow 或具体组件</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 typed metadata 与 validators" status="DONE" order="1" priority="P0">
+            <Description>修订 StructureSchema/EditorPlan 类型、exports 和 validators；defaults/identity 仅使用可序列化数据，kind-specific metadata 拒绝错位形态。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">合法六类 metadata 和 wildcard templates 通过 validation</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">函数、component、runtime、writer、非法 identity/default 被拒绝</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Compiler metadata and presentation normalization" status="DONE" order="1">
+        <Description>通过 runtime.compile 传播 field/schema/presentation facts，并统一 recursive/path overlay 语义。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Default compiler 生成 renderer-complete plan 且无 snapshot expansion。</cdt:Criterion>
+          <cdt:Criterion>Path overlays 与 recursive overlays 有单一确定性语义。</cdt:Criterion>
+          <cdt:Criterion>Caller config 不获得 resolver/dialect/precedence ownership。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="编写 metadata 传播与 overlay normalization 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 object field context、default presenters、dynamic templates、opaque unresolved/cyclic refs、recursive/path/wildcard overlay merge、later-wins、determinism 和 custom transformer normalized input。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">红测试证明当前 compiler 丢失 metadata 且忽略 path overlays</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 compiler metadata 传播" status="DONE" order="1" priority="P0">
+            <Description>增加 compiler-owned inherited field context，传播各 schema kind facts，enum/const 使用可发现 presenter，并保持所有递归经 runtime.compile。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">六类 schema 编译后 renderer 无需 raw schema 即可取得 typed facts</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">collection/map 只保留 wildcard template，不按值展开</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">ref 保持有限 opaque identity，compiler 不执行解析或循环展开</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 path overlay normalization" status="DONE" order="2" priority="P0">
+            <Description>在递归/selection 前把 path overlays 合并为 normalized overlay，支持 wildcard，结构化 merge，声明顺序 later-wins，且不向 config 暴露 resolver。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">recursive 与 path-targeted presentation 对同一路径产生确定结果</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">custom transformers 观察 normalized overlay，输入 presentation 数据不被修改</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Public truth and dependency boundaries" status="DONE" order="2">
+        <Description>更新 root exports、依赖扫描、文档和实例，使当前实现边界准确可见。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Contract/logic package root 暴露稳定类型/API，deep internals 不成为公共入口。</cdt:Criterion>
+          <cdt:Criterion>文档准确区分本 track 已实现内容和后续 runtime/renderer 内容。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="更新 public/dependency boundary tests" status="DONE" order="0" priority="P0">
+            <Description>验证 root exports、serializability、无 renderer/support/IO/XNL/VFS/database/Flow imports 和无 stale path-overlay 限制。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">公共入口和依赖扫描通过且无 ownership 泄漏</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="更新 Schema Editor contract/compiler 文档" status="DONE" order="1" priority="P1">
+            <Description>记录 typed metadata、defaults/identity、overlay precedence、三档使用和 runtime/renderer 未实现边界，更新可执行示例。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">文档示例与真实 root API、validation 和 compiler 输出一致</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Verification" status="DONE" order="3">
+        <Description>独立验证 behavior、DEPA/halfcode 边界、测试、类型和 Codument 状态。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Contract/logic tests 与 TypeScript 全绿。</cdt:Criterion>
+          <cdt:Criterion>Renderer-complete plan 不携带实现或 host ownership。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="运行验证矩阵并记录报告" status="DONE" order="0" priority="P0">
+            <Description>运行 focused/full tests、typecheck、strict validate、dependency/stale vocabulary scans、diff check，并写 reports/verification.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">报告逐项映射 behavior/proposal 并记录对后续 runtime/renderer 的 contract 输出</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

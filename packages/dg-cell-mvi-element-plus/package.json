@@ -1,0 +1,33 @@
+{
+  "name": "dg-cell-mvi-element-plus",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Element Plus view layer for @dg-cell-mvi: the Fs* components that render el-* + elementUiRegistry (the Element impl of dg-cell-mvi-vue's UiRegistry). Re-exports useCrud + the crud contract so pages import everything from one place.",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dg-cell-mvi-crud": "^0.1.0",
+    "dg-cell-mvi-vue": "^0.1.0",
+    "@element-plus/icons-vue": "^2.3.2",
+    "@iconify/vue": "^4.1.1"
+  },
+  "peerDependencies": {
+    "element-plus": ">=2.0.0",
+    "vue": ">=3.3"
+  },
+  "devDependencies": {
+    "element-plus": "^2.11.4",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "vue": "^3.5.22"
+  }
+}

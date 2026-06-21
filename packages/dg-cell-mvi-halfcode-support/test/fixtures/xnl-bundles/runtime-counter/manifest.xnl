@@ -1,0 +1,7 @@
+<AppBundle #dg.demo.runtime.App apiVersion="halfcode.dg-cell-mvi/v1" version="0.1.0" {
+  name = "Runtime Counter Demo"
+} (
+  <Units [
+    <Unit kind="page" fqn="dg.demo.runtime.CounterPage" src="vfs://./pages/counter/manifest.xnl">
+  ]>
+)>

@@ -1,0 +1,32 @@
+<behaviors capability="halfcode-runtime-dsl" version="1">
+  <requirement id="runtime-family">
+    <statement>系统 SHALL 提供独立于 frontend DSL 的 halfcode runtime DSL family 入口；当前只声明暂缓边界，不声明 live state、event、reducer 的可生成域。</statement>
+    <suite id="docs-structure" name="文档结构">
+      <case id="std-and-spec-exist">
+        <given>开发者阅读 docs/halfcode/dsl-bundle</given>
+        <when>查找 runtime DSL</when>
+        <then>系统 SHALL 提供 std/runtime/axioms.md 与 spec/runtime 下的 domains、nodes、files、refs 规范</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="mvi-fact-boundary">
+    <statement>runtime DSL MUST 明确 frontend Scope 不拥有 live runtime state；live state 与 reducer vocabulary 后续重新设计，不得由 renderer 或 projection 反写。</statement>
+    <suite id="state-boundary" name="状态事实源">
+      <case id="seed-not-live-state">
+        <given>bundle 声明 frontend Scope</given>
+        <when>runtime 执行 AppEvent</when>
+        <then>系统 SHALL NOT 允许 Scope 声明 live state def/seed 绑定</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="no-inline-logic">
+    <statement>runtime DSL MUST NOT 内联函数、fetch、constructor、callback 或业务执行方法；后续自定义逻辑 MUST 经 vfs:// 或注册表引用挂接。</statement>
+    <suite id="logic-boundary" name="逻辑边界">
+      <case id="builtin-reducer">
+        <given>runtime 后续声明可执行逻辑</given>
+        <when>作者引用实现</when>
+        <then>系统 SHALL 使用外部实现引用，并拒绝内联函数体</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

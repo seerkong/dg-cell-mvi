@@ -1,0 +1,37 @@
+<EagerDataFlow #dg.demo.flow.TransformSub apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.TransformSub {
+    inputPorts = ["input"]
+    outputPorts = ["entityDetailMap" "personSet" "deptSet"]
+  }>
+  <FlowAuthoring #dg.demo.flow.TransformSub { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #entry { x = 80 y = 160 }>
+    <NodeLayout #classify { x = 360 y = 160 }>
+    <NodeLayout #decrypt { x = 640 y = 80 }>
+    <NodeLayout #convert-basic-types { x = 640 y = 260 }>
+    <NodeLayout #return { x = 920 y = 160 }>
+  ]>
+) [
+  <EntryNode #entry>
+  <TransformNode #classify {
+    inputs = { input = "flow-port://#entry/input" }
+    outputs = ["entityDetailMap" "personSet" "deptSet"]
+    type = "vfs://./flow-code/sub.types.ts#ClassifyLogic"
+    src = "vfs://./flow-code/sub.impl.ts#classify"
+  }>
+  <SinkNode #decrypt {
+    inputs = { input = "flow-port://#classify/entityDetailMap" }
+    src = "vfs://./flow-code/sub.impl.ts#decrypt"
+  }>
+  <SinkNode #convert-basic-types {
+    inputs = { input = "flow-port://#classify/entityDetailMap" }
+    waitFor = ["flow-node://#decrypt"]
+    src = "vfs://./flow-code/sub.impl.ts#convertBasicTypes"
+  }>
+  <ReturnNode #return {
+    inputs = {
+      entityDetailMap = "flow-port://#classify/entityDetailMap"
+      personSet = "flow-port://#classify/personSet"
+      deptSet = "flow-port://#classify/deptSet"
+    }
+  }>
+]>

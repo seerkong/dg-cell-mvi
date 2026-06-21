@@ -1,0 +1,133 @@
+<Track id="add-schema-editor-business-dialect-demo" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>用可运行的业务 A/B demo 证明 Schema Editor 的 scoped dialect、属性 presenter 和 accepted-state runtime 可以跨编辑器复用且互不污染。</Goal>
+    <Description>建立 RED 边界、共享业务属性 capsule、两个 sibling Scope canonical demo、真实交互与独立验证，并在发现中立基座缺口时按 owner 迭代。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-17T14:02:52Z</CreatedAt>
+    <UpdatedAt>2026-07-17T16:20:20Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-packages" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="input" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="output" name="business-dialect-demo" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_add-schema-editor-business-dialect-demo" name="add-schema-editor-business-dialect-demo" version="1">
+    <Description>从边界合同开始，逐层完成共享 capsule、A/B runtime、交互验证和独立收口。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="RED contracts 与复用边界" status="DONE" order="0">
+        <Description>固定同 schema 不同 Scope、纯数据 presentation、normalized event 与通用包无业务泄漏的失败合同。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>RED tests 在缺少业务复用 demo 时因 scoped runtime、真实 presenter 或 canonical lifecycle 缺口失败。</cdt:Criterion>
+          <cdt:Criterion>合同禁止组件、函数、runtime 和 writer 进入 schema/presentation。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="建立 scoped business reuse RED contract" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 写 type/runtime/component tests，固定一个 user.phone schema、A/B sibling Scope、shared property reuse、editor-instance override、accepted-only interaction 和通用包业务泄漏扫描。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">至少一个目标测试在 demo 未实现时因正确缺口失败，既有 neutral Schema Editor tests 保持通过。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试要求真实 canonical loader/runtime 与挂载控件，不接受仅检查 EditorPlan 或 registry snapshot。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">源码扫描覆盖 schema/presentation code leakage、global registry、Session/ValueHost/writer presenter props。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="共享业务属性 capsule" status="DONE" order="1">
+        <Description>实现可跨 editor 复用的中立业务属性 dialect 和 presenter factory，不包含 A/B 策略。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>共享 capsule 只暴露 stable ids、factory 和 normalized presenter adapters。</cdt:Criterion>
+          <cdt:Criterion>通用 contract/logic/support/Vue/Element Plus source 不出现 demo 业务知识。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 shared property dialect 与 presenters" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 实现 phone/address/ref/enum 的共享 classifier/transformer/presenter entries及中立 owner tests，保持 fn(runtime,input,config) 与 package-root composition。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">同一 factory 可为多个 compiler/runtime instance 创建隔离的 dialect 与 presenter registry。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">address/ref/enum 至少在两个 editor 中复用同一实现 identity/factory，且无复制的 bounded-context 实现。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">Presenter 仅接 toolkit-neutral props并发 normalized events，不获得 Session、ValueHost、runtime 或 writer。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="A/B scoped canonical demos" status="DONE" order="2">
+        <Description>用同一 schema 装配两个 sibling Scope 和一个 editor-instance override，真实运行 canonical Halfcode editor。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>A/B 由代码侧 scoped bindings产生不同 phone 体验，schema/presentation 不复制不嵌代码。</cdt:Criterion>
+          <cdt:Criterion>两个 canonical runtime、Session 和 presenter registry 相互隔离。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现 business A/B dialect 与 Scope assembly" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 构建 A/B bounded-context layers、共享 schema、serializable presentations 和 sibling Scope runtime；一个 editor 追加 instance override。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">同一 user.phone schema 在 A/B 解析为不同 stable presenter并挂载不同真实控件。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Instance override 只影响一个 editor；A/B 和第三个 baseline editor 的 registry/Session state 不串扰。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="true">Schema/presentation validation 证明全部 Data 可序列化且不含组件、函数、runtime 或 writer。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="接通 canonical Halfcode demo runtime" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>Fresh agent 让两个 editor 真实经过 compile、lowering、resolver、loader/compiler/app runtime、canonical renderer、Scope bridge 与 Session，不注入 synthetic bundle。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">A/B source 通过 canonical loader/runtime 零 error，outer shell 仅有一个 schemaEditor.Editor。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">挂载的 phone/address/ref/enum controls 来自 scoped registry并可观察 provenance。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">通用 package API 无 demo 特例、global service locator 或兼容 fallback。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P4" name="交互、隔离与文档" status="DONE" order="3">
+        <Description>验证 accepted-only 交互、共享能力复用、Scope 隔离和扩展文档。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>真实控件覆盖 accepted/rejected/conflict/stale/dispose-late，并且只 accepted 推进 DOM。</cdt:Criterion>
+          <cdt:Criterion>扩展文档可让新业务复用 schema、dialect、presenter 和 Scope assembly。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="完成 mounted accepted-state 与 isolation tests" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>Fresh agent 驱动真实 A/B controls，验证 normalized command、host outcomes、兄弟隔离、instance override 和 shared presenter reuse。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">Accepted 更新正确 editor；rejected/conflict/stale/malformed/dispose-late 均保持旧 accepted DOM。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">一个 editor 的 pending、revision、registry override 和 value 不改变 sibling editor。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC3" checked="true">测试无直接 Session state mutation、内部 command shortcut 或 plan-only 替代。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="同步扩展文档并执行完整验证" ownerAccount="agent:impl" status="DONE" order="1" priority="P1">
+            <Description>Fresh agent 更新 schema-editor usage/examples/boundaries，说明 shared/bounded-context/instance 三层代码装配、stable id presentation和demo入口，并运行 full tests/typecheck/build/scans/strict validate。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">文档给出同 schema A/B 和 shared property capsule 的实际 package-root API 示例。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">完整 unit、typecheck、build、canonical demo、boundary scans 和 diff check 通过。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">codument strict validation 通过，未引入隐式 raw/JSON fallback。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P5" name="独立验证" status="DONE" order="4">
+        <Description>Fresh verifier 只读目标、实现、demo 和测试，独立证明业务复用与无泄漏。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Verifier 独立复跑 canonical mounted A/B、Scope isolation、package boundary、typecheck/build和strict validate。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="执行 fresh independent verification" ownerAccount="agent:verify" status="DONE" order="0" priority="P0">
+            <Description>Fresh verifier issues-first 输出 PASS/FAIL 到 reports/verify.md；只验证不修复，不修改 track completion status。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">报告包含实际命令、测试计数、canonical runtime证据、A/B visible controls和host outcome矩阵。</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">报告确认同 schema、shared capability reuse、sibling isolation和instance override，而非复制配置造成的假复用。</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC3" checked="true">报告确认 generic packages 无业务 A/B、writer、global registry 或隐式 fallback 泄漏。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

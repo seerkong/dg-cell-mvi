@@ -1,0 +1,111 @@
+<Track id="add-halfcode-schema-editor-contracts" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在纯 contract 层冻结可递归、renderer-neutral、host-owned mutation 的 Schema-driven Halfcode Editor 数据与处理器协议。</Goal>
+    <Description>新增 StructureSchema、EditorPresentation、SchemaEditorDialect protocol、EditorPlan、ValuePath、结构化 edit Command、validators、三档用法文档与依赖边界测试。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-16T17:58:44Z</CreatedAt>
+    <UpdatedAt>2026-07-16T19:18:23Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="existing-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="schema-editor-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="output" name="contract-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/test/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-schema-editor-contracts" name="add-halfcode-schema-editor-contracts" version="1">
+    <Description>先以红测试冻结纯数据和 DEPA 边界，再实现 contracts/validators，最后补文档、exports 和验证矩阵。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contract vocabulary and boundaries" status="DONE" order="0">
+        <Description>建立 schema、presentation、dialect、plan 与 command 的最小完整公开词汇。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Schema 与 Presentation 是纯可序列化 Data，不持有函数、组件或 runtime instance。</cdt:Criterion>
+          <cdt:Criterion>EditorPlan renderer-neutral，并表达 collection/map recursive template。</cdt:Criterion>
+          <cdt:Criterion>Dialect 动态代码符合 output = fn(runtime, input, config)，递归由 runtime.compile 消息承担。</cdt:Criterion>
+          <cdt:Criterion>Command 不拥有 apply/persistence effect，未知结构不隐式 JSON fallback。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 contract 与 dependency boundary 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖递归 schema、纯 presentation、renderer-neutral plan、runtime-first dialect、结构化 commands、无 JSON fallback 和无 Vue/VFS/XNL mutation 依赖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试先证明当前包缺少 Schema Editor contract surface</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试对函数、component constructor、runtime instance、apply callback 与 persistence client 给出拒绝证据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 StructureSchema 与 EditorPresentation" status="DONE" order="1" priority="P0">
+            <Description>实现 scalar/object/array/map/union/ref schema、semantic annotations、递归 presentation overlay、stable presenter id/options 与纯 validators。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">object field、array item、map value、union alternatives 可递归且 identity 唯一</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">schema/presentation JSON round-trip 且 executable value validation 失败</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="实现 Dialect、EditorPlan 与 edit Command contracts" status="DONE" order="2" priority="P0">
+            <Description>实现 processor protocols、resolution precedence、plan nodes/templates/bindings/provenance/diagnostics、ValuePath 和闭集 edit Commands 及 validators。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">transformer 只有 runtime/input/config 三参数且 child recursion 通过 runtime.compile</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">collection/map template 不依赖当前 snapshot 展开</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC3" checked="true">commands 覆盖 set/insert/remove/move/map/union 且不含 writer</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Public surface and three-tier documentation" status="DONE" order="1">
+        <Description>收口 capsule export，并用中立示例解释三档使用与包边界。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>外部只从 contract package/capsule public index 导入。</cdt:Criterion>
+          <cdt:Criterion>文档不承诺尚未实现的 compiler/runtime 行为，但完整记录 contract 和后续 lowering 边界。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="增加 public exports 与 capsule boundary tests" status="DONE" order="0" priority="P0">
+            <Description>从 schema-editor/index.ts 和 package root 导出稳定 surface，禁止外部依赖 internals 和 renderer/persistence imports。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">root import 可取得全部公共 contract/validator，internals 不成为并行入口</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="编写 Schema Editor contract 与三档用法文档" status="DONE" order="1" priority="P1">
+            <Description>记录 schema-only、schema+presentation、custom dialect/full editor，给出递归 collection、业务 semantic 与 host command 示例。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">示例明确 pure data、stable presenter id、runtime-first processor 和 host-owned mutation</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">文档明确 raw JSON 仅可显式选择</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Verification" status="DONE" order="2">
+        <Description>执行 contract package tests/typecheck 和边界残留扫描，记录 evidence。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>受影响测试和类型检查全部通过。</cdt:Criterion>
+          <cdt:Criterion>contract capsule 不包含 renderer、persistence 或业务 Flow 特例。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="运行验证矩阵并记录报告" status="DONE" order="0" priority="P0">
+            <Description>运行 package tests、workspace typecheck 相关门禁、dependency scan 和 git diff check，写 reports/verification.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">报告逐项映射 behavior delta 与 proposal 成功判据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

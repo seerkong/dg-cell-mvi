@@ -1,0 +1,49 @@
+<behavior-patch capability="halfcode-message-protocol" version="1">
+  <summary>Canonical FrontendApp communication separates commands from events and uses Message only as their transport-neutral abstraction.</summary>
+  <upsert selector="behavior://halfcode-message-protocol/requirements/command-event-message-protocol">
+    <requirement id="command-event-message-protocol">
+      <statement>Canonical FrontendApp halfcode SHALL model a requested operation as a Command and a completed fact as an Event. A Command MAY reference a runtime-first handler and config; an Event SHALL NOT declare a handler. Message denotes either concrete protocol kind only in generic transport and policy positions.</statement>
+      <cases>
+        <case id="command-runtime-entry">
+          <given>a Command with a handler code reference and static config</given>
+          <when>the runtime executes that command</when>
+          <then>the handler SHALL receive runtime as its first argument according to output = fn(runtime, input, config)</then>
+        </case>
+        <case id="event-is-fact">
+          <given>an Event declaration</given>
+          <when>the canonical loader validates it</when>
+          <then>a handler field SHALL be rejected because event delivery is not a request handler declaration</then>
+        </case>
+      </cases>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-message-protocol/requirements/canonical-message-vocabulary">
+    <requirement id="canonical-message-vocabulary">
+      <statement>Canonical FrontendApp XNL SHALL use Commands/Command, Events/Event, commands://, events://, element command, MessagePolicy/MessageRule, contract Sends, and Wire message. Retired Intent vocabulary SHALL receive a focused diagnostic instead of becoming a canonical alias.</statement>
+      <cases>
+        <case id="command-and-event-domains">
+          <given>a FrontendApp page with commands.xnl and events.xnl</given>
+          <when>the bundle loads</when>
+          <then>both domain schemes and their typed declarations SHALL resolve</then>
+        </case>
+        <case id="retired-intent-rejected">
+          <given>a FrontendApp canonical bundle containing Intents, Intent, or intents://</given>
+          <when>the loader validates the bundle</when>
+          <then>it SHALL report HALFCODE_MESSAGE_DSL_LEGACY_VOCABULARY</then>
+        </case>
+      </cases>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://halfcode-message-protocol/requirements/message-boundary-transport">
+    <requirement id="message-boundary-transport">
+      <statement>Scopes SHALL assemble command/event registries and an optional MessagePolicy into their runtime instance. Contracts SHALL describe accepted and sent message refs. A Wire SHALL deliver one unchanged message ref from a sending route to an accepting route; conversion to another command or event belongs in runtime code.</statement>
+      <cases>
+        <case id="event-wire">
+          <given>a source Page that sends events://#report.saved and a target Page that accepts that exact event</given>
+          <when>the app compiler builds wiring</when>
+          <then>the resulting WirePlanBinding SHALL carry that events:// ref as message</then>
+        </case>
+      </cases>
+    </requirement>
+  </upsert>
+</behavior-patch>

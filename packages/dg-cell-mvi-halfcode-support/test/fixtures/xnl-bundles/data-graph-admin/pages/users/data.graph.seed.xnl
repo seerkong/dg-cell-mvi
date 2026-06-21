@@ -1,0 +1,15 @@
+<DataGraphSeed #users-list-demo {
+  module = "data-graph://#users.list"
+  values = {
+    inputs = {
+      query = { keyword = "" status = "all" }
+    }
+    state = {
+      rows = [
+        { id = "u-1" name = "Ada" status = "active" score = 98 }
+        { id = "u-2" name = "Lin" status = "inactive" score = 76 }
+        { id = "u-3" name = "Grace" status = "active" score = 91 }
+      ]
+    }
+  }
+}>

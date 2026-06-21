@@ -1,0 +1,7 @@
+<Routes #runtimeCounterRoutes [
+  <Route #counter-route {
+    path = "/"
+    page = "page://dg.demo.runtime.CounterPage"
+    title = "Runtime Counter"
+  }>
+]>

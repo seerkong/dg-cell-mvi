@@ -1,0 +1,12 @@
+<ConfigDef #users-page-config-def [
+  <ConfigDef #users-filter {
+    keywordInput = "ElementPlusInputProps"
+    statusSelect = "ElementPlusSelectProps"
+  }>
+  <ConfigDef #users-table {
+    columns = "ColumnDef[]"
+  }>
+  <ConfigDef #resources {
+    usersPage = "ResourceBinding"
+  }>
+]>

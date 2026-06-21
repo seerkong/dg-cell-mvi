@@ -1,0 +1,7 @@
+<Scopes #counter-page-scopes [
+  <Scope #counter-page {
+    runtime = "runtime://#counter"
+    config = "config://#counter-page"
+    commands = "command://#counter-page-commands"
+  }>
+]>

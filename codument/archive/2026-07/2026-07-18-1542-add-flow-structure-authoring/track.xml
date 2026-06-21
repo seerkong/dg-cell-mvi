@@ -1,0 +1,139 @@
+<Track id="add-flow-structure-authoring" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 CtrlFlow 与 DAGFlow 通过 adapter 投影和同一单向 mutation 链路完成端口、next、根位置新增节点及删除节点。</Goal>
+    <Description>建立 renderer-neutral structure action ref、原子 node.insert command、Schema Editor 新节点 draft、family-specific adapter compilation、exact XnlMutation persistence，以及四产品 browser/chaos 验证。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-18T07:03:57Z</CreatedAt>
+    <UpdatedAt>2026-07-18T12:42:34Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-owner" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="input" name="workbench-flow-editor" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/"/>
+    <MaterialBundle role="input" name="visual-graph" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/visual-graph/"/>
+    <MaterialBundle role="output" name="workbench-flow-editor" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/"/>
+    <MaterialBundle role="output" name="visual-graph" domain="code" path="vfs://@/external/eidolon-workbench/frontend/packages/visual-graph/"/>
+    <MaterialBundle role="output" name="workbench-tests" domain="test" path="vfs://@/external/eidolon-workbench/frontend/packages/bastard/tests/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-flow-structure-authoring" name="add-flow-structure-authoring" version="1">
+    <Description>用一个共享命令协议和两个 family adapter compiler 完成可见、原子、accepted-only 的 Flow 图结构编辑。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contract 与 RED baseline" status="DONE" order="0">
+        <Description>冻结现有 mutation owner，并以失败测试定义 adapter-projected action、原子插入与 renderer boundary。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>RED tests 因缺少 action ref/node.insert contract 而失败，既有配置与 persistence baseline 仍通过。</cdt:Criterion>
+          <cdt:Criterion>VisualGraph contract 不包含 CtrlFlow、DAGFlow、XNL 或 VFS grammar。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="冻结结构命令与 mutation owner baseline" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>补 characterization tests，固定现有 MVI event/reducer/effect、adapter desired AST、diffNodes、dry-run、VFS feedback 和 canonical reload 链路。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">测试证明 canvas 不直接写 AST/XNL/VFS，structure command 只进入现有 semantic write queue。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">现有 CtrlFlow/DAGFlow projection、config authoring 和 reload baseline 可机械复跑。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="建立 structure action 与 atomic insert RED contract" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>定义 visual opaque action ref、adapter-owned action validation、node.insert draft 和 removal capability 的 type/unit/component RED tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">至少一个测试在旧实现上因缺少 projected action 或 atomic insert 而真实失败。</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">测试禁止从 pin id/label/geometry 反推 Flow grammar，并覆盖 stale/foreign action rejection。</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="true">无效或取消 draft 不产生 mutation/VFS effect。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Family adapter 原子结构编译" status="DONE" order="1">
+        <Description>让 CtrlFlow 与 DAGFlow adapter 从显式 action ref 编译 desired canonical AST，并复用 exact mutation pipeline。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>两类 Flow 共用结构命令协议，但 sequence/body 与 inputs/waitFor 语义保持隔离。</cdt:Criterion>
+          <cdt:Criterion>Node 和关系在同一 candidate、同一 mutation batch 中建立或删除。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 CtrlFlow structure compiler" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>投影 root/next/body actions；实现同 body insert-after、branch/otherwise/strategy body-start、simple splice、structural subtree delete 与 protected node rejection。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">InstantFlow、WorkFlow、BizProcess 的 root、next 和 branch/body 插入 round-trip 通过。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">删除 simple/structural node 后 canonical sequence、children、ports 和 layout 重投影正确。</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">CtrlFlow 插入/删除不持久化 visual edge 且不解析 renderer pin id。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 DAGFlow structure compiler" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>投影 root/data-output/completion actions；实现 default input 与 waitFor 的原子初始化、node delete 引用清理或 product rejection。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">EagerDataFlow 的 root、data-output 和 completion 插入生成正确 inputs/waitFor URI 并 round-trip。</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">删除节点时 inbound references 在同 candidate 清理，required reference 失效时 fail closed。</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">DAG data 与 completion dependency 不互相转换，adapter 不解析 renderer pin id。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="共享画布交互与 Schema Editor draft" status="DONE" order="2">
+        <Description>用 adapter 投影能力驱动画布新增/删除入口，并在 commit 前通过现有 Schema Editor 编辑新节点初始配置。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>共享 UI 只渲染 action/capability，不 switch family grammar。</cdt:Criterion>
+          <cdt:Criterion>节点 draft 未完成时不改变 accepted graph，提交后等待 canonical feedback。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现端口、next 与根位置新增交互" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>在稳定尺寸的 node/pin controls 上显示新增入口，打开 node kind/id/config draft；复用 product schema/presentation/dialect 与 canonical Schema Editor runtime。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">用户可从 CtrlFlow next/branch 和 DAG data/completion 端口打开正确上下文的新节点编辑器。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Draft 使用 typed controls，无隐式 JSON fallback，cancel/invalid 不写入，valid commit 发一个 node.insert。</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="true">键盘、焦点、viewport 与 selection 不因 draft 控件发生全局快捷键冲突。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现节点删除交互与影响反馈" ownerAccount="agent:impl" status="DONE" order="1" priority="P0">
+            <Description>根据 adapter removal capability 渲染删除命令；对 subtree/reference impact 提供确认或诊断，并等待 accepted feedback 后更新画布。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">可删除节点有稳定可访问入口，protected node 不显示或禁用且有 product diagnostic。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Rejected delete 不移除画布节点，accepted delete reload 后保持。</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">CtrlFlow 与 DAGFlow 删除均通过同一 MVI command/event/effect 入口。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="E2E、chaos 与独立验证" status="DONE" order="3">
+        <Description>用真实可见控件、刷新和 seeded chaos 验证四产品结构 authoring 及 accepted-only invariants。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Focused/full unit、typecheck、build、browser E2E、chaos 和 strict validation 全部通过。</cdt:Criterion>
+          <cdt:Criterion>Fresh verifier 独立确认 no direct writer、no pin parsing、no partial commit。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="扩展四产品 browser E2E 与 chaos" ownerAccount="agent:impl" status="DONE" order="0" priority="P0">
+            <Description>通过 visible controls 覆盖 root/next/body/data/completion insert、delete、cancel、invalid、reload、family switch 和浏览器错误；加入 deterministic action registry。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">四产品至少各完成一次新增和删除并在 reload 后保持，CtrlFlow/DAGFlow family matrix 完整。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">Seeded chaos 混合 config/structure/selection/reload/rejection，可重放且每步检查 canonical/DOM/browser errors。</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC3" checked="true">E2E 不通过 page.evaluate 或内部 store dispatch 绕过可见交互。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="完整机械验证与 fresh verification" ownerAccount="agent:verify" status="DONE" order="1" priority="P0">
+            <Description>运行 unit/typecheck/build/browser/chaos/residue/strict validation；fresh verifier 只读目标与实现并写 reports/verify.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">所有机械命令通过或有可证环境 blocker，reports/verify.md 给出 issues-first PASS/FAIL。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">扫描确认 VisualGraph 无 Flow/XNL/VFS grammar，canvas 无 direct writer，active source 无旧 placement compatibility path。</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">`codument validate add-flow-structure-authoring --strict` 通过。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

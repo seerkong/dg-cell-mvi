@@ -1,0 +1,57 @@
+<behaviors capability="halfcode-schema-editor-compiler" version="1">
+  <requirement id="runtime-first-recursive-compilation">
+    <statement>The logic package SHALL compile StructureSchema and optional EditorPresentation into a renderer-neutral EditorPlan through processors shaped as output = fn(runtime, input, config), with the scoped dialect owned by runtime.</statement>
+    <suite id="recursive" name="Recursive compilation">
+      <case id="nested-structures">
+        <given>A nested object containing array, map, union, scalar, and ref schemas</given>
+        <when>compileEditorPlan runs</when>
+        <then>The compiler SHALL produce stable recursive plan nodes, wildcard templates, paths, provenance, and diagnostics without renderer or host writer dependencies</then>
+      </case>
+      <case id="runtime-owned-dialect">
+        <given>A function-bearing SchemaEditorDialect and serializable compile options</given>
+        <when>The compiler runtime is assembled and invoked</when>
+        <then>The dialect SHALL be read from runtime and SHALL NOT be passed through config</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="fixed-selection-and-default-dialect">
+    <statement>The compiler SHALL own fixed transformer selection and a default structural dialect without exposing a resolver, registry, classifier, or caller-owned precedence surface.</statement>
+    <suite id="selection" name="Transformer selection">
+      <case id="precedence">
+        <given>Presenter, scoped semantic, format, and structural candidates exist</given>
+        <when>A transformer is selected</when>
+        <then>The compiler SHALL use presenter, semantic, format, structural, then unsupported order</then>
+      </case>
+      <case id="no-json-fallback">
+        <given>No candidate transformer can compile a node</given>
+        <when>The node is compiled</when>
+        <then>The compiler SHALL emit an unsupported diagnostic and SHALL NOT select an implicit raw JSON presenter</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="scoped-dialect-composition">
+    <statement>The compiler runtime factory SHALL compose default, shared, bounded-context, and editor-instance dialect layers deterministically without mutating source dialects.</statement>
+    <suite id="scopes" name="Scoped composition">
+      <case id="same-semantic-different-runtime">
+        <given>Two runtimes bind different transformers for the same semantic type</given>
+        <when>The same schema is compiled in each runtime</when>
+        <then>Each plan SHALL use its own scoped transformer without leaking the binding to the other runtime</then>
+      </case>
+      <case id="later-layer-wins">
+        <given>Multiple ordered layers bind the same transformer key</given>
+        <when>The runtime dialect is composed</when>
+        <then>The later layer SHALL win and all input dialect objects SHALL remain unchanged</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="event-time-command-templates">
+    <statement>Collection, map, and union plan bindings SHALL represent event-time Command arguments without embedding apply callbacks, concrete fake indices, or host persistence effects.</statement>
+    <suite id="bindings" name="Command templates">
+      <case id="collection-event-arguments">
+        <given>A collection plan with insert, remove, and move interactions</given>
+        <when>The plan is compiled before a concrete UI event exists</when>
+        <then>Its command bindings SHALL describe event-sourced index/value arguments as serializable neutral data</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

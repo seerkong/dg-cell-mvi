@@ -1,0 +1,132 @@
+<behaviors capability="dg-cell-mvi-halfcode-industrial-dsl" version="1">
+  <requirement id="canonical-document">
+    <statement>系统 SHALL 为 dg-cell-mvi-halfcode 提供与 legacy render schema 隔离的 canonical HalfcodeDocument 契约。</statement>
+    <suite id="contract-boundary" name="契约边界">
+      <case id="separate-legacy-schema">
+        <given>现有 legacy HalfcodeSchema 仍需要兼容旧 demo 和旧输入</given>
+        <when>系统新增 canonical halfcode contract</when>
+        <then>系统 SHALL 将 canonical HalfcodeDocument 与 LegacyHalfcodeSchema 隔离在不同类型边界</then>
+      </case>
+      <case id="reject-runtime-functions">
+        <given>一个 canonical HalfcodeDocument 声明产品物料、state、resources 和 effects</given>
+        <when>系统校验 canonical 文档</when>
+        <then>系统 MUST 拒绝函数、Vue component constructor、Element component constructor、direct fetch 和 raw new Function expression 进入 canonical surface</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="compiler-pipeline">
+    <statement>系统 SHALL 通过 compiler pipeline 把 legacy/raw 输入编译为 canonical document 和派生 plans。</statement>
+    <suite id="compile-products" name="编译产物">
+      <case id="compile-render-plan">
+        <given>输入是 canonical HalfcodeDocument</given>
+        <when>compiler 编译 view material</when>
+        <then>系统 SHALL 输出 RenderPlan，并让 renderer 消费 RenderPlan 而不是 raw schema</then>
+      </case>
+      <case id="compile-crud-admin-plans">
+        <given>输入包含 CrudMaterial 或 AdminShellMaterial</given>
+        <when>compiler 编译产品线物料</when>
+        <then>系统 SHALL 输出可映射到 dg-cell-mvi-crud 与 dg-cell-mvi-admin-* 的 typed plans</then>
+      </case>
+      <case id="diagnose-unsupported-legacy">
+        <given>legacy input 中存在 canonical v1 不支持的行为</given>
+        <when>compat compiler 处理该输入</when>
+        <then>系统 SHALL 产生 diagnostics，而不是静默丢弃或把不安全语义写进 canonical document</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="runtime-ownership">
+    <statement>系统 SHALL 保持 halfcode runtime state 的唯一写路径为 MVI events。</statement>
+    <suite id="state-ownership" name="状态所有权">
+      <case id="schema-seed-is-checkpoint">
+        <given>schema 或 document 中包含初始 state seed</given>
+        <when>runtime preview 已经运行并存在 live runtime state</when>
+        <then>系统 MUST NOT 通过隐式 schema merge 覆盖 live runtime state</then>
+      </case>
+      <case id="renderer-does-not-own-path-semantics">
+        <given>用户在渲染出的控件中触发 v-model 更新</given>
+        <when>系统处理该 UI intent</when>
+        <then>系统 SHALL 分发 typed command/event，并由 reducer 拥有最终 state transition</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="effect-and-artifact-boundary">
+    <statement>系统 SHALL 把 effect 与 artifact IO 表达为 descriptors 和 support ports，而不是藏在 DSL 或 UI adapter 中。</statement>
+    <suite id="ports" name="端口边界">
+      <case id="crud-request-through-support">
+        <given>CrudMaterial 声明 request、dict 或 hook 行为</given>
+        <when>系统编译并运行该 CRUD material</when>
+        <then>系统 SHALL 通过 support ports 执行 request/dict/hook/effect，而不是在 element-plus adapter 中构造 direct fetch closure</then>
+      </case>
+      <case id="artifact-port">
+        <given>编辑器保存、加载或 diff 低代码文档</given>
+        <when>系统访问 memory/browser storage/xnl-vfs/server storage</when>
+        <then>系统 SHALL 通过 ArtifactPort 访问制品，并保持 HalfcodeDocument 与 runtime state 的 owner 边界</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="compatibility-quarantine">
+    <statement>系统 SHALL 保留 legacy 兼容能力，但 MUST 将其隔离在 compatibility adapter 中。</statement>
+    <suite id="legacy" name="兼容层">
+      <case id="legacy-render-still-works">
+        <given>现有 demo 或测试仍传入 legacy HalfcodeSchema、Halfcode 或 legacy expression</given>
+        <when>系统运行兼容路径</when>
+        <then>系统 SHALL 继续支持旧输入，或给出明确 diagnostics</then>
+      </case>
+      <case id="canonical-not-polluted">
+        <given>compat adapter 成功处理 legacy 输入</given>
+        <when>系统生成 canonical document 或 plans</when>
+        <then>系统 MUST NOT 把 legacy-only 字段、函数和 UI adapter closure 写入 canonical surface</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="xnl-core-artifact-pipeline">
+    <statement>系统 SHALL 真实复用 xnl.ts 的 xnl-core path、mutation、loader、import 能力作为 halfcode artifact DSL 底座。</statement>
+    <suite id="xnl-core" name="XNL 核心能力">
+      <case id="xnl-codec-roundtrip">
+        <given>canonical HalfcodeDocument 需要作为低代码 artifact 保存</given>
+        <when>系统 serialize/parse 该 artifact</when>
+        <then>系统 SHALL 通过 xnl-core XNL 文本与 AST 完成 roundtrip，而不是只使用 JSON 或 XML 形态</then>
+      </case>
+      <case id="xnl-path-mutation">
+        <given>编辑器产生 document mutation</given>
+        <when>系统应用 mutation 到 artifact</when>
+        <then>系统 SHALL 使用 xnl-core path/mutation 生成或应用 XNL mutation 证据</then>
+      </case>
+      <case id="xnl-loader-import">
+        <given>低代码物料或扩展通过 prefab/export/import 复用</given>
+        <when>系统加载 artifact</when>
+        <then>系统 SHALL 调用 xnl-core loader/import 解析 Prefabs、exports 与 vfs:// import references</then>
+      </case>
+      <case id="core-extension-separation">
+        <given>artifact 同时包含语义核心、低代码编辑扩展和图布局扩展</given>
+        <when>系统保存、加载、编译或预览 artifact</when>
+        <then>系统 SHALL 保持 core XNL、halfcodeExt、graphExt 三域分离，扩展域不得反写 canonical core</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="xnl-only-asset-bundle">
+    <statement>系统 SHALL 提供 XNL-only halfcode asset bundle/folder loader，并统一使用 xnl-core 的 loader/import/path 规范加载 bundle 内所有配置。</statement>
+    <suite id="xnl-bundle" name="XNL-only Asset Bundle">
+      <case id="folder-loader">
+        <given>一个低代码应用以文件夹形式组织 core、低代码扩展、图扩展和共享物料</given>
+        <when>系统加载该 bundle</when>
+        <then>系统 SHALL 通过注入的 resolver 读取文件夹，并支持 vfs://@/、vfs://./、vfs://../ 路径解析</then>
+      </case>
+      <case id="no-json-or-xml-config">
+        <given>bundle 包含 manifest、core、halfcodeExt、graphExt 等配置</given>
+        <when>系统加载这些配置</when>
+        <then>系统 MUST 使用 XNL 数据格式表达所有配置，不得要求或接受 JSON/XML 配置文件作为 bundle 配置入口</then>
+      </case>
+      <case id="bundle-import-loader">
+        <given>bundle core 通过 Imports 引用 shared XNL 物料或 prefab/export</given>
+        <when>系统加载 bundle</when>
+        <then>系统 SHALL 调用 xnl-core import/loader 解析导入和 prefab，并产出可编译的 HalfcodeDocument</then>
+      </case>
+      <case id="bundle-to-admin-crud">
+        <given>bundle 描述一个 admin shell 与 CRUD 页面</given>
+        <when>系统执行 folder load 和 compiler</when>
+        <then>系统 SHALL 输出 adminShellPlans、crudPlans 和 renderPlans，可作为 admin 壳 + CRUD 应用的运行输入</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

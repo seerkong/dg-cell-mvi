@@ -1,0 +1,10 @@
+<Runtime #counter-runtime [
+  <RuntimeInstance #counter-base {
+    create = "vfs://./runtime/counter.runtime.ts#createCounterRuntime"
+    config = "config://#counter-initial-state"
+  }>
+  <RuntimeInstance #counter {
+    prototype = "runtime://#counter-base"
+    derive = "vfs://./runtime/counter.runtime.ts#deriveCounterRuntime"
+  }>
+]>

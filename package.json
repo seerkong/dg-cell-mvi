@@ -1,0 +1,24 @@
+{
+  "name": "dg-cell-mvi-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "../depa-flows.ts/packages/depa-behavior-tree",
+    "../depa-flows.ts/packages/biz-process-contract",
+    "../depa-flows.ts/packages/biz-process-logic",
+    "../depa-flows.ts/packages/eager-data-flow-contract",
+    "../depa-flows.ts/packages/eager-data-flow-logic",
+    "../depa-flows.ts/packages/instant-flow-contract",
+    "../depa-flows.ts/packages/instant-flow-logic",
+    "../depa-flows.ts/packages/task-manager-contract",
+    "../depa-flows.ts/packages/task-manager-logic",
+    "../depa-flows.ts/packages/work-flow-contract",
+    "../depa-flows.ts/packages/work-flow-logic"
+  ],
+  "scripts": {
+    "build": "bun run --filter './packages/*' build",
+    "test": "bun run --filter './packages/*' test",
+    "lint": "bun run --filter './packages/*' lint"
+  }
+}

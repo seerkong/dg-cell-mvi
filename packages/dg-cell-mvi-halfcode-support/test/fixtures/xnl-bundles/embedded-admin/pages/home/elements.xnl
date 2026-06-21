@@ -1,0 +1,8 @@
+<Elements #home-page-elements (
+  <Scope ref="home-page">
+) [
+  <h1 #home-title { text = "工作台首页" }>
+  <dg.admin.embedded.ReportsPage #reports-embed {
+    urlInputs = "config://#reports-embed/url"
+  }>
+]>

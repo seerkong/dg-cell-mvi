@@ -1,0 +1,57 @@
+<behaviors capability="halfcode-schema-editor-render-contracts" version="1">
+  <requirement id="renderer-complete-plan-metadata">
+    <statement>EditorPlan SHALL carry typed, serializable, renderer-neutral metadata sufficient to render schema fields without reopening raw StructureSchema or embedding component/runtime implementations.</statement>
+    <suite id="metadata" name="Renderer complete metadata">
+      <case id="schema-facts-propagate">
+        <given>A nested schema with field labels, required keys, constraints, scalar enum/const/default, collection/map hints, union alternatives/discriminator, and refs</given>
+        <when>The default compiler creates an EditorPlan</when>
+        <then>Each relevant plan node SHALL expose the corresponding typed facts and SHALL pass contract validation</then>
+      </case>
+      <case id="pure-data-only">
+        <given>A schema or plan attempts to carry a factory, component, runtime instance, or writer in metadata</given>
+        <when>The public validator runs</when>
+        <then>The validator SHALL reject the non-serializable or ownership-violating value</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="collection-and-union-authoring-facts">
+    <statement>Collection, map, and union plans SHALL preserve the pure-data facts needed for dynamic item creation, stable rendering, key editing, and alternative selection without snapshot expansion.</statement>
+    <suite id="dynamic-structures" name="Dynamic structure facts">
+      <case id="collection-template">
+        <given>An array schema with nested item schema, serializable item default, and identity hint</given>
+        <when>The schema is compiled before a value snapshot exists</when>
+        <then>The collection plan SHALL retain one wildcard item template plus default and identity facts, and SHALL NOT create static value children</then>
+      </case>
+      <case id="union-descriptors">
+        <given>A union schema with discriminator and labeled alternatives</given>
+        <when>The schema is compiled</when>
+        <then>The union plan SHALL preserve ordered alternative descriptors separately from recursively compiled alternative plans</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="path-overlay-normalization">
+    <statement>The compiler SHALL normalize recursive and path-targeted EditorPresentation overlays with deterministic precedence before transformer selection and recursion.</statement>
+    <suite id="overlays" name="Presentation normalization">
+      <case id="recursive-and-path-overlay">
+        <given>Recursive presentation data and multiple path-targeted overlays address the same nested field or wildcard template</given>
+        <when>The compiler normalizes and compiles the presentation</when>
+        <then>Unspecified data SHALL survive, matching later path overlays SHALL win per field, and all transformers SHALL observe the normalized overlay</then>
+      </case>
+      <case id="no-resolver-in-config">
+        <given>A caller compiles a schema with path overlays</given>
+        <when>Normalization runs</when>
+        <then>Normalization SHALL remain compiler-owned and SHALL NOT add functions, resolver aliases, or precedence controls to caller config</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="ownership-boundaries">
+    <statement>The render/runtime prerequisite revision SHALL remain inside contract and logic ownership and SHALL NOT implement renderer, host session, persistence, XNL, VFS, or Flow semantics.</statement>
+    <suite id="boundaries" name="Package boundaries">
+      <case id="dependency-scan">
+        <given>The revised contract and compiler source graph</given>
+        <when>Dependency and public-surface tests run</when>
+        <then>The packages SHALL expose stable root APIs and SHALL contain no Vue, Element Plus, support runtime, IO, XNL, VFS, database, or Flow imports</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

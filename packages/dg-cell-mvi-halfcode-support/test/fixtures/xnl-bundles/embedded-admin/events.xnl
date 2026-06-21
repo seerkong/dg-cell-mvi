@@ -1,0 +1,3 @@
+<Events #embedded-admin-events [
+  <Event #report.saved>
+]>

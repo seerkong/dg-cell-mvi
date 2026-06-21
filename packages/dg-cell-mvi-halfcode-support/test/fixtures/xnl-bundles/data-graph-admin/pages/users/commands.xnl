@@ -1,0 +1,6 @@
+<Commands #users-page-commands [
+  <Command #users.search {
+    handler = "vfs://./command-handlers/users.command-handlers.ts#updateUsersQuery"
+  }>
+  <Command #users.refresh>
+]>

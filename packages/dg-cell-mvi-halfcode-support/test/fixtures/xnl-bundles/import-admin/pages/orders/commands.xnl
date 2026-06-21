@@ -1,0 +1,6 @@
+<Commands #orders-page-commands [
+  <Command #orders.search {
+    handler = "vfs://./command-handlers/orders.command-handlers.ts#searchOrders"
+  }>
+  <Command #orders.refresh>
+]>

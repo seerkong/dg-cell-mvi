@@ -1,0 +1,6 @@
+<AppBundle #dg.admin.graph.App version="0.1.0" (
+  <Units [
+    <Unit kind="page" fqn="dg.admin.graph.UsersPage" src="vfs://./pages/users/manifest.xnl">
+    <Unit kind="page" fqn="dg.admin.graph.DashboardPage" src="vfs://./pages/dashboard/manifest.xnl">
+  ]>
+)>

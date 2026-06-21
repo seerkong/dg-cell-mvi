@@ -1,0 +1,26 @@
+<EagerDataFlow #dg.demo.flow.TransformMain apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.TransformMain {
+    inputPorts = ["input"]
+    outputPorts = ["output"]
+  }>
+  <FlowAuthoring #dg.demo.flow.TransformMain { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #entry { x = 80 y = 120 }>
+    <NodeLayout #transform-and-extract { x = 360 y = 120 }>
+  ]>
+) [
+  <EntryNode #entry>
+  <SubFlowNode #transform-and-extract {
+    flow = "eager-data-flow://dg.demo.flow.TransformSub"
+    inputs = { input = "flow-port://#entry/input" }
+  }>
+  <TransformNode #flatten-result {
+    inputs = { input = "flow-port://#transform-and-extract/entityDetailMap" }
+    outputs = ["output"]
+    waitFor = ["flow-node://#transform-and-extract"]
+    type = "vfs://./flow-code/main.types.ts#FlattenResultLogic"
+    src = "vfs://./flow-code/main.impl.ts#flattenResult"
+  }>
+  <ReturnNode #return {
+    inputs = { output = "flow-port://#flatten-result/output" }
+  }>
+]>

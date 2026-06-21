@@ -1,0 +1,171 @@
+<Track id="add-halfcode-schema-editor-vue-renderer" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让唯一 canonical schemaEditor.Editor shell 通过 toolkit-neutral presenter registry 和 accepted-session projection 成为递归可交互 Vue editor。</Goal>
+    <Description>在现有 halfcode Vue capsule 内实现 presenter registry、递归 EditorPlan rendering、dynamic wildcard templates、normalized event bridge、canonical shell integration 和 subscription lifecycle。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-17T04:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-17T06:14:09Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="input" name="schema-editor-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/schema-editor/"/>
+    <MaterialBundle role="input" name="canonical-vue-renderer" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/src/"/>
+    <MaterialBundle role="output" name="schema-editor-vue-renderer" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/src/schema-editor/"/>
+    <MaterialBundle role="output" name="vue-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/test/"/>
+    <MaterialBundle role="output" name="schema-editor-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/schema-editor/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-schema-editor-vue-renderer" name="add-halfcode-schema-editor-vue-renderer" version="1">
+    <Description>先冻结 public contracts 与 RED，再实现递归模板物化、event/session lifecycle、真实 canonical shell integration，最后独立验证边界。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Public contracts and RED baseline" status="DONE" order="0">
+        <Description>冻结 presenter registry、normalized event、renderer runtime/input/config 和 canonical shell adapter 的公共边界。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Registry 只做 stable presenter id 到 adapter/component implementation 的受控映射。</cdt:Criterion>
+          <cdt:Criterion>Presenter props 不含 ValueHost、session、runtime、writer 或 persistence capability。</cdt:Criterion>
+          <cdt:Criterion>公开 Processor/factory 保持三参数协议并只从包根导出。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 public contracts 与 ownership 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 registry resolve/composition、normalized event data、root exports、三参数 arity、unknown/duplicate ids、no deep imports 和 forbidden capability props。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明当前 Vue 包没有 Schema Editor presenter/renderer public surface</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试以 probe adapters 表达 contract，不引入 Element Plus 或 host mutation</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 presenter registry 与公共 renderer contracts" status="DONE" order="1" priority="P0">
+            <Description>增加 toolkit-neutral registry/adapter/event/types、显式 composition 和 package-root exports；组件实现保持 opaque，缺失/冲突 id fail closed。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">stable ids 可确定解析且 unknown/duplicate policy 有结构化结果</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">Presenter public contract 不暴露 ValueHost/session/runtime/writer</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="true">公开 Processor/factory arity 为 3，Vue 包仍只有 package root export</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Recursive renderer and wildcard templates" status="DONE" order="1">
+        <Description>递归消费 renderer-complete EditorPlan，并从 accepted snapshot 动态实例化 collection/map templates。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>六类 plan node 均只从 EditorPlan 和 accepted snapshot 渲染。</cdt:Criterion>
+          <cdt:Criterion>Nested wildcards 外到内绑定，不生成静态 plan children/entries。</cdt:Criterion>
+          <cdt:Criterion>Vue key 只属于 renderer projection，不进入 domain value。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="编写递归渲染与模板物化红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖六类节点、typed metadata、nested collection/map、accepted value lookup、wildcard order、plan immutability、missing presenter 和 no raw fallback。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T2.1-AC1" checked="true">红测试证明当前 canonical renderer 不能递归消费 EditorPlan 或物化 wildcard templates</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现递归 EditorPlan Vue renderer" status="DONE" order="1" priority="P0">
+            <Description>实现 node-kind dispatch、value path projection、presenter props/slots、union/custom handling 和 fail-closed diagnostics，不回读 schema/dialect。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">六类节点和深层组合通过 probe presenter DOM 测试</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">EditorPlan 和 accepted snapshot 输入不被修改</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 wildcard 与 renderer identity materialization" status="DONE" order="2" priority="P0">
+            <Description>实现 outer-to-inner wildcard context、collection property/ephemeral key、map key、accepted-transition reconciliation 和 nested event bindings。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">nested collection/map value 与事件使用相同有序 wildcard bindings</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">property identity 优先，fallback keys 可重排且不写入 domain/host request</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC3" checked="true">当前 accepted items 不被复制为 persistent plan children/entries</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Event session bridge and lifecycle" status="DONE" order="2">
+        <Description>把 normalized presenter event 绑定到 plan template/session dispatch，并以 Vue lifecycle 管理唯一 subscription。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>唯一写入链经过 session.dispatch 和 scoped ValueHost。</cdt:Criterion>
+          <cdt:Criterion>Renderer 不做 optimistic value update。</cdt:Criterion>
+          <cdt:Criterion>Unmount 只 unsubscribe，不 dispose Scope-owned session。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="编写 event/session/lifecycle 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖全部 command event families、malformed/unknown/duplicate events、pending/reject/conflict/accept、late result、replacement、remount 和 shared session。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T3.1-AC1" checked="true">红测试证明当前 Vue 包没有 normalized session dispatch 或 subscription lifecycle</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 normalized event to session dispatch bridge" status="DONE" order="1" priority="P0">
+            <Description>descriptor-safe 验证 event，唯一匹配 node command binding，并以 template/payload/wildcards 调用 session.dispatch；错误 fail closed。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">每个合法 event 只 dispatch 一次正确 plan-owned template</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Presenter/renderer 不直接调用 ValueHost 或应用 concrete Command</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">malformed/unknown/duplicate events 不产生 partial dispatch</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="实现 accepted projection subscription lifecycle" status="DONE" order="2" priority="P0">
+            <Description>实现 initial getState、单 subscription、plan/session/registry replacement cleanup、unmount/remount 和 late completion isolation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">Rendered value 只随 accepted snapshot 推进，pending/diagnostics 不伪装 accepted value</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">每次 mount 仅一个 active subscriber，replacement/unmount 无残留 listener</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC3" checked="true">Renderer 从不调用 shared session.dispose</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Canonical shell integration public boundaries and docs" status="DONE" order="3">
+        <Description>让真实 schemaEditor.Editor shell 复用现有 canonical renderer/component registry，并收口 public/dependency/documentation truth。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>真实 lowered source lifecycle 可 mount 唯一 shell。</cdt:Criterion>
+          <cdt:Criterion>Presenter registry 与 canonical component registry 分层组合。</cdt:Criterion>
+          <cdt:Criterion>无第二套 renderer/runtime/lowering 和 excluded ownership。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="固化 canonical shell integration characterization" status="DONE" order="0" priority="P0">
+            <Description>从 real lowerEditorPlan source 经过 resolver/loader/compiler/app runtime，mount existing CanonicalHalfcodeRenderer，并固化唯一 shell/Scope session/probe presenter lifecycle。</Description>
+            <cdt:Acceptance><cdt:Criterion id="T4.1-AC1" checked="true">characterization 证明提前落地的 context-aware registry 可通过真实 canonical lifecycle 且无绿色旁路</cdt:Criterion></cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="审查并加固 context-aware canonical registry shell adapter" status="DONE" order="1" priority="P0">
+            <Description>审查提前落地的最小 backward-compatible resolution context，修复 Scope bridge/session、缓存、capability isolation 与旧 one-argument registry 兼容缺口。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">真实 canonical lifecycle mount 后递归 presenter 可见且零 loader/compiler/runtime errors</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Registry adapter 只把 session projection 交给 shell，不把 bridge.valueHost 交给 renderer/presenter</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">现有 canonical admin/counter renderer tests 保持通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="收口 public boundary tests and documentation" status="DONE" order="2" priority="P1">
+            <Description>更新 root exports、dependency scans 和 Schema Editor docs，声明 Vue renderer 已实现、Element Plus/Flow mutation 仍未实现。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">Vue root-only API 和 no-deep-import/forbidden-dependency checks 通过</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">文档事件链、wildcard、registry、lifecycle 示例与真实 API/test 一致</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">代码和文档无 Element Plus presenter、Flow/XNL/VFS/database 或 optimistic mutation 声明</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="Verification" status="DONE" order="4">
+        <Description>独立验证 behavior、真实 canonical lifecycle、Vue lifecycle、回归、DEPA ownership 和 Codument 状态。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>Vue focused/full tests 与 TypeScript 全绿。</cdt:Criterion>
+          <cdt:Criterion>Contract/logic/support regressions 与真实 shell lifecycle 通过。</cdt:Criterion>
+          <cdt:Criterion>Ownership/dependency/public scans 和 strict validate 通过。</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T5.1" name="运行 renderer 验证矩阵并记录报告" status="DONE" order="0" priority="P0">
+            <Description>运行 focused/full tests、typecheck、upstream regressions、real canonical lifecycle、subscription/late-result matrix、dependency/public scans、strict validate、diff check，并写 reports/verification.md。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">报告逐项映射六个 behavior requirements 和全部 cases</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">报告明确给 G3-T4 的 presenter adapter/registry handoff 与仍未实现边界</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

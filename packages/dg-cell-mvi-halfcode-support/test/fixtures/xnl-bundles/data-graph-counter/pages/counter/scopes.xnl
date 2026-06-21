@@ -1,0 +1,13 @@
+<Scopes #counter-page-scopes [
+  <Scope #counter-page {
+    config = "config://#counter-page"
+    commands = "command://#counter-page-commands"
+  } (
+    <DataGraphBindings [
+      <GraphMount #counter {
+        module = "data-graph://#counter.core"
+        impls = "vfs://./graph-code/counter.graph.impl.ts#counterGraphImpls"
+      }>
+    ]>
+  )>
+]>

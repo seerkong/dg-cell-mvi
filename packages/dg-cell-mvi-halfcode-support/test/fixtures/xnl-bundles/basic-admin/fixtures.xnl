@@ -1,0 +1,10 @@
+<DevFixtures #basic-admin-fixtures {
+  mockRecords = {
+    users-table = [
+      { id = "u1" name = "Ada Lovelace" score = 98 status = "enabled" }
+      { id = "u2" name = "Grace Hopper" score = 92 status = "enabled" }
+      { id = "u3" name = "Alan Turing" score = 89 status = "disabled" }
+    ]
+    users-query = { keyword = "" status = "" }
+  }
+}>

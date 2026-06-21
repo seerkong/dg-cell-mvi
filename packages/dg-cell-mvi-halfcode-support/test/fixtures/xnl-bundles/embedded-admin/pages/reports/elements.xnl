@@ -1,0 +1,13 @@
+<Elements #reports-page-elements (
+  <Scope ref="reports-page">
+) [
+  <h1 #reports-title { text = "报表中心" }>
+  <Capsule #reports-admin-slot (
+    <Scope ref="reports-admin-slot">
+  ) [
+    <dg.materials.CrudTable #reports-table {
+      entity = "reports"
+      props = "config://#reports-table"
+    }>
+  ]>
+]>

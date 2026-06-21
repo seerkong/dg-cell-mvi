@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "dg-cell-mvi-core": ["../dg-cell-mvi-core/src/index.ts"],
+      "dg-cell-mvi-crud": ["../dg-cell-mvi-crud/src/index.ts"],
+      "dg-cell-mvi-vue": ["../dg-cell-mvi-vue/src/index.ts"],
+      "dg-cell-mvi-element-plus": ["../dg-cell-mvi-element-plus/src/index.ts"],
+      "dg-cell-mvi-admin-contract": ["../dg-cell-mvi-admin-contract/src/index.ts"],
+      "dg-cell-mvi-admin-logic": ["../dg-cell-mvi-admin-logic/src/index.ts"],
+      "dg-cell-mvi-admin-support": ["../dg-cell-mvi-admin-support/src/index.ts"],
+      "depa-data-graph-core": ["../../../depa-data-graph/packages/core/src/index.ts"],
+      "depa-data-graph-vue": ["../../../depa-data-graph/packages/vue/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.ts"]
+}

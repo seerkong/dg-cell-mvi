@@ -1,0 +1,29 @@
+<behavior-patch capability="halfcode-schema-editor-element-plus-presenters" version="1">
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/ownership-and-dependency-boundaries">
+    <requirement id="ownership-and-dependency-boundaries">
+      <statement>The Element Plus schema-editor capsule SHALL depend only on public Halfcode contract/support/Vue APIs, Element Plus APIs, and presenter-internal UI engine dependencies explicitly declared by this capability; it SHALL NOT own compilation, session lifecycle, recursive rendering, lowering, host mutation or persistence capabilities.</statement>
+      <suite id="boundaries" name="Ownership and package boundaries">
+        <case id="capability-isolation">
+          <given>Presenter props, component-local engine runtime, registry factories and canonical composition inputs.</given>
+          <when>Ownership and dependency scans run.</when>
+          <then>No presenter SHALL receive or capture Session, ValueHost, host writer, Flow, XNL mutation, VFS, database or browser persistence capability; structured-value engine loaders and editor instances SHALL remain restricted to the explicit presenter internals.</then>
+        </case>
+        <case id="no-parallel-runtime">
+          <given>The Element Plus package source graph.</given>
+          <when>Public and dependency boundary tests run.</when>
+          <then>The package SHALL NOT implement a second compiler, Session, recursive renderer, canonical renderer, loader or lowering path; Monaco and vanilla-jsoneditor SHALL be treated only as presenter-internal UI engines.</then>
+        </case>
+        <case id="pure-data-boundary">
+          <given>StructureSchema, EditorPresentation, EditorPlan and lowered canonical source.</given>
+          <when>Default or business presenters are composed.</when>
+          <then>No component implementation, engine loader, callback, registry object or runtime value SHALL be written into those serializable data structures.</then>
+        </case>
+        <case id="explicit-json-exception">
+          <given>Ownership scans encounter JSON serialization or a code editor.</given>
+          <when>The source is inspected.</when>
+          <then>Such behavior SHALL be accepted only inside the explicit structured-value presenter path and SHALL remain forbidden as an implicit fallback in every other presenter.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

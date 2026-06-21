@@ -1,0 +1,6 @@
+<AppBundle #dg.admin.basic.App version="2.0.0" (
+  <Units [
+    <Unit kind="page" fqn="dg.admin.basic.UsersPage" src="vfs://./pages/users/manifest.xnl">
+    <Unit kind="component" fqn="dg.materials.CrudTable" src="vfs://./components/crud-table/manifest.xnl">
+  ]>
+)>

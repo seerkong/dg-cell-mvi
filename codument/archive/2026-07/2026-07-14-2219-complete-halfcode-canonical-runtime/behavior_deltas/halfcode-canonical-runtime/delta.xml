@@ -1,0 +1,114 @@
+<behavior-patch capability="halfcode-canonical-runtime" version="1">
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/canonical-source-language">
+    <requirement id="canonical-source-language">
+      <statement>系统 SHALL 让 canonical Halfcode XNL 与 source AST 使用唯一裸语义字段，并 SHALL 拒绝历史 XxxRef 绑定字段。</statement>
+      <suite id="naming" name="Canonical naming">
+        <case id="bare-binding-fields">
+          <given>FrontendApp、Route、元素与 Scope 使用 page、permission、props、urlInputs、command、config 等绑定</given>
+          <when>loader 解析 bundle</when>
+          <then>source AST SHALL 以同名 HalfcodeRef 字段表示这些绑定，inline props SHALL 单独表示为 inlineProps</then>
+        </case>
+        <case id="reject-ref-suffixes">
+          <given>canonical XNL 声明 pageRef、propsRef、scopeRef、urlInputsRef、contractRef 或 parentRef</given>
+          <when>loader 或 guardrail 校验该 bundle</when>
+          <then>系统 SHALL 拒绝该声明且不得静默兼容</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/scope-object-system">
+    <requirement id="scope-object-system">
+      <statement>系统 SHALL 从 Elements/Capsule 元素树编译 Scope hierarchy，并按 parent-first 顺序装配代码拥有的 RuntimeObject。</statement>
+      <suite id="scope-assembly" name="Scope hierarchy and assembly">
+        <case id="tree-derived-parent">
+          <given>Elements 根和嵌套 Capsule 通过 Scope ref 或 inline Scope 声明边界</given>
+          <when>compiler 生成 ScopeRuntimePlan</when>
+          <then>plan SHALL 包含由树位置派生的 scopeId、parentScopeId 与 ownerElementId，source DSL SHALL 不含 parentRef</then>
+        </case>
+        <case id="parent-runtime-visible">
+          <given>父 Scope 绑定 RuntimeObject 能力且子 Scope 继承或覆盖部分 binding</given>
+          <when>runtime assembly 装配子 Scope</when>
+          <then>子 Scope SHALL 通过当前 RuntimeObject 可见父能力，并 SHALL 以最近 Scope 覆盖同名能力</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/canonical-execution-spine">
+    <requirement id="canonical-execution-spine">
+      <statement>系统 SHALL 提供一个 canonical Halfcode app runtime actor，拥有 load、compile、scope assembly、render binding、Command dispatch 与 dispose。</statement>
+      <suite id="command-dispatch" name="Command execution">
+        <case id="button-to-runtime-code">
+          <given>元素 command 绑定到 commands domain 中带 runtime-first handler 的 Command</given>
+          <when>renderer dispatch 该元素 Command</when>
+          <then>app runtime SHALL 从 compiled plan 解析 handler/config 并调用 output = fn(runtime, input, config)，不得重新扫描 raw domain</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/scope-family-bindings">
+    <requirement id="scope-family-bindings">
+      <statement>Scope SHALL 将 config、commands、events、MessagePolicy、CallableEffect bindings 与 DataGraph bindings 作为独立 typed plans 装配到 RuntimeObject。</statement>
+      <suite id="effect-binding" name="Callable Effect binding">
+        <case id="typed-callable-effect">
+          <given>Scope 声明 EffectBindings 并指向代码类型与实现 bundle</given>
+          <when>Scope runtime 被装配</when>
+          <then>动态代码 SHALL 通过强类型 RuntimeObject 调用 effect，且 CallableEffect SHALL 与 MviEffectRequest 使用不同公开类型</then>
+        </case>
+      </suite>
+      <suite id="graph-binding" name="Data graph binding">
+        <case id="materialize-real-graph-module">
+          <given>Scope 声明 GraphMount，代码导出真实 depa-data-graph GraphModule 和 logic implementations</given>
+          <when>Scope runtime 被装配</when>
+          <then>materializer SHALL 使用 GraphModule、NodeRef 与 mountGraph 创建 typed mounted graph，并 SHALL 支持 seed 和已有 graph 扩展</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/message-kind-preservation">
+    <requirement id="message-kind-preservation">
+      <statement>Halfcode Command/Event 进入 dg-cell-mvi dispatch/effect loop 时 SHALL 保留 command/event kind、payload contract 与 policy 身份。</statement>
+      <suite id="mvi-bridge" name="MVI message bridge">
+        <case id="preserve-kind">
+          <given>一个 Command 触发 reducer/effect，并由 effect 返回 Event</given>
+          <when>消息经过 dg-cell-mvi AppEvent transport</when>
+          <then>bridge SHALL 能确定请求是 Command、反馈是 Event，且 Event SHALL 不能绑定 handler</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/canonical-consumer">
+    <requirement id="canonical-consumer">
+      <statement>canonical Vue 与 Workbench 消费入口 SHALL 使用 HalfcodeAppRuntime 和 compiled plans；legacy schema/store renderer SHALL 不再从 canonical package root 暴露。</statement>
+      <suite id="consumer-migration" name="Consumer migration">
+        <case id="counter-demo">
+          <given>runtime-counter 或 data-graph-counter bundle</given>
+          <when>Vue/Workbench demo 渲染并点击加一按钮</when>
+          <then>真实 UI SHALL 经 canonical Command/Scope RuntimeObject 更新投影，不得调用 legacy patchState/setStatePath 主链</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://halfcode-canonical-runtime/requirements/verification-health">
+    <requirement id="verification-health">
+      <statement>所有 canonical fixtures SHALL 零 error load/compile，受影响包测试 SHALL 可解析真实 depa-data-graph 依赖并通过。</statement>
+      <suite id="workspace-gates" name="Workspace gates">
+        <case id="fixture-corpus">
+          <given>六个 canonical xnl-bundles</given>
+          <when>执行 corpus load、compile 与 stale-name scan</when>
+          <then>所有 bundle SHALL 零 error，XNL 中 nameRef 属性 SHALL 为零</then>
+        </case>
+        <case id="dependency-resolution">
+          <given>dg-cell-mvi-core 测试环境</given>
+          <when>运行 streamSignalStore、serverEventSource 与 effectRunner suites</when>
+          <then>depa-data-graph-core SHALL 可解析，所有 suite SHALL 被收集并执行</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

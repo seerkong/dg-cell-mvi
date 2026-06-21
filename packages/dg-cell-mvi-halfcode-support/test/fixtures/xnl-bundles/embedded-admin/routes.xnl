@@ -1,0 +1,12 @@
+<Routes #embedded-admin-routes [
+  <Route #home-route {
+    path = "/home"
+    page = "page://dg.admin.embedded.HomePage"
+    menu = { icon = "home" order = 1 }
+  }>
+  <Route #reports-route {
+    path = "/reports"
+    page = "page://dg.admin.embedded.ReportsPage"
+    menu = { icon = "document" order = 2 }
+  }>
+]>

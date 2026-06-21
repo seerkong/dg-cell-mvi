@@ -1,0 +1,67 @@
+<Track id="add-halfcode-runtime-object-contracts" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>新增 halfcode runtime object contract 类型、诊断和 canonical domain table。</Goal>
+    <Description>为 RuntimeInstance + Scope assembly 运行时实现提供纯 contract 层底座，不执行代码。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-04T17:02:00Z</CreatedAt>
+    <UpdatedAt>2026-07-04T17:02:55Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="contract-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-runtime-object-contracts" name="add-halfcode-runtime-object-contracts" version="1">
+    <Description>新增 runtime object contract declarations 与最小测试。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contract declarations" status="DONE" order="0">
+        <Description>新增 runtime 类型与诊断，更新 canonical scheme table。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="新增 runtime contract 类型" status="DONE" order="0">
+            <Description>新增 unit/runtime.ts，导出 RuntimeInstanceSpec、RuntimeScopeAssembly、HalfcodeRuntimeObject、RuntimeCreate、RuntimeDerive 等纯类型/验证 helper。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1">runtime 类型从 contract root 可导入。</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2">source exclusivity helper 覆盖 src/create/prototype 三类来源。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="更新 runtime diagnostics" status="DONE" order="1">
+            <Description>新增 runtime ref/source/prototype/protocol/scope binding 诊断码并纳入 severity map。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1">runtime diagnostic codes 可由 support 层复用。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="对齐 canonical domain scheme table" status="DONE" order="2">
+            <Description>将 refs.ts scheme table 对齐最新 DSL 域名，至少覆盖 config/effect.types/data.graph/data.graph.logic.types/data.graph.seed/runtime。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1">scheme table 包含 runtime:// 与 scope.runtime:// 后续实现所需基础域。</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2">旧 state/effects 域不再作为 canonical 新 DSL 行。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Tests and exports" status="DONE" order="1">
+        <Description>补充 contract 测试并跑 halfcode support 测试矩阵。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="新增 runtime contract tests" status="DONE" order="0">
+            <Description>覆盖 RuntimeInstance source exclusivity、canonical schemes、diagnostic exports。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1">contract package tests 通过。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="回归 support tests" status="DONE" order="1">
+            <Description>运行 dg-cell-mvi-halfcode-support 测试，确认 loader fixture parse 不回退。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1">support package tests 通过。</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Hooks/>
+</Track>

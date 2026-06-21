@@ -1,0 +1,3 @@
+<Events #users-page-events [
+  <Event #users.selected>
+]>

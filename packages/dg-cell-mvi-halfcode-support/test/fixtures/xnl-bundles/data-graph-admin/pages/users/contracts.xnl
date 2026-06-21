@@ -1,0 +1,22 @@
+<Contracts #users-page-contracts (
+  <PageContract #dg.admin.graph.UsersPage {
+    urlInputs = { query = { keyword = "string?" status = "string?" } }
+  } (
+    <Accepts [ <Command ref="command://#users.refresh"> ]>
+    <Sends [ <Event ref="event://#users.selected"> ]>
+  )>
+) [
+  <ElementContract #users-filter (
+    <Requires {
+      commands = [ "command://#users.search" ]
+      config = [ "config://#users-filter" ]
+    }>
+    <Sends [ <Command ref="command://#users.search"> ]>
+  )>
+  <ElementContract #users-grid (
+    <Requires {
+      config = [ "config://#users-grid" ]
+    }>
+    <Sends [ <Event ref="event://#users.selected"> ]>
+  )>
+]>

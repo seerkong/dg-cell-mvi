@@ -1,0 +1,5 @@
+<Config #counter-demo-config [
+  <ConfigEntry #app {
+    title = "Counter Graph Demo"
+  }>
+]>

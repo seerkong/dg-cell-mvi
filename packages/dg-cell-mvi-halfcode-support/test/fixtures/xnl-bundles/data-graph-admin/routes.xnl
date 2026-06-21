@@ -1,0 +1,12 @@
+<Routes #data-graph-admin-routes [
+  <Route #users-route {
+    path = "/users"
+    page = "page://dg.admin.graph.UsersPage"
+    menu = { icon = "users" order = 1 }
+  }>
+  <Route #dashboard-route {
+    path = "/dashboard"
+    page = "page://dg.admin.graph.DashboardPage"
+    menu = { icon = "dashboard" order = 2 }
+  }>
+]>

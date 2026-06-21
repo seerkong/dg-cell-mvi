@@ -1,0 +1,17 @@
+# Build output & generated artifacts
+dist
+stats.html
+
+# Deps & lockfiles
+node_modules
+bun.lock
+*.lock
+
+# Don't reformat env / static / markdown copy
+*.env
+.env*
+static
+public
+
+# Generated / vendor-ish CSS bundles are not ours to format
+src/styles/*.min.css

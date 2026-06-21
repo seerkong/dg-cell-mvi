@@ -1,0 +1,6 @@
+<Commands #counter-page-commands [
+  <Command #counter.increment {
+    handler = "vfs://./runtime/counter.command-handlers.ts#incrementCounter"
+    config = "config://#counter-actions"
+  }>
+]>

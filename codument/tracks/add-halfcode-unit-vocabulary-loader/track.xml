@@ -1,0 +1,55 @@
+<Track id="add-halfcode-unit-vocabulary-loader" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>loader 支持新词汇 manifest（FrontendApp / Unit kind+fqn+src / 域内容发现），使新形态 fixtures 可真实加载；旧形态保持兼容。</Goal>
+    <Description>mission evolve-halfcode-non-frontend-dsl 的 G2R-T1（replan-002）：修复 review 高优先级缺口——runtime-counter/data-graph-counter 用新词汇书写但 loader 零支持，e2e 仅文本扫描。规范真源：docs/halfcode/dsl-bundle/spec/frontend/{files,nodes}.md（e1fc301 后版本）。</Description>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-05T18:45:09Z</CreatedAt>
+    <UpdatedAt>2026-07-05T22:05:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-unit-vocabulary-loader" name="add-halfcode-unit-vocabulary-loader" version="1">
+    <Description>两个 phase：新词汇解析与域内容发现、真实 fixtures e2e 与兼容回归。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="新词汇解析" status="COMPLETED" order="0">
+        <cdt:Gate>
+          <cdt:Criterion>旧形态（HalfcodePage/Ports/MaterialBundle/UnitBundle path）零回归</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="FrontendApp manifest 与 Unit 注册解析" status="COMPLETED" order="0" priority="P0">
+            <Description>解析 FrontendApp 根（metadata apiVersion/version + 属性 name 等）与 Units 段的 Unit(kind, fqn, src→manifest 文件)；注册 fqn 与目标根 #id 交叉核验（不符沿用 KIND_MISMATCH/FQN 诊断语义）。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">FrontendApp/Unit 形态与 UnitBundle 旧形态并存可加载</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="域内容发现" status="COMPLETED" order="1" priority="P0">
+            <Description>无 domains 声明时按 docs files.md §3：扫描单元目录 域名.xnl 文件，根 tag 必须与域的 PascalCase 名一致（不符报诊断）；app 级同规则。resolver 需 readDir 能力，无 readDir 时给明确错误。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">runtime-counter 的 config/contracts/elements/intents/runtime/scopes 全部被发现且根 tag 核验通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="真实 fixtures e2e 与回归" status="COMPLETED" order="1">
+        <cdt:Gate>
+          <cdt:Criterion>support 全包测试全绿；既有测试零修改（新增除外）</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="磁盘 fixtures 真实加载 e2e" status="COMPLETED" order="0" priority="P0">
+            <Description>runtime-counter 与 data-graph-counter 经 loadHalfcodeUnitBundle 从磁盘加载：断言注册表 fqn、CounterPage 单元域集合、RuntimeSpec 含 counter-base/counter（prototype+derive 指向正确）、scopeRuntimeBindings 含 counter-page；正例零 error 诊断。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">slicing track2 验收在真实 fixture 上成立（非内存复制品）</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

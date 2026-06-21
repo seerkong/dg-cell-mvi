@@ -1,0 +1,8 @@
+<CommandsDef #users-page-commands-defs [
+  <CommandDef #users.search {
+    payload = { keyword = "string" status = "string" page = "number" pageSize = "number" }
+  }>
+  <CommandDef #users.filter.reset {
+    payload = {}
+  }>
+]>

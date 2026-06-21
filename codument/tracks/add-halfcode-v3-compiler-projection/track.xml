@@ -1,0 +1,108 @@
+<Track id="add-halfcode-v3-compiler-projection" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>实现 v3 单元 bundle 的编译投影：路由树 -> admin shell plan、单元树 -> render plan、urlInputs/props/Requires 编译期校验、wiring plan 与 unwired 诊断，并升级 admin-element-plus preview 页消费分层 bundle。</Goal>
+    <Description>mission redesign-halfcode-hierarchical-unit-dsl 的 G4-T1；前置 contract v3 与 loader track 已完成；v2 compileHalfcode 路径零修改。</Description>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-02T20:30:00Z</CreatedAt>
+    <UpdatedAt>2026-07-02T20:50:16Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mission-spec" domain="mission" path="vfs://@/codument/missions/active/redesign-halfcode-hierarchical-unit-dsl/analysis/v3-unit-dsl-spec-draft.md"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+    <MaterialBundle role="output" name="logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-v3-compiler-projection" name="add-halfcode-v3-compiler-projection" version="1">
+    <Description>三个 phase：plan 契约、compiler 实现与校验、e2e 与 preview 闭环。</Description>
+    <SubNodes>
+
+      <TaskGroup id="P1" name="plan 契约" status="DONE" order="0">
+        <Description>contract unit 分区追加 plan 类型与 compile 输入类型（additive，不改既有 v2/v3 类型），logic 不 import support。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>plan/输入类型全部可序列化且只依赖 contract v3 类型</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="定义 UnitCompilePlans 与 compile 输入" status="DONE" order="0" priority="P0">
+            <Description>AdminShellPlanV3（或适配复用 v2 AdminShellPlan，记录决策）、UnitRenderPlan、WiringPlan、UnitCompileInput（与 loader 返回同型的 contract 级结构）。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">contract 包测试仍全绿；新类型有边界约束</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="compiler 实现与契约校验" status="DONE" order="1">
+        <Description>logic 新模块 compileHalfcodeUnitBundle：路由投影（title 覆盖回落）、urlInputs 匹配、props 匹配、Requires 沿 scope 链核验、wiring 编译与 unwired warning、UnitRenderPlan。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>五类校验各有正负例单测；v2 compiler 测试零修改全绿</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现路由/urlInputs/props 编译" status="DONE" order="0" priority="P0">
+            <Description>RouteTree 展开 -> AdminShellPlanV3；HALFCODE_ROUTE_URLINPUTS_MISMATCH；HALFCODE_PROPS_CONTRACT_MISMATCH。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">title 覆盖/回落、url 匹配、props 匹配均有正负例</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 Requires 核验与 wiring 编译" status="DONE" order="1" priority="P0">
+            <Description>Requires 沿 scope 链（config/intents/effects 可达性）-> HALFCODE_CAPSULE_REQUIRES_UNMET；Wire -> WiringPlan；未接线 emit -> HALFCODE_INTENT_UNWIRED warning。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">requires 正负例 + wiring 正例 + unwired warning 有单测</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 UnitRenderPlan 投影" status="DONE" order="2" priority="P0">
+            <Description>原子/Capsule/component 实例/嵌入 page/Slot(含 Slots 容器) 全类别投影；renderer 不解释 raw XNL。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">users page 树全类别覆盖断言</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="e2e 与 preview 闭环" status="DONE" order="2">
+        <Description>support e2e（folder load -> compile -> plans/诊断）；admin-element-plus preview 页消费分层 bundle；全测试矩阵。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>basic-admin 编译零 error 诊断；broken-requires 产出 REQUIRES_UNMET</cdt:Criterion>
+          <cdt:Criterion>admin-element-plus build 通过；halfcode 四包测试矩阵全绿</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="support e2e：load->compile 全链路" status="DONE" order="0" priority="P0">
+            <Description>basic-admin 与 single-file-app 正例 plans 断言；broken-requires/url 不匹配/未知 props 负例诊断断言。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">e2e 覆盖正负例与两种 app 形态</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="preview 页消费分层 bundle" status="DONE" order="1" priority="P1">
+            <Description>admin-element-plus 新增/升级 halfcode bundles 页：Vite raw glob 加载 xnl-unit-bundles/basic-admin，渲染 admin shell plan 的路由/菜单与至少一个 UnitRenderPlan；DEPA_DATA_GRAPH_ROOT 构建通过。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">build 通过且页面模块有基础测试或构建期校验</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="测试矩阵与收口" status="DONE" order="2" priority="P0">
+            <Description>contract/logic/support 三包 + element-plus 配置测试全绿；v2 测试零修改；findings 回写。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">矩阵全绿并记录数字</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

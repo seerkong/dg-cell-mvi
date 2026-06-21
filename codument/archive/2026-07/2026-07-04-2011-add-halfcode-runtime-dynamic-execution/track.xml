@@ -1,0 +1,40 @@
+<Track id="add-halfcode-runtime-dynamic-execution" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>新增 halfcode runtime dynamic code entry executor。</Goal>
+    <Description>G2-T4：以 runtime 为首参执行 handler/effect/processor 代码入口。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-04T17:10:29Z</CreatedAt>
+    <UpdatedAt>2026-07-04T17:11:36Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="output" name="support-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+  </Ports>
+  <TaskSpace id="space_add-halfcode-runtime-dynamic-execution" name="add-halfcode-runtime-dynamic-execution" version="1">
+    <Description>Generic runtime code entry execution.</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Executor API" status="DONE" order="0">
+        <Description>Add and export generic executor.</Description>
+        <SubNodes>
+          <Task id="T1.1" name="Implement executor" status="DONE" order="0">
+            <Description>Add executeHalfcodeRuntimeCode.</Description>
+          </Task>
+          <Task id="T1.2" name="Export executor" status="DONE" order="1">
+            <Description>Export executor and types from package root.</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Tests" status="DONE" order="1">
+        <Description>Cover normal, instanceRefs, mismatch and thrown execution.</Description>
+        <SubNodes>
+          <Task id="T2.1" name="Add executor tests" status="DONE" order="0"/>
+          <Task id="T2.2" name="Run tests" status="DONE" order="1"/>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Hooks/>
+</Track>
