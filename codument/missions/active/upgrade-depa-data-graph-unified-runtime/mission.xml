@@ -1,0 +1,116 @@
+<Mission id="upgrade-depa-data-graph-unified-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>active</Status>
+    <Goal>将 dg-cell-mvi 全工作区从 depa-data-graph 0.1.1 升级到指定的 1.0.1 统一 DataGraph 模型，并以显式 Signal、Stream 与 StateNode API 保持既有 MVI 运行时语义。</Goal>
+    <Description>先以目标提交和当前代码建立 API、行为与依赖证据，再经由真实 tracks 迁移 core store、Halfcode graph runtime 与各消费端，最后以锁文件、类型、运行时和跨包验证收口。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>4</Revision>
+    <CreatedAt>2026-07-26T00:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-26T16:48:24Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+    <MaterialBundle role="output" name="core-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-core/"/>
+    <MaterialBundle role="output" name="halfcode-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="workspace-consumers" domain="code" path="vfs://@/packages/"/>
+  </Ports>
+  <cdt:ProjectRefs>
+    <cdt:ProjectRef id="host" kind="host"/>
+  </cdt:ProjectRefs>
+  <cdt:ActorSets default="data-graph-upgrade-loop">
+    <cdt:ActorSet id="data-graph-upgrade-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="host"><Description>以指定 upstream 发布面、工作区实际调用和验证证据切分或修订升级 tracks。</Description></cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="host"><Description>读取当前 mission、候选/绑定 tracks、依赖解析、测试基线、Halfcode mission 状态和执行期 reports。</Description></cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="host"><Description>判断统一图期望与实际 API/行为是否一致，选择一个不跨越 track 边界的下一个收敛动作。</Description></cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="host"><Description>启动或修订 mission，创建/执行/验证一个 host track，或写入有证据的报告。</Description></cdt:Actor>
+    </cdt:ActorSet>
+  </cdt:ActorSets>
+  <TaskSpace id="space_upgrade-depa-data-graph-unified-runtime" name="upgrade-depa-data-graph-unified-runtime" version="1" cdt:child-mode="dag">
+    <Description>统一 DataGraph 升级 mission：mission 仅负责证据、协调、track 编排和验证；依赖、代码、测试与文档修改必须进入真实 track。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="目标与现状证据冻结" status="DONE" order="0">
+        <Description>把指定目标提交的 public API/语义与工作区直接依赖、导入、lockfile、测试基线和 active mission 边界对应起来。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="核验目标发布物与 API 差异" status="DONE" order="0">
+            <Description>已读取指定提交 966f26bac5a8cfebb4b3f30e7ff24f7407aee12c；确认目标 core/Vue 为 1.0.1，并以统一 Signal/Stream DataGraph 和四种 StateNode 取代旧 split graph/bridge 机制。证据见 analysis/context-inventory.md。</Description>
+          </Task>
+          <Task id="G1-T2" name="冻结工作区使用面与基线门控" status="DONE" order="1">
+            <Description>枚举所有 manifest、lockfile、public re-export、core runtime、Halfcode materializer、Vue adapter、fixture 和测试中的 depa-data-graph 使用；执行现有最小相关测试、类型检查与构建基线，并记录包管理器/lockfile 再生成策略。</Description>
+          </Task>
+          <Task id="G1-T3" name="协调既有 Halfcode mission 边界" status="DONE" order="2">
+            <Description>读取 evolve-halfcode-non-frontend-dsl 的实际状态与其已完成 DataGraph binding 证据；只定义升级兼容切片和依赖，不重写该 mission 的 DSL 语义或重复其已完成工作。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G2" name="迁移设计与 track 切片" status="DONE" order="1">
+        <Description>把旧 API 调用逐项映射至统一 graph 的显式 source/adapter/state-node/handle API，冻结兼容面、回滚点和真实 track 边界。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="收敛 StreamSignalStore 统一图设计" status="DONE" order="0">
+            <Description>明确 AppendOnlyEventLog 继续承担事件历史，事件 source 到可读状态采用 StreamDrivenStateSignalNode 或等价显式 adapter；state output 不得充当事件历史，副作用保持在 store 的 Effect 边界。</Description>
+          </Task>
+          <Task id="G2-T2" name="收敛模块 identity 与 Halfcode materialization 设计" status="DONE" order="1">
+            <Description>对齐目标版本 GraphModule、NodeRef、mountGraph、GraphRuntime 和 typed graph 语义，判定 fixture/codegen/materializer 的最小兼容变更及与既有 mission 的交接点。</Description>
+          </Task>
+          <Task id="G2-T3" name="确认消费端兼容与验收矩阵" status="DONE" order="2">
+            <Description>确认 Vue useGraphSignal、CRUD/admin/uhtml 等 consumer 的输入输出引用语义，并形成 package × API × 测试的验收矩阵及候选 tracks 的依赖图。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G3" name="Core 依赖与运行时迁移 track" status="DONE" order="2">
+        <Description>以一个可独立验证的 track 升级直接依赖和锁文件，并将 dg-cell-mvi-core 迁移至统一图运行时；普通 store 公开只读 history/graph observation，真实 graph 仅经显式 runtime-owner capability 提供给 composition root。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="创建并执行 core unified runtime track" status="DONE" order="0">
+            <Description>升级各 package 的 core/Vue 依赖与受支持 lockfile；迁移 streamSignalStore、serverEventSource、core re-export 及其测试，使 graph 拥有 source/state node 生命周期和命名状态变更边界。</Description>
+            <cdt:TrackLink state="bound" id="upgrade-depa-data-graph-core-unified-runtime" project-ref="host"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G4" name="Halfcode 统一图兼容 track" status="NOT_STARTED" order="3">
+        <Description>在既有 Halfcode runtime 的事实边界内，迁移 materializer、typed module 及其 fixture/codegen/test，使 scope runtime 继续持有一个可验证的统一 DataGraph。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 Halfcode graph migration track" status="NOT_STARTED" order="0">
+            <Description>只处理由 1.0.1 API/类型/运行时语义变化引起的 Halfcode graph 兼容性，不改变已确认 DSL 领域模型；必要时先修订交叉 mission 的边界记录。</Description>
+            <cdt:TrackLink state="candidate" id="migrate-halfcode-data-graph-unified-api" project-ref="host"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G5" name="框架 adapter 与消费者迁移 track" status="NOT_STARTED" order="4">
+        <Description>以 core public contract 为边界，迁移 Vue adapter 与所有直接声明该依赖的 workspace consumer，消除旧 API 假设并补齐回归覆盖。</Description>
+        <SubNodes>
+          <Task id="G5-T1" name="创建并执行 consumer migration track" status="NOT_STARTED" order="0">
+            <Description>迁移 dg-cell-mvi-vue、CRUD/admin/template/element-plus/uhtml 等消费端及其测试；确保 useGraphSignal 只接收正确的 signal output ref，且无 0.1.1-only API 残留。</Description>
+            <cdt:TrackLink state="candidate" id="migrate-depa-data-graph-workspace-consumers" project-ref="host"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="VERIFY" name="端到端验证与受控收口" status="NOT_STARTED" order="5">
+        <Description>验证每个 bound track、依赖树、lockfile、类型、单元测试、构建和关键 MVI/halfcode runtime 行为，并在发现语义漂移时受控重规划。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="执行独立升级验收" status="NOT_STARTED" order="0">
+            <Description>独立验证 1.0.1 实际解析、所有直接消费者、事件回放与当前状态语义、dispose、Vue watch/useGraphSignal、Halfcode mount/materialization；写 reports/mission-verify.md。</Description>
+          </Task>
+          <Task id="VERIFY-T2" name="mission reconcile 与归档准备" status="NOT_STARTED" order="1">
+            <Description>核对所有候选 track 的最终绑定和状态；若没有可接受缺口则生成归档前报告，否则按 evidence 修订 DAG 或请求人工决策。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_upgrade-depa-data-graph-unified-runtime">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G2"/></Node>
+      <Node id="G5"><After ref="G3"/></Node>
+      <Node id="VERIFY"><After ref="G3"/><After ref="G4"/><After ref="G5"/></Node>
+    </Dag>
+  </Schedule>
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-rounds="3" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

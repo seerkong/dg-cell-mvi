@@ -13,8 +13,8 @@
   "dependencies": {
     "dg-cell-mvi-core": "^0.1.0",
     "dg-cell-mvi-crud": "^0.1.0",
-    "depa-data-graph-core": "^0.1.1",
-    "depa-data-graph-vue": "^0.1.1"
+    "depa-data-graph-core": "^1.0.1",
+    "depa-data-graph-vue": "^1.0.1"
   },
   "peerDependencies": {
     "vue": ">=3.3",

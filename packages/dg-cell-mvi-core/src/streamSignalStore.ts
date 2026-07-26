@@ -4,36 +4,30 @@
  * Public surface is `dispatch / state / viewModel / dispose`; the internals sit on
  * **depa-data-graph**:
  *
- *   - state      → a depa `DataGraph` signal node (its `set` already does Object.is change-detection)
- *   - viewModel  → a depa `addComputed([state], project)` node (lazy; pulled by the view's `watch`)
- *   - event bus  → a depa `AppendOnlyEventLog` (its `stream({replay:false})` is a live-only hot bus,
- *                  and `.entries()` doubles as the replay/diagnostics artifact)
+ *   - event log  → the append-only history owner and replayable graph source
+ *   - state      → a graph-owned `StreamDrivenStateSignalNode` current-state projection
+ *   - viewModel  → a computed signal derived only from the state-node output
+ *   - effects    → a graph sink on the same event source, after the state projection
  *
- * The core loop is unchanged: dispatch → reduce → state signal → project → viewModel signal, with
- * `reduce` also returning effects that run async and re-dispatch their results (closed loop). The
- * feedback-depth guard is preserved verbatim.
+ * Each timeline entry is reduced once by the state node. Its validated result is handed to the
+ * effect sink without re-running the reducer; effect feedback re-enters through the event log.
  */
 import { AppendOnlyEventLog, DataGraph } from 'depa-data-graph-core';
-import type { StopHandle, TimelineEntry } from 'depa-data-graph-core';
+import type {
+  GraphSnapshot,
+  SignalNodeIdLike,
+  StopHandle,
+  TimelineEntry,
+} from 'depa-data-graph-core';
 
 import { createLifecycle } from './lifecycle';
 import type { AppEvent, EffectRequest, EffectRuntime, FeedbackMeta, Reduce, StoreTap } from './contract';
 
 const DEFAULT_MAX_FEEDBACK_DEPTH = 25;
+const EVENT_SOURCE_ID = 'events';
 const STATE_ID = 'state';
 const VIEW_MODEL_ID = 'viewModel';
-
-function readGraphValue<T>(ctx: unknown, id: string): T {
-  const runtime = ctx as {
-    graph?: { get?: <TValue>(nodeId: string) => TValue };
-    get?: <TValue>(nodeId: string) => TValue;
-  };
-  const get = runtime.graph?.get ?? runtime.get;
-  if (!get) {
-    throw new Error('depa-data-graph computed context does not expose a readable graph API');
-  }
-  return get<T>(id);
-}
+const EFFECT_SINK_ID = 'effects';
 
 function defaultOnDroppedEvent(event: AppEvent): void {
   console.warn('streamSignalStore dropped an event emitted after dispose:', event);
@@ -59,6 +53,22 @@ export interface StreamSignalStoreOptions<S, VM = S> {
   tap?: StoreTap<S>;
 }
 
+/** Read-only replay/diagnostic history exposed to ordinary store consumers. */
+export interface EventHistory<T> {
+  entries(): readonly TimelineEntry<T>[];
+}
+
+/** Reactive and diagnostic observation of a store graph, without ownership capabilities. */
+export interface GraphObservation {
+  get<T>(id: SignalNodeIdLike): T;
+  snapshot(): GraphSnapshot;
+}
+
+/** Privileged capability for a composition root that owns the actual graph lifecycle. */
+export interface GraphOwner {
+  readonly graph: DataGraph<unknown>;
+}
+
 export interface StreamSignalStore<S, VM = S> {
   /**
    * The single entry for state change. Reduces, updates the state signal, runs effects.
@@ -71,15 +81,40 @@ export interface StreamSignalStore<S, VM = S> {
   /** Reactive getter for the projected view model. */
   viewModel(): VM;
   dispose(): void;
-  /** Append-only event timeline — the replay/diagnostics artifact (spec: 事件序列即重放素材). */
-  readonly eventLog: AppendOnlyEventLog<AppEvent>;
-  /** Underlying depa DataGraph holding the `state` + `viewModel` nodes. Read-only escape hatch. */
-  readonly graph: DataGraph<unknown>;
+  /** Ordered event timeline — the read-only replay/diagnostics artifact. */
+  readonly eventLog: EventHistory<AppEvent>;
+  /** Read-only observation of the unified source/state/viewModel/sink graph. */
+  readonly graph: GraphObservation;
+}
+
+export interface StreamSignalStoreRuntime<S, VM = S> {
+  readonly store: StreamSignalStore<S, VM>;
+  readonly graphOwner: GraphOwner;
+}
+
+interface ReducedTimelineEntry<S> {
+  event: AppEvent;
+  previousState: S;
+  state: S;
+  effects: EffectRequest[];
+  feedbackMeta: FeedbackMeta;
 }
 
 export function createStreamSignalStore<S, VM = S>(
   options: StreamSignalStoreOptions<S, VM>,
 ): StreamSignalStore<S, VM> {
+  return createStreamSignalStoreRuntime(options).store;
+}
+
+/**
+ * Constructs a store together with the privileged owner of its actual DataGraph.
+ *
+ * This API is for composition roots. Ordinary consumers should use
+ * `createStreamSignalStore`, whose facade exposes observation only.
+ */
+export function createStreamSignalStoreRuntime<S, VM = S>(
+  options: StreamSignalStoreOptions<S, VM>,
+): StreamSignalStoreRuntime<S, VM> {
   const {
     initialState,
     reduce,
@@ -98,15 +133,13 @@ export function createStreamSignalStore<S, VM = S>(
   const lifecycle = createLifecycle();
   const dropHandler = typeof onDroppedEvent === 'function' ? onDroppedEvent : defaultOnDroppedEvent;
 
-  // --- signal layer: state + derived viewModel as depa DataGraph nodes ---
+  // The event log owns replayable history. The graph owns only the live source/state/sink topology.
+  const log = new AppendOnlyEventLog<AppEvent>();
   const graph = new DataGraph<unknown>(() => ({}));
-  graph.addSignal<S>(STATE_ID, initialState);
-  graph.addComputed<VM>(VIEW_MODEL_ID, [STATE_ID], (ctx) => project(readGraphValue<S>(ctx, STATE_ID)));
   lifecycle.add(() => graph.dispose());
 
-  // --- stream layer: event bus + replay artifact ---
-  const log = new AppendOnlyEventLog<AppEvent>();
-  const feedbackMeta = new WeakMap<AppEvent, FeedbackMeta>();
+  const dispatchMetaStack: FeedbackMeta[] = [];
+  const reducedEntries = new WeakMap<TimelineEntry<AppEvent>, ReducedTimelineEntry<S>>();
 
   const tapOnEvent = typeof tap?.onEvent === 'function' ? tap.onEvent : null;
   const tapOnState = typeof tap?.onState === 'function' ? tap.onState : null;
@@ -120,38 +153,53 @@ export function createStreamSignalStore<S, VM = S>(
     }
   }
 
-  function resolveEventMeta(event: AppEvent): FeedbackMeta {
-    if (event && typeof event === 'object') {
-      const meta = feedbackMeta.get(event);
-      if (meta) return meta;
-    }
-    return { depth: 0, chain: [String(event?.type || '(unknown)')] };
+  function currentDispatchMeta(event: AppEvent): FeedbackMeta {
+    return (
+      dispatchMetaStack.at(-1) ?? {
+        depth: 0,
+        chain: [String(event?.type || '(unknown)')],
+      }
+    );
   }
 
-  function dispatchFeedback(event: AppEvent, parentMeta: FeedbackMeta): void {
-    const depth = parentMeta.depth + 1;
-    const chain = [...parentMeta.chain, String(event?.type || '(unknown)')];
-    if (depth > maxFeedbackDepth) {
-      onError(
-        new Error(
-          `streamSignalStore exceeded max feedback depth ${maxFeedbackDepth}; event chain: ${chain.join(' -> ')}`,
-        ),
-      );
+  function dispatchEvent(event: AppEvent<any>, parentMeta?: FeedbackMeta): void {
+    if (lifecycle.disposed) {
+      dropHandler(event);
       return;
     }
-    if (event && typeof event === 'object') {
-      feedbackMeta.set(event, { depth, chain });
+    let meta: FeedbackMeta;
+    if (parentMeta) {
+      const depth = parentMeta.depth + 1;
+      const chain = [...parentMeta.chain, String(event?.type || '(unknown)')];
+      if (depth > maxFeedbackDepth) {
+        onError(
+          new Error(
+            `streamSignalStore exceeded max feedback depth ${maxFeedbackDepth}; event chain: ${chain.join(' -> ')}`,
+          ),
+        );
+        return;
+      }
+      meta = { depth, chain };
+    } else {
+      meta = { depth: 0, chain: [String(event?.type || '(unknown)')] };
     }
-    log.append(event);
+    dispatchMetaStack.push(meta);
+    try {
+      log.append(event);
+    } finally {
+      dispatchMetaStack.pop();
+    }
   }
 
-  const subscription = log.stream({ replay: false }).subscribe({
-    next(entry: TimelineEntry<AppEvent>) {
+  const eventSource = graph.addSource<TimelineEntry<AppEvent>>(EVENT_SOURCE_ID, log.stream());
+  const stateNode = graph.addStreamDrivenStateSignalNode<TimelineEntry<AppEvent>, S>({
+    id: STATE_ID,
+    input: eventSource.ref,
+    initial: initialState,
+    reducer(previousState, entry) {
       const event = entry.value;
       try {
-        const meta = resolveEventMeta(event);
-        const prevState = graph.peek<S>(STATE_ID);
-        const result = reduce(prevState, event);
+        const result = reduce(previousState, event);
         if (
           !result ||
           typeof result !== 'object' ||
@@ -163,47 +211,81 @@ export function createStreamSignalStore<S, VM = S>(
             )}"`,
           );
         }
-        const nextState = result.state;
+        const state = result.state;
         const requests: EffectRequest[] =
           result.effects === undefined || result.effects === null ? [] : result.effects;
 
-        graph.set<S>(STATE_ID, nextState);
-
-        if (tapOnState && !Object.is(nextState, prevState)) invokeTap(tapOnState, nextState, prevState);
-        if (tapOnEvent) invokeTap(tapOnEvent, event, nextState, meta);
-        if (tapOnEffect && Array.isArray(requests) && requests.length > 0) {
-          invokeTap(tapOnEffect, requests, event);
-        }
-
-        Promise.resolve(
-          runEffects(requests, {
-            event,
-            state: nextState,
-            dispatch: (feedbackEvent: AppEvent) => dispatchFeedback(feedbackEvent, meta),
-          }),
-        ).catch(onError);
+        reducedEntries.set(entry, {
+          event,
+          previousState,
+          state,
+          effects: requests,
+          feedbackMeta: currentDispatchMeta(event),
+        });
+        return state;
       } catch (error) {
         onError(error);
+        return previousState;
       }
     },
-    error: onError,
-    complete() {},
   });
-  lifecycle.add(() => subscription?.unsubscribe?.());
+  graph.addComputed<VM>(VIEW_MODEL_ID, [stateNode.output], (ctx) =>
+    project(ctx.graph.get(stateNode.output)),
+  );
+  graph.addSink<TimelineEntry<AppEvent>>(EFFECT_SINK_ID, [eventSource.ref], (entry) => {
+    const reduced = reducedEntries.get(entry);
+    reducedEntries.delete(entry);
+    if (!reduced) {
+      return;
+    }
 
-  return {
-    dispatch(event: AppEvent) {
-      if (lifecycle.disposed) {
-        dropHandler(event);
-        return;
+    const { event, previousState, state, effects, feedbackMeta: meta } = reduced;
+    try {
+      if (tapOnState && !Object.is(state, previousState)) {
+        invokeTap(tapOnState, state, previousState);
       }
-      log.append(event);
+      if (tapOnEvent) invokeTap(tapOnEvent, event, state, meta);
+      if (tapOnEffect && Array.isArray(effects) && effects.length > 0) {
+        invokeTap(tapOnEffect, effects, event);
+      }
+
+      Promise.resolve(
+        runEffects(effects, {
+          event,
+          state,
+          dispatch: (feedbackEvent: AppEvent) => dispatchEvent(feedbackEvent, meta),
+        }),
+      ).catch(onError);
+    } catch (error) {
+      onError(error);
+    }
+  });
+
+  const eventLog: EventHistory<AppEvent> = {
+    entries() {
+      return log.entries();
     },
-    state: () => graph.get<S>(STATE_ID),
+  };
+  const graphObservation: GraphObservation = {
+    get<T>(id: SignalNodeIdLike) {
+      return graph.get<T>(id);
+    },
+    snapshot() {
+      return graph.snapshot();
+    },
+  };
+  const store: StreamSignalStore<S, VM> = {
+    dispatch: dispatchEvent,
+    state: () => graph.get(stateNode.output),
     viewModel: () => graph.get<VM>(VIEW_MODEL_ID),
     dispose: lifecycle.dispose,
-    eventLog: log,
-    graph,
+    eventLog,
+    graph: graphObservation,
+  };
+
+  return {
+    store,
+    graphOwner: { graph },
   };
 }
 

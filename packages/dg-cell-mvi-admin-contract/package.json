@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "dg-cell-mvi-core": "^0.1.0",
-    "depa-data-graph-core": "^0.1.1"
+    "depa-data-graph-core": "^1.0.1"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

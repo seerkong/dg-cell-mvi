@@ -20,7 +20,7 @@
     "dg-cell-mvi-core": "^0.1.0",
     "dg-cell-mvi-halfcode-contract": "^0.1.0",
     "dg-cell-mvi-halfcode-logic": "^0.1.0",
-    "depa-data-graph-core": "^0.1.1",
+    "depa-data-graph-core": "^1.0.1",
     "eager-data-flow-logic": "workspace:*",
     "instant-flow-logic": "workspace:*",
     "task-manager-contract": "workspace:*",

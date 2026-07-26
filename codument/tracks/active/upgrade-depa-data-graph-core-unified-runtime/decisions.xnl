@@ -1,0 +1,120 @@
+<decision #upgrade-depa-data-graph-core-unified-runtime.target-release {
+  status = "accepted"
+  priority = "P0"
+  blocks = ["implementation" "tests"]
+}
+(
+  <question ?>Which upstream release defines this track?</?>
+  <recommendation ?>Use the mission-fixed 1.0.1 release.</?>
+  <options { } [
+    <option { key = "v1.0.1" recommended = true }
+    (
+      <title ?>Fixed 1.0.1 release</?>
+      <description ?>Upgrade to the published surface corresponding to the specified upstream commit.</?>
+      <tradeoff ?>Later upstream changes require a separate decision.</?>
+    )>
+    <option { key = "floating-latest" }
+    (
+      <title ?>Floating latest</?>
+      <description ?>Resolve whichever version is newest at install time.</?>
+      <tradeoff ?>The migration would no longer be reproducible against the reviewed source.</?>
+    )>
+  ]>
+  <answer { }
+  (
+    <raw-answer ?>Use 1.0.1.</?>
+    <decision-text ?>The track SHALL target 1.0.1.</?>
+    <rationale ?>The mission fixes the target commit and package release.</?>
+    <evidence ?>Mission decision D1 and target package manifests.</?>
+  )>
+)>
+<decision #upgrade-depa-data-graph-core-unified-runtime.public-facade {
+  status = "accepted"
+  priority = "P0"
+  blocks = ["implementation" "consumer-tracks"]
+}
+(
+  <question ?>Should the store expose the new state-node handle as its public API?</?>
+  <recommendation ?>Preserve the existing facade and keep the handle internal.</?>
+  <options { } [
+    <option { key = "preserve-facade" recommended = true }
+    (
+      <title ?>Preserve facade</?>
+      <description ?>Keep dispatch/state/viewModel/dispose/eventLog/graph while migrating internals.</?>
+      <tradeoff ?>The implementation must bridge target API detail without exposing writable state.</?>
+    )>
+    <option { key = "break-to-handle" }
+    (
+      <title ?>Expose handles</?>
+      <description ?>Replace the store public API with state-node handles.</?>
+      <tradeoff ?>All downstream packages would require a breaking migration.</?>
+    )>
+  ]>
+  <answer { }
+  (
+    <raw-answer ?>Preserve facade.</?>
+    <decision-text ?>The state-node handle remains internal to core.</?>
+    <rationale ?>The mission explicitly limits this track to dependency/core migration and stages consumers separately.</?>
+    <evidence ?>Current CRUD/admin/Halfcode consumers use the existing facade.</?>
+  )>
+)>
+<decision #upgrade-depa-data-graph-core-unified-runtime.lockfiles {
+  status = "accepted"
+  priority = "P1"
+  blocks = ["dependency-update"]
+}
+(
+  <question ?>How should existing lockfiles be treated?</?>
+  <recommendation ?>Regenerate both retained lockfiles to the same target release.</?>
+  <options { } [
+    <option { key = "regenerate-both" recommended = true }
+    (
+      <title ?>Regenerate both</?>
+      <description ?>Keep Bun and Pnpm lockfiles consistent with direct 1.0.1 declarations.</?>
+      <tradeoff ?>Pnpm remains a consistency artifact until project tooling declares it authoritative.</?>
+    )>
+    <option { key = "remove-pnpm" }
+    (
+      <title ?>Remove Pnpm lock</?>
+      <description ?>Delete the non-primary lockfile.</?>
+      <tradeoff ?>This is unrelated repository hygiene and would discard a user-owned artifact.</?>
+    )>
+  ]>
+  <answer { }
+  (
+    <raw-answer ?>Regenerate both.</?>
+    <decision-text ?>Both retained lockfiles SHALL resolve the target direct dependencies.</?>
+    <rationale ?>The repository currently tracks both and the requested upgrade must not leave split resolution.</?>
+    <evidence ?>G1-T2 baseline inventory.</?>
+  )>
+)>
+<decision #upgrade-depa-data-graph-core-unified-runtime.read-only-facade-and-owner-capability {
+  status = "accepted"
+  priority = "P0"
+  blocks = ["implementation" "consumer-tracks"]
+}
+(
+  <question ?>How should consumers observe the store while composition roots retain access to the actual DataGraph?</?>
+  <recommendation ?>Expose read-only history/graph views from the ordinary store and a separate explicit owner capability.</?>
+  <options { } [
+    <option { key = "read-only-facade-with-owner" recommended = true }
+    (
+      <title ?>Read-only facade with explicit owner</?>
+      <description ?>Keep ordinary consumers on observation-only ports; return the actual graph only from a privileged runtime-owner construction API.</?>
+      <tradeoff ?>eventLog/graph public types become intentionally breaking; Vue must stop passing store.graph to the upstream full-graph adapter.</?>
+    )>
+    <option { key = "mutable-compatibility-exception" }
+    (
+      <title ?>Mutable compatibility exception</?>
+      <description ?>Continue to return AppendOnlyEventLog and DataGraph directly.</?>
+      <tradeoff ?>Callers can bypass dispatch or dispose the graph, so the DEPA boundary remains unenforced.</?>
+    )>
+  ]>
+  <answer { }
+  (
+    <raw-answer ?>用户选择收紧边界，并同意 composition-root-only graph owner capability。</?>
+    <decision-text ?>普通 store SHALL expose read-only EventHistory and GraphObservation; createStreamSignalStoreRuntime SHALL be the explicit privileged API for the actual DataGraph.</?>
+    <rationale ?>单一写入口和 lifecycle-owning Actor 不能与无条件可变 graph/log 暴露同时成立。</?>
+    <evidence ?>P2 coding attractor review、用户 2026-07-26 明确批准。</?>
+  )>
+)>

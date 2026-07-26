@@ -1,0 +1,51 @@
+<behavior-patch capability="depa-data-graph-unified-runtime" version="1">
+  <upsert selector="behavior://depa-data-graph-unified-runtime/requirements/unified-core-dependency">
+    <requirement id="unified-core-dependency">
+      <statement>工作区 SHALL 将所有直接 depa-data-graph core/Vue 依赖与保留 lockfile 解析收敛到目标 1.0.1 发布面。</statement>
+      <suite id="dependency-resolution" name="Dependency resolution">
+        <case id="no-mixed-direct-release">
+          <given>工作区保留 Bun 与 Pnpm lockfile 且多个 package 直接声明 data graph dependency</given>
+          <when>执行目标版本安装与依赖检查</when>
+          <then>所有直接 core/Vue dependency SHALL 解析到 1.0.1，且不得保留混合的直接 0.1.1 解析</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://depa-data-graph-unified-runtime/requirements/stream-store-unified-state">
+    <requirement id="stream-store-unified-state">
+      <statement>StreamSignalStore SHALL 以 append-only event history 驱动统一 DataGraph 的当前 state projection，并 SHALL 保持公开 facade、effect feedback、tap 与 dispose 语义。</statement>
+      <suite id="event-state-boundary" name="Event history and current state">
+        <case id="history-is-not-state-output">
+          <given>store 接收多个 AppEvent 并投影当前 state</given>
+          <when>consumer 读取 eventLog 与 state/viewModel</when>
+          <then>eventLog SHALL 保留有序事件历史，state/viewModel SHALL 只表示当前投影，且 state output 不得被用作 replay history</then>
+        </case>
+        <case id="single-reduction-feedback">
+          <given>一个 event 产生 effect request 且 effect 返回 feedback event</given>
+          <when>store 处理该 event 和反馈</when>
+          <then>每个 timeline entry 的 reducer SHALL 只执行一次，feedback SHALL 经 append-only event path 回流并受既有深度保护</then>
+        </case>
+        <case id="feedback-metadata-is-per-dispatch">
+          <given>同一 AppEvent 对象曾作为 effect feedback 被处理，之后又由普通调用方公开 dispatch</given>
+          <when>store 记录两次 dispatch 的 feedback metadata</when>
+          <then>metadata SHALL 绑定到各自 dispatch/log entry；后一次公开 dispatch SHALL 从 depth 0 和只含自身 type 的 chain 开始</then>
+        </case>
+        <case id="dispose-stops-projection">
+          <given>store 已建立 source、state node 和 effect sink</given>
+          <when>store 被 dispose 后再 dispatch event</when>
+          <then>state SHALL 不再改变，且 drop handler SHALL 接收该 event</then>
+        </case>
+        <case id="store-facade-is-read-only">
+          <given>普通 consumer 通过 createStreamSignalStore 获得 store</given>
+          <when>consumer 读取 event history 或 graph observation</when>
+          <then>consumer SHALL 能读取 history entries、reactive signal values 和 graph snapshot，但不得取得 append、graph mutation 或 graph dispose capability</then>
+        </case>
+        <case id="privileged-graph-owner-is-explicit">
+          <given>composition root 需要扩展同一 DataGraph</given>
+          <when>它调用显式 runtime-owner construction API</when>
+          <then>它 SHALL 获得 store 所使用的真实 DataGraph；普通 store construction SHALL 不泄露该 capability</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

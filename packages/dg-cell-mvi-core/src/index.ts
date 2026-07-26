@@ -37,10 +37,17 @@ export type { Lifecycle, Disposer } from './lifecycle';
 export { createEffectRunner } from './effectRunner';
 export type { EffectRunner } from './effectRunner';
 
-export { createStreamSignalStore } from './streamSignalStore';
+export {
+  createStreamSignalStore,
+  createStreamSignalStoreRuntime,
+} from './streamSignalStore';
 export type {
+  EventHistory,
+  GraphObservation,
+  GraphOwner,
   StreamSignalStore,
   StreamSignalStoreOptions,
+  StreamSignalStoreRuntime,
   RunEffectsContext,
 } from './streamSignalStore';
 

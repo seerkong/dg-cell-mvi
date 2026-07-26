@@ -67,4 +67,83 @@ describe('createServerEventSource (generalized)', () => {
     expect(listener).toBeNull();
     src.dispose();
   });
+
+  it('buffers to one scheduled frame and routes the coalesced payload on drain', () => {
+    const pendingFrame: { callback: (() => void) | null } = { callback: null };
+    const scheduler = {
+      schedule: vi.fn((callback: () => void) => {
+        pendingFrame.callback = callback;
+        return 'frame-1';
+      }),
+      cancel: vi.fn(),
+    };
+    const routed: number[] = [];
+    const src = createServerEventSource({
+      routeTable: { 'server.tick': (env) => routed.push(env.payload.n) },
+      scheduler,
+      advanceFrameBuffer: (queue, payload) => ({
+        nextQueue: [...queue, payload],
+        immediate: [],
+      }),
+      coalesce: (payloads) => [payloads.at(-1)],
+    });
+
+    src.push({ kind: 'tick', n: 1 });
+    src.push({ kind: 'tick', n: 2 });
+
+    expect(scheduler.schedule).toHaveBeenCalledOnce();
+    expect(routed).toEqual([]);
+
+    pendingFrame.callback?.();
+    expect(routed).toEqual([2]);
+
+    src.dispose();
+  });
+
+  it('dispose cancels pending intake, disconnects sources, and drops later pushes', () => {
+    const pendingFrame: { callback: (() => void) | null } = { callback: null };
+    const connection: {
+      listener: { next: (value: unknown) => void } | null;
+    } = { listener: null };
+    const unsubscribe = vi.fn(() => {
+      connection.listener = null;
+    });
+    const scheduler = {
+      schedule: vi.fn((callback: () => void) => {
+        pendingFrame.callback = callback;
+        return 'pending-frame';
+      }),
+      cancel: vi.fn(),
+    };
+    const routed = vi.fn();
+    const onDroppedPayload = vi.fn();
+    const src = createServerEventSource({
+      routeTable: { 'server.tick': routed },
+      scheduler,
+      advanceFrameBuffer: (queue, payload) => ({
+        nextQueue: [...queue, payload],
+        immediate: [],
+      }),
+      onDroppedPayload,
+    });
+    const stream = {
+      subscribe(observer: { next: (value: unknown) => void }) {
+        connection.listener = observer;
+        return { unsubscribe };
+      },
+    };
+
+    src.connect(stream);
+    connection.listener?.next({ kind: 'tick', n: 1 });
+    expect(scheduler.schedule).toHaveBeenCalledOnce();
+
+    src.dispose();
+    expect(scheduler.cancel).toHaveBeenCalledWith('pending-frame');
+    expect(unsubscribe).toHaveBeenCalledOnce();
+
+    pendingFrame.callback?.();
+    src.push({ kind: 'tick', n: 2 });
+    expect(routed).not.toHaveBeenCalled();
+    expect(onDroppedPayload).toHaveBeenCalledWith({ kind: 'tick', n: 2 });
+  });
 });

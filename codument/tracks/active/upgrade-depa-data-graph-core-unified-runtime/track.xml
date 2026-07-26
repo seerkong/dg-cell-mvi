@@ -1,0 +1,114 @@
+<Track id="upgrade-depa-data-graph-core-unified-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>将工作区直接依赖解析到 depa-data-graph 1.0.1，并将 dg-cell-mvi-core 的 StreamSignalStore 和 server event intake 迁移到统一 DataGraph 的显式 source/state/sink 生命周期。</Goal>
+    <Description>以 replayable event source、stream-driven signal state 和 graph-owned effect sink 替换对 store-owned state 的直接 graph.set；普通 store 仅公开只读 history/graph observation，真实 graph 只经显式 runtime-owner capability 提供给 composition root。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-07-26T14:50:06Z</CreatedAt>
+    <UpdatedAt>2026-07-26T16:48:06Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mission" domain="mission" path="vfs://@/codument/missions/active/upgrade-depa-data-graph-unified-runtime/"/>
+    <MaterialBundle role="output" name="workspace-manifests" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="core-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-core/"/>
+    <MaterialBundle role="output" name="lockfiles" domain="code" path="vfs://@/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_upgrade-depa-data-graph-core-unified-runtime" name="upgrade-depa-data-graph-core-unified-runtime" version="1">
+    <Description>先锁定实际依赖版本和 characterization baselines，再迁移 core event/state/effect topology，最后在依赖解析与测试门控下收口。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="依赖解析与迁移基线" status="DONE" order="0">
+        <Description>升级所有直接 core/Vue package manifest 与受保留 lockfile，建立只针对本 track 的目标 API characterization。</Description>
+        <SubNodes>
+          <Task id="P1-T1" name="升级直接依赖并统一 lockfile 解析" status="DONE" order="0">
+            <Description>将所有直接 depa-data-graph-core/Vue 声明升级至 1.0.1 发布面；以 Bun 实际安装验证为主，并同步更新保留的 Pnpm lockfile，禁止混合 0.1.1 与 1.0.1 解析。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P1-T1-AC1" checked="true">所有直接依赖 manifest 声明目标 1.0.1 版本范围</cdt:Criterion>
+              <cdt:Criterion id="P1-T1-AC2" checked="true">Bun 与保留的 Pnpm lockfile 不再解析直接 0.1.1 core/Vue package</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P1-T2" name="补齐统一状态迁移 characterization tests" status="DONE" order="1">
+            <Description>在改写 store 前为 event history、current state、一次 reducer、feedback depth、tap/error、dispose 和 server intake 写出迁移验收测试；保留已知 command URI 与 TypeScript 基线失败的独立记录。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P1-T2-AC1" checked="true">核心迁移测试区分事件历史与当前 state output</cdt:Criterion>
+              <cdt:Criterion id="P1-T2-AC2" checked="true">核心迁移测试覆盖 reducer 单次执行、effect feedback 和 post-dispose no-op</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="统一 Core 运行时拓扑" status="DONE" order="1">
+        <Description>将 core 的 live event/state/effect 路径迁移到单个统一 DataGraph，同时保留 StreamSignalStore 的稳定 public capsule。</Description>
+        <SubNodes>
+          <Task id="P2-T1" name="迁移 StreamSignalStore 到 source/state/sink 图" status="DONE" order="0">
+            <Description>将 AppendOnlyEventLog 注册为 graph source，用 StreamDrivenStateSignalNode 持有当前 state，用同一 source 的 graph sink 执行 taps/effects；state 和 viewModel 只通过 signal outputs 读取。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P2-T1-AC1" checked="true">store 不对 state-node output 调用 graph.set，且 state/viewModel 保持可 watch</cdt:Criterion>
+              <cdt:Criterion id="P2-T1-AC2" checked="true">每个 timeline entry 的 reducer 只执行一次，effect feedback 继续经 event log 回流</cdt:Criterion>
+              <cdt:Criterion id="P2-T1-AC3" checked="true">eventLog 是唯一历史 owner，state output 不被当作 replay history</cdt:Criterion>
+              <cdt:Criterion id="P2-T1-AC4" checked="true">store dispose 后，尚未完成 effect 的 feedback 不得继续写入 event history，并按 dropped event 处理</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P2-T2" name="对齐 server event intake 与 core public exports" status="DONE" order="1">
+            <Description>验证 serverEventSource 在目标 stream API 下仍保留 normalize、frame buffering、connect/dispose 语义；对齐 watch、untracked、StopHandle 和所有 core re-export 的 1.0.1 类型。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P2-T2-AC1" checked="true">server event source 的路由、连接和 dispose 回归测试通过</cdt:Criterion>
+              <cdt:Criterion id="P2-T2-AC2" checked="true">core public exports 在目标 package 下可解析，未泄露可写 state handle</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P2-T3" name="收紧 store facade 并提供显式 graph owner capability" status="DONE" order="2">
+            <Description>将公开 eventLog 改为只读事件历史，将公开 graph 改为只读观察端口；新增只供 composition root 持有的 runtime-owner construction API 返回真实 DataGraph。保留 createStreamSignalStore 的普通 store 入口，禁止普通 consumer 透过 facade 写入或 dispose 内部 graph。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P2-T3-AC1" checked="true">普通 store 的 eventLog 不暴露 append/stream，graph 不暴露 set/add*/dispose，且历史/观测读取仍可用</cdt:Criterion>
+              <cdt:Criterion id="P2-T3-AC2" checked="true">显式 runtime-owner API 可使 composition root 取得同一实际 DataGraph；普通 createStreamSignalStore 不泄露该 capability</cdt:Criterion>
+              <cdt:Criterion id="P2-T3-AC3" checked="true">公开类型与回归测试覆盖只读边界、store 语义和 owner graph identity</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Core 升级验证与交接" status="DONE" order="2">
+        <Description>实际验证目标解析与 core 运行时行为，形成供 Halfcode/consumer tracks 消费的稳定只读 facade 与 runtime-owner capability 证据。</Description>
+        <SubNodes>
+          <Task id="P3-T1" name="执行 core 目标版本验证矩阵" status="DONE" order="0">
+            <Description>运行 core tests、聚焦 TypeScript 检查和依赖树检查；已知的非本 track 基线失败必须逐项标注，新增失败不得掩盖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P3-T1-AC1" checked="true">目标 core/Vue 1.0.1 实际解析可被命令证据证明</cdt:Criterion>
+              <cdt:Criterion id="P3-T1-AC2" checked="true">StreamSignalStore 和 serverEventSource 相关测试通过或有可复现的非迁移阻塞报告</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P3-T2" name="修复 core 迁移测试的项目类型门控" status="DONE" order="1">
+            <Description>修复 P3-T1 复现的五个 migration-touched core test-source TypeScript 错误；保持运行时断言语义，禁止借由放宽 tsconfig、删除覆盖或修改生产 runtime 掩盖问题。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P3-T2-AC1" checked="true">package-local TypeScript 5.9 对 core tsconfig 的 noEmit 检查不再报告 migration-touched test-source 错误</cdt:Criterion>
+              <cdt:Criterion id="P3-T2-AC2" checked="true">StreamSignalStore、serverEventSource 与 public exports 聚焦测试继续通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P3-T3" name="写出下游兼容交接报告" status="DONE" order="2">
+            <Description>记录 core facade、typed signal output 和残余基线，使 Halfcode/consumer tracks 不重探 core API 语义。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P3-T3-AC1" checked="true">报告给出下游可依赖的 public contract、验证命令与已知基线例外</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="P3-T4" name="隔离公开 dispatch 与 feedback 元数据" status="DONE" order="3">
+            <Description>修复 gap-loop 第 1 轮发现的事件对象身份泄漏：feedback depth/chain 必须绑定到单次 dispatch/log-entry 处理，而不得永久绑定到可复用 AppEvent 对象。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="P3-T4-AC1" checked="true">同一 AppEvent 对象先作为 effect feedback、后由普通调用方重新 dispatch 时，后一次公开 dispatch 的 depth 为 0 且 chain 仅含自身 type</cdt:Criterion>
+              <cdt:Criterion id="P3-T4-AC2" checked="true">既有 reducer-once、feedback-depth、dispose、facade、server intake 与 public export 验收继续通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="2" on-exhausted="block" verify-round="false"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule/>
+</Track>
