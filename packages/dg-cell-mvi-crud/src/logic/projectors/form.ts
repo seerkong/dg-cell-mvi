@@ -18,6 +18,7 @@ import type { NormalizedColumn, NormalizedCrudOptions } from '../../support/opti
 import { isAsyncCompute, resolveCompute, type AsyncComputeValue } from '../../support/compute';
 import { I18N_KEY, resolveT } from '../../support/i18n';
 import type { ResolvedButton } from './buttons';
+import { projectColumnDictControl, type DictControlBinding } from './dict';
 
 /**
  * ResolvedFormItem — the form-item render shape from the fixed CrudBinding contract. Owned here (the
@@ -49,6 +50,8 @@ export interface ResolvedFormItem {
   topRender?: (scope: any) => any;
   bottomRender?: (scope: any) => any;
   conditionalRender?: { match: (scope: any) => boolean; render: (scope: any) => any };
+  /** Standard dict-select projection consumed by UI command bridges. */
+  dict?: DictControlBinding;
 }
 
 export type { ResolvedButton };
@@ -239,6 +242,19 @@ export function projectFormColumns(
           label: typeof lb === 'function' ? lb(d) : d[lk],
         })),
       };
+    }
+    if (dictCfg && fc.column.dictId) {
+      item.dict = projectColumnDictControl(
+        state,
+        fc.column.dictId,
+        fc.column.dict,
+        item.component.disabled === true,
+        state.form.form[fc.key],
+      );
+      // Keep the established component.options surface while sourcing it from the richer projection.
+      if (item.component.options == null) {
+        item.component = { ...item.component, options: item.dict.options };
+      }
     }
     out.push(item);
   }

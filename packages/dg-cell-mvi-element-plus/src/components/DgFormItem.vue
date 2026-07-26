@@ -31,6 +31,7 @@
             <DgComponentRender
               :name="col.component.name"
               :options="col.component.options"
+              :selected-options="col.dict?.selectedOptions"
               :props="componentProps(col)"
               :model-value="vm.form.form[col.key]"
               @update:model-value="(v: any) => commands.setFormField(col.key, v)"
@@ -46,6 +47,7 @@
         <DgComponentRender
           :name="col.component.name"
           :options="col.component.options"
+          :selected-options="col.dict?.selectedOptions"
           :props="componentProps(col)"
           :model-value="vm.form.form[col.key]"
           @update:model-value="(v: any) => commands.setFormField(col.key, v)"
@@ -59,18 +61,28 @@
     </div>
 
     <div v-if="col.helper" :class="$style.helper">{{ col.helper }}</div>
+    <div v-if="col.dict?.error" :class="$style.dictError" role="alert">
+      {{ col.dict.error }}
+    </div>
   </el-form-item>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
 import type { CrudBinding } from 'dg-cell-mvi-crud';
 import { DgRender, type CrudCommands } from 'dg-cell-mvi-vue';
 import DgComponentRender from './DgComponentRender';
+import {
+  createElementPlusDictControlBridge,
+  dispatchDictControlCommand,
+} from '../support/dictControlBridge';
 
 type FormItem = CrudBinding['form']['columns'][number];
 
 const props = defineProps<{ col: FormItem; vm: CrudBinding; commands: CrudCommands }>();
+const dictBridge = createElementPlusDictControlBridge({
+  dispatch: (event) => dispatchDictControlCommand(props.commands, event),
+});
 
 /**
  * The live form-item scope handed to every render hook (and conditionalRender.match), built the same
@@ -91,16 +103,51 @@ function isRequired(col: FormItem): boolean {
 // Strip the v-model props (name/options handled explicitly) and force-disable in view mode.
 function componentProps(col: FormItem): Record<string, any> {
   const { name, options, ...rest } = col.component || {};
+  const dictProps = col.dict ? dictBridge.elementProps(col.dict) : {};
   if (props.vm.form.mode === 'view') {
-    return { ...rest, disabled: true };
+    return { ...rest, ...dictProps, disabled: true };
   }
-  return rest;
+  return { ...rest, ...dictProps };
 }
+
+// Watchers observe CRUD-owned state only and dispatch protocol commands through the bridge. They
+// never read a provider, construct a URL, mutate cache, or execute I/O.
+watch(
+  () =>
+    props.col.dict?.dependencies.length &&
+    (props.col.dict.triggers.length === 0 ||
+      props.col.dict.triggers.includes('context-change'))
+      ? JSON.stringify(props.col.dict.context)
+      : undefined,
+  (next, previous) => {
+    if (previous !== undefined && next !== previous && props.col.dict) {
+      dictBridge.dependenciesChanged(props.col.dict);
+    }
+  },
+);
+
+watch(
+  () => props.vm.form.form[props.col.key],
+  (value) => {
+    if (props.col.dict?.triggers.includes('value-missing')) {
+      dictBridge.valueChanged(props.col.dict, value);
+    }
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => dictBridge.dispose());
 </script>
 
 <style module>
 .helper {
   color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+.dictError {
+  color: var(--el-color-danger, #f56c6c);
   font-size: 12px;
   line-height: 1.4;
   margin-top: 2px;

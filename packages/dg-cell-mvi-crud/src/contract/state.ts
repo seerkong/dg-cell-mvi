@@ -11,6 +11,7 @@ import type {
   EditableActiveTrigger,
   EditableMode,
 } from './crudOptions';
+import type { DictLoadMode } from './dict';
 
 export type FormMode = 'add' | 'edit' | 'view';
 export type ListStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -78,11 +79,30 @@ export interface FormSlice<R = any> {
   res?: any;
 }
 
+export interface DictActiveRequest {
+  requestId: string;
+  generation: number;
+  scope: string;
+  mode: DictLoadMode;
+  cacheKey: string;
+}
+
 export interface DictEntry {
   status: DictStatus;
+  /** Current options for the active scope/query. */
+  visibleNodes: any[];
+  /** All nodes known well enough to resolve a selected value's label. */
+  knownByValue: Record<string, any>;
+  /** Compatibility projection of visibleNodes. */
   data: any[];
+  /** Compatibility projection of knownByValue. */
   dataMap: Record<string, any>;
   error: string | null;
+  scope: string;
+  generation: number;
+  activeRequest: DictActiveRequest | null;
+  /** Cache key that produced the current visibleNodes projection. */
+  visibleCacheKey?: string;
 }
 export type DictSlice = Record<string, DictEntry>;
 

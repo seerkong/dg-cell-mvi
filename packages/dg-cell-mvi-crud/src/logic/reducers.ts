@@ -141,6 +141,10 @@ export function reduceCrud<R = any>(
 
     // ---- dict slice (delegated) ----
     case CRUD_EVENT.loadDict:
+    case CRUD_EVENT.refreshDict:
+    case CRUD_EVENT.invalidateDict:
+    case CRUD_EVENT.hydrateDict:
+    case CRUD_EVENT.searchDict:
     case CRUD_EVENT.dictLoaded:
     case CRUD_EVENT.dictLoadFailed:
       return reduceDict<R>(state, event, config);

@@ -5,6 +5,7 @@
  * them and re-dispatch feedback events.
  */
 import type { EffectRequest } from 'dg-cell-mvi-core';
+import type { DictLoadIntent } from './dict';
 import type { FormMode } from './state';
 
 export const CRUD_EFFECT = {
@@ -18,6 +19,7 @@ export const CRUD_EFFECT = {
   delRequest: 'crud.fx.delRequest',
   infoRequest: 'crud.fx.infoRequest',
   loadDict: 'crud.fx.loadDict',
+  invalidateDict: 'crud.fx.invalidateDict',
   /** re-check the current form's async-compute fields (options-on-watch) and fetch when watch changed. */
   resolveAsyncCompute: 'crud.fx.resolveAsyncCompute',
   /** run a changed field's column-level `valueChange` linkage (may set OTHER fields). */
@@ -65,7 +67,13 @@ export const removeChainEffect = (p: { row: any; index?: number; rows?: any[] })
 export const delRequestEffect = (p: { row: any; index?: number }) => fx(CRUD_EFFECT.delRequest, p);
 export const infoRequestEffect = (p: { mode: FormMode; row: any; index: number | null }) =>
   fx(CRUD_EFFECT.infoRequest, p);
-export const loadDictEffect = (p: { dictId: string; value?: any }) => fx(CRUD_EFFECT.loadDict, p);
+export const loadDictEffect = (intent: DictLoadIntent) => fx(CRUD_EFFECT.loadDict, intent);
+export const invalidateDictEffect = (p: {
+  dictId: string;
+  scope: string;
+  cacheKey?: string;
+  generation: number;
+}) => fx(CRUD_EFFECT.invalidateDict, p);
 /**
  * Re-check async-compute fields for the current form: the handler computes each field's `watch(scope)`
  * from the live form and, when it differs from the stored `watchKey`, runs `asyncFn` and re-dispatches

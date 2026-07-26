@@ -1,0 +1,103 @@
+<Track id="add-crud-dict-runtime-parity" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>为 dg-cell-mvi CRUD 建立可序列化、上下文安全且可测试的字典运行时：统一 provider、加载/刷新/补全/检索协议，提供缓存与乱序保护，并完成 Element Plus 控件桥接。</Goal>
+    <Description>以 DEPA 的 Data / Effect / Processor / Actor 边界收敛字典能力；保持既有静态与简单 URL 用例兼容，不在 reducer 或 UI schema 执行 I/O。</Description>
+    <CommitMode>manual</CommitMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <CreatedAt>2026-07-24T00:00:00Z</CreatedAt>
+    <UpdatedAt>2026-07-24T18:51:16Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="design" domain="design" path="vfs://./design.md"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+    <MaterialBundle role="output" name="crud-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-crud/src/"/>
+    <MaterialBundle role="output" name="ui-adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-element-plus/src/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-crud-dict-runtime-parity" name="add-crud-dict-runtime-parity" version="1">
+    <Description>先收敛可序列化契约和纯归约，再实现 provider runtime，最后接入 UI bridge 与兼容迁移；每一 phase 均以自动化测试作为门禁。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="字典契约与纯 MVI 闭环" status="DONE" order="0">
+        <Description>定义字典来源、绑定、加载意图、缓存键、节点状态和 command/result vocabulary；修复加载请求丢失刷新或上下文的路径。contract/reducer 不依赖 HTTP 或 Vue。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>所有加载模式的 intent 均完整携带 scope、参数、值/检索词、刷新标志和请求代次</cdt:Criterion>
+          <cdt:Criterion>纯 reducer 测试覆盖缓存命中、刷新、失效及乱序结果 no-op</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="定义字典声明和 provider contract" status="DONE" order="0" priority="P0">
+            <Description>在 CRUD contract 内引入可序列化 DictDefinition、DictBinding、DictLoadIntent、DictNode、缓存策略与 provider 标识；提供既有 data/URL 配置的兼容映射，不将副作用闭包纳入 reducer 输入。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">类型测试证明固定、provider、上下文、补全与检索五类声明可表达</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 command/result 及状态归约" status="DONE" order="1" priority="P0">
+            <Description>实现加载、刷新、失效、补全和检索 command，以及带请求关联的成功/失败 result；状态区分 visibleNodes 与 knownByValue，并维持 data/dataMap 投影兼容。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">刷新不会退化为普通加载；旧代次、已失效或不同作用域的结果不会覆盖当前状态</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="provider runtime 与缓存并发控制" status="DONE" order="1">
+        <Description>在 effect 边界注册 provider 并执行 load/loadByValues；实现缓存、在途请求协调、可选取消、TTL 与调试诊断。正确性由 reducer 的关联字段保证。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>固定与上下文 provider 都能收到完整 intent，并将标准节点数组反馈为 result</cdt:Criterion>
+          <cdt:Criterion>相同请求可复用在途执行；刷新绕过缓存；取消失败时旧结果仍不能提交</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 provider 注册与 effect adapter" status="DONE" order="0" priority="P0">
+            <Description>构造注入式 DictProviderRuntime，提供 load 与 loadByValues 两个窄接口；所有 URL、鉴权与响应转换均由 provider 适配，不泄漏进 reducer 或 UI adapter。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">没有具体 HTTP 客户端被 CRUD reducer、view-model 或 Element Plus adapter import</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现缓存和请求协调" status="DONE" order="1" priority="P0">
+            <Description>按定义的缓存键实现 TTL、作用域隔离、共享缓存、强制刷新、失效和在途去重；为测试提供受控时间和 deferred provider。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">缓存命中、刷新、失效、并发去重、乱序和失败恢复均有自动化测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="投影、Element Plus bridge 与迁移验证" status="DONE" order="2">
+        <Description>把字典状态稳定投影到 CRUD view model，并将控件打开、依赖变更、已选值和检索词转换为 command；补齐迁移文档和跨包验证。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>级联、已选值补全和远程搜索可在 UI 测试中经 command/effect/result 闭环完成</cdt:Criterion>
+          <cdt:Criterion>旧静态与简单 URL 配置保持可用，受影响包测试和类型检查通过</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="实现 view-model 投影和控件 bridge" status="DONE" order="0" priority="P0">
+            <Description>投影 visibleNodes、knownByValue、loading/error 和可访问状态；为选择控件提供 open、依赖变化、值补全、remote-search 的 command 转换和必要去抖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">组件 watcher 不直接发起 I/O，加载与错误状态可被控件消费</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="迁移说明、测试矩阵与收口" status="DONE" order="1" priority="P0">
+            <Description>提供五种配置样例和旧配置兼容说明；运行 contract、CRUD runtime、Element Plus adapter 的单测/类型检查，记录实际命令与结果。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">六类目标场景和旧配置回归均有可复现测试证据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

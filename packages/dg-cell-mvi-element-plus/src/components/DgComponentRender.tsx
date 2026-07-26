@@ -73,6 +73,12 @@ export default defineComponent({
     modelValue: { type: null as unknown as PropType<any>, default: undefined },
     /** el-select option list. */
     options: { type: Array as PropType<SelectOption[]>, default: undefined },
+    /**
+     * Label-only options for selected values hydrated outside the active result set. They are
+     * registered as hidden el-option children so Element Plus can resolve model labels, while the
+     * public `options` list remains the dropdown's visible result set.
+     */
+    selectedOptions: { type: Array as PropType<SelectOption[]>, default: undefined },
     /** Extra props forwarded to the resolved component. */
     props: { type: Object as PropType<Record<string, any>>, default: undefined },
   },
@@ -107,6 +113,7 @@ export default defineComponent({
       const { comp, baked } = resolved.value;
       const name = typeof props.name === 'string' ? props.name : '';
       const opts = props.options;
+      const selectedOpts = props.selectedOptions;
       const kind = props.component == null ? OPTION_KIND[name] : undefined;
 
       // cascader / tree-select consume options via a prop (options / data).
@@ -127,14 +134,32 @@ export default defineComponent({
       );
 
       // select / radio / checkbox render their options as children.
-      if (opts && (kind === 'option' || kind === 'radio' || kind === 'checkbox')) {
+      if (
+        (opts || (kind === 'option' && selectedOpts)) &&
+        (kind === 'option' || kind === 'radio' || kind === 'checkbox')
+      ) {
         const childName = kind === 'option' ? 'el-option' : kind === 'radio' ? 'el-radio' : 'el-checkbox';
         const Child = resolveComponent(childName);
-        const children = opts.map((opt) =>
+        const children = (opts ?? []).map((opt) =>
           kind === 'option'
             ? h(Child, { key: opt.value, value: opt.value, label: opt.label })
             : h(Child, { key: opt.value, value: opt.value }, () => opt.label),
         );
+        if (kind === 'option' && selectedOpts) {
+          const visibleValues = new Set((opts ?? []).map((option) => String(option.value)));
+          for (const option of selectedOpts) {
+            if (visibleValues.has(String(option.value))) continue;
+            children.push(
+              h(Child, {
+                key: `dict-selected:${String(option.value)}`,
+                value: option.value,
+                label: option.label,
+                style: { display: 'none' },
+                'data-dict-selected-only': 'true',
+              }),
+            );
+          }
+        }
         return h(comp, bound, () => children);
       }
 

@@ -1,0 +1,86 @@
+<behavior-patch capability="crud-dict-runtime" version="1">
+  <upsert selector="behavior://crud-dict-runtime/requirements/dict-source-and-context-load">
+    <requirement id="dict-source-and-context-load">
+      <statement>CRUD SHALL support inline fixed nodes and dictionaries loaded by provider identifier. Every provider load MUST receive the complete dictionary id, scope, normalized context parameters, load mode, query term or value set, refresh flag and request correlation id; a provider MUST return an array of standard dictionary nodes.</statement>
+      <suite id="source-and-context" name="字典来源与上下文">
+        <case id="inline-fixed-nodes">
+          <given>一个字段绑定内联固定节点</given>
+          <when>该字段首次需要展示选项</when>
+          <then>系统 SHALL 在不执行 provider I/O 的情况下投影这些节点</then>
+        </case>
+        <case id="dependent-provider-context">
+          <given>一个字段绑定依赖上级字段的 provider 字典</given>
+          <when>上级字段的值变化</when>
+          <then>系统 SHALL 以新的作用域上下文产生加载意图，且 provider SHALL 能区分旧上下文和新上下文</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://crud-dict-runtime/requirements/refresh-cache-and-request-correlation">
+    <requirement id="refresh-cache-and-request-correlation">
+      <statement>CRUD SHALL construct a cache key from dictionary definition, scope, mode, query term and context parameters. refresh MUST bypass applicable cache and generate a new request correlation id; invalidate MUST invalidate matching cache and in-flight results. The reducer MUST accept only results still correlated to current state.</statement>
+      <suite id="refresh-cache-correlation" name="刷新、缓存与关联">
+        <case id="ordinary-load-cache-hit">
+          <given>同一作用域的普通加载已有未过期缓存</given>
+          <when>再次发起普通加载</when>
+          <then>系统 MAY 使用缓存，且 view model SHALL 与缓存节点一致</then>
+        </case>
+        <case id="refresh-bypasses-cache">
+          <given>同一作用域已有未过期缓存</given>
+          <when>发起 refresh</when>
+          <then>系统 MUST 调用 provider，而不是将缓存命中当作刷新完成</then>
+        </case>
+        <case id="late-old-result-is-ignored">
+          <given>旧上下文加载尚未返回，随后产生了新上下文加载</given>
+          <when>旧请求最后返回</when>
+          <then>系统 MUST 忽略旧 result，当前可见节点不得被覆盖</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://crud-dict-runtime/requirements/value-hydration-and-visible-node-isolation">
+    <requirement id="value-hydration-and-visible-node-isolation">
+      <statement>CRUD SHALL support loading nodes for selected values that are absent from current visible nodes. Hydrated nodes MUST join the known-value index for label resolution, but unless they match the active query they MUST NOT automatically join the visible option list.</statement>
+      <suite id="value-hydration" name="按值补全">
+        <case id="hydrate-unknown-selected-value">
+          <given>表单初始值包含当前可见节点中不存在的值</given>
+          <when>控件需要显示该值的 label</when>
+          <then>系统 SHALL 发起按值补全，并在成功后投影该 label</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://crud-dict-runtime/requirements/remote-search-control-bridge">
+    <requirement id="remote-search-control-bridge">
+      <statement>A search-capable control SHALL translate a search term to a dictionary search command. Control open, dependent-field changes and selected-value changes SHALL only issue CRUD commands. The UI adapter MUST NOT call network APIs, construct URLs or own dictionary cache.</statement>
+      <suite id="control-bridge" name="控件桥接">
+        <case id="search-term-loads-through-provider">
+          <given>一个启用了远程检索的选择控件</given>
+          <when>用户输入检索词</when>
+          <then>系统 SHALL 将该词作为加载意图的查询字段交给 provider，并从 view model 投影 loading 与结果</then>
+        </case>
+        <case id="provider-failure-is-projected">
+          <given>provider 请求失败</given>
+          <when>对应 failed result 被归约</when>
+          <then>控件 SHALL 从 view model 获得可显示的失败状态，且既有成功数据不得被错误清空</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+
+  <upsert selector="behavior://crud-dict-runtime/requirements/compatibility-projection-and-boundary">
+    <requirement id="compatibility-projection-and-boundary">
+      <statement>CRUD SHALL continue projecting `data` as current visible nodes and `dataMap` as the known-value index. CRUD reducers, view models and UI adapters MUST NOT import a concrete HTTP client or execute side effects.</statement>
+      <suite id="compatibility-and-boundary" name="兼容投影与边界">
+        <case id="legacy-static-and-url-configuration">
+          <given>应用使用仅含固定节点或简单 URL 的既有字典配置</given>
+          <when>应用升级到新运行时</when>
+          <then>该应用 SHALL 保持可用，并可逐步迁移到显式 provider 定义</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

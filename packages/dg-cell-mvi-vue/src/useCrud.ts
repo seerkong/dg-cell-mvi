@@ -36,6 +36,10 @@ import {
   closeForm,
   setCompact,
   loadDict,
+  refreshDict,
+  invalidateDict,
+  hydrateDict,
+  searchDict,
   editableEnable,
   editableDisable,
   editableStartRowEdit,
@@ -58,6 +62,9 @@ import {
   type CrudStore,
   type CrudUiPort,
   type CrudTranslator,
+  type DictCommandContext,
+  type DictProviderRegistrations,
+  type DictSerializableValue,
 } from 'dg-cell-mvi-crud';
 
 export interface CrudCommands<R = any> {
@@ -82,7 +89,13 @@ export interface CrudCommands<R = any> {
   setCompact: (value: boolean) => void;
   setColumnsFilter: (overrides: ColumnsFilterOverrides) => void;
   resetColumnsFilter: () => void;
-  loadDict: (p: { dictId: string; value?: any; reload?: boolean }) => void;
+  loadDict: (
+    p: DictCommandContext & { value?: any; reload?: boolean },
+  ) => void;
+  refreshDict: (p: DictCommandContext) => void;
+  invalidateDict: (p: { dictId: string; scope?: string; cacheKey?: string }) => void;
+  hydrateDict: (p: DictCommandContext & { values: DictSerializableValue[] }) => void;
+  searchDict: (p: DictCommandContext & { query: string }) => void;
   // ---- inline editing ----
   editableEnable: (p?: { mode?: 'free' | 'row' | 'cell'; exclusive?: boolean; exclusiveEffect?: 'cancel' | 'save'; activeDefault?: boolean }) => void;
   editableDisable: () => void;
@@ -153,6 +166,8 @@ export interface UseCrudOptions<R = any> {
    * the port derived from `uiAdapter`; normally leave unset and pass `uiAdapter` instead.
    */
   ui?: CrudUiPort;
+  /** Provider implementations stay at the composition root and never enter Vue state or schema. */
+  dictProviders?: DictProviderRegistrations;
 }
 
 export interface UseCrudRet<R = any> {
@@ -244,6 +259,7 @@ export function useCrud<R = any>(options: UseCrudOptions<R>): UseCrudRet<R> {
     // config so the PURE projector localizes built-in labels + filters permissioned buttons.
     i18n: injectedTranslator,
     permission: options.permission,
+    dictProviders: options.dictProviders,
   });
 
   const d = store.dispatch;
@@ -268,7 +284,13 @@ export function useCrud<R = any>(options: UseCrudOptions<R>): UseCrudRet<R> {
     setCompact: (v: boolean) => d(setCompact(v)),
     setColumnsFilter: (o: ColumnsFilterOverrides) => d(setColumnsFilter(o)),
     resetColumnsFilter: () => d(resetColumnsFilter()),
-    loadDict: (p: { dictId: string; value?: any; reload?: boolean }) => d(loadDict(p)),
+    loadDict: (p: DictCommandContext & { value?: any; reload?: boolean }) => d(loadDict(p)),
+    refreshDict: (p: DictCommandContext) => d(refreshDict(p)),
+    invalidateDict: (p: { dictId: string; scope?: string; cacheKey?: string }) =>
+      d(invalidateDict(p)),
+    hydrateDict: (p: DictCommandContext & { values: DictSerializableValue[] }) =>
+      d(hydrateDict(p)),
+    searchDict: (p: DictCommandContext & { query: string }) => d(searchDict(p)),
     editableEnable: (p?: any) => d(editableEnable(p)),
     editableDisable: () => d(editableDisable()),
     editableStartRowEdit: (p: any) => d(editableStartRowEdit(p)),
@@ -298,8 +320,14 @@ export function useCrud<R = any>(options: UseCrudOptions<R>): UseCrudRet<R> {
       const loadedDictIds = new Set<string>();
       const loadColumnDicts = (cols: ReadonlyArray<unknown>): void => {
         for (const col of cols) {
-          const c = col as { dict?: unknown; dictId?: string; children?: unknown[] };
-          if (c.dict && c.dictId && !loadedDictIds.has(c.dictId)) {
+          const c = col as {
+            dict?: { binding?: { triggers?: string[] } };
+            dictId?: string;
+            children?: unknown[];
+          };
+          const triggers = c.dict?.binding?.triggers;
+          const eager = !triggers?.length || triggers.includes('eager');
+          if (c.dict && c.dictId && eager && !loadedDictIds.has(c.dictId)) {
             loadedDictIds.add(c.dictId);
             commands.loadDict({ dictId: c.dictId });
           }
@@ -308,8 +336,17 @@ export function useCrud<R = any>(options: UseCrudOptions<R>): UseCrudRet<R> {
       };
       loadColumnDicts(store.config.columns);
       // also load the tabs quick-filter dict (when the tabs bar resolves its options from a dict).
-      const tabs = (store.config as { tabs?: { dict?: unknown; dictId?: string } }).tabs;
-      if (tabs?.dict && tabs.dictId && !loadedDictIds.has(tabs.dictId)) {
+      const tabs = (
+        store.config as {
+          tabs?: {
+            dict?: { binding?: { triggers?: string[] } };
+            dictId?: string;
+          };
+        }
+      ).tabs;
+      const tabTriggers = tabs?.dict?.binding?.triggers;
+      const eagerTabs = !tabTriggers?.length || tabTriggers.includes('eager');
+      if (tabs?.dict && tabs.dictId && eagerTabs && !loadedDictIds.has(tabs.dictId)) {
         loadedDictIds.add(tabs.dictId);
         commands.loadDict({ dictId: tabs.dictId });
       }

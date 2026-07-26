@@ -6,6 +6,11 @@
  */
 import type { AppEvent } from 'dg-cell-mvi-core';
 import type { ColumnsFilterOverrides } from './crudOptions';
+import type {
+  DictRequestCorrelation,
+  DictSerializableRecord,
+  DictSerializableValue,
+} from './dict';
 import type { FormMode, SortState } from './state';
 
 export const CRUD_EVENT = {
@@ -40,6 +45,10 @@ export const CRUD_EVENT = {
 
   // dict commands
   loadDict: 'crud.loadDict',
+  refreshDict: 'crud.refreshDict',
+  invalidateDict: 'crud.invalidateDict',
+  hydrateDict: 'crud.hydrateDict',
+  searchDict: 'crud.searchDict',
 
   // async-compute feedback (options-on-watch resolved at the effect boundary)
   asyncComputeResolved: 'crud.asyncComputeResolved',
@@ -139,8 +148,34 @@ export const doRemove = (p: { row?: any; index?: number; noConfirm?: boolean }) 
   ev(CRUD_EVENT.doRemove, p);
 
 // ---- dict commands ----
-export const loadDict = (p: { dictId: string; value?: any; reload?: boolean }) =>
+export interface DictCommandContext {
+  dictId: string;
+  providerId?: string;
+  scope?: string;
+  context?: DictSerializableRecord;
+}
+
+export const loadDict = (
+  p: DictCommandContext & {
+    /** Legacy selected value; normalized to a hydrate value list only by explicit hydrateDict. */
+    value?: any;
+    /** Legacy refresh spelling retained as an alias for force-refresh load semantics. */
+    reload?: boolean;
+  },
+) =>
   ev(CRUD_EVENT.loadDict, p);
+export const refreshDict = (p: DictCommandContext) => ev(CRUD_EVENT.refreshDict, p);
+export const invalidateDict = (p: {
+  dictId: string;
+  scope?: string;
+  cacheKey?: string;
+}) =>
+  ev(CRUD_EVENT.invalidateDict, p);
+export const hydrateDict = (
+  p: DictCommandContext & { values: DictSerializableValue[] },
+) => ev(CRUD_EVENT.hydrateDict, p);
+export const searchDict = (p: DictCommandContext & { query: string }) =>
+  ev(CRUD_EVENT.searchDict, p);
 
 // ---- toolbar ----
 export const setCompact = (value: boolean) => ev(CRUD_EVENT.setCompact, { value });
@@ -228,9 +263,36 @@ export const removeFailed = (p: { error: string }) => ev(CRUD_EVENT.removeFailed
  * stops). Distinct from `removeFailed` (a request error → an error notify). Mirrors `submitAborted`.
  */
 export const removeAborted = (p: { reason?: string } = {}) => ev(CRUD_EVENT.removeAborted, p);
-export const dictLoaded = (p: { dictId: string; data: any[] }) => ev(CRUD_EVENT.dictLoaded, p);
-export const dictLoadFailed = (p: { dictId: string; error: string }) =>
-  ev(CRUD_EVENT.dictLoadFailed, p);
+export type DictLoadedResult = DictRequestCorrelation & { nodes: any[] };
+export type DictFailedResult = DictRequestCorrelation & { error: string };
+
+/** @deprecated Correlated results are required while a request is active. */
+export interface LegacyDictLoadedResult {
+  dictId: string;
+  data: any[];
+}
+
+/** @deprecated Correlated results are required while a request is active. */
+export interface LegacyDictFailedResult {
+  dictId: string;
+  error: string;
+}
+
+export function dictLoaded(p: DictLoadedResult): AppEvent<DictLoadedResult>;
+export function dictLoaded(p: LegacyDictLoadedResult): AppEvent<LegacyDictLoadedResult>;
+export function dictLoaded(
+  p: DictLoadedResult | LegacyDictLoadedResult,
+): AppEvent<DictLoadedResult | LegacyDictLoadedResult> {
+  return ev(CRUD_EVENT.dictLoaded, p);
+}
+
+export function dictLoadFailed(p: DictFailedResult): AppEvent<DictFailedResult>;
+export function dictLoadFailed(p: LegacyDictFailedResult): AppEvent<LegacyDictFailedResult>;
+export function dictLoadFailed(
+  p: DictFailedResult | LegacyDictFailedResult,
+): AppEvent<DictFailedResult | LegacyDictFailedResult> {
+  return ev(CRUD_EVENT.dictLoadFailed, p);
+}
 /**
  * An async-compute field's `asyncFn` resolved (options fetched on a watched key). `key` is the form
  * field, `watchKey` the stable key of the watched value it ran against (re-runs only when this

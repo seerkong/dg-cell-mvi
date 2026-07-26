@@ -14,6 +14,7 @@ export type {
   FormSlice,
   DictSlice,
   DictEntry,
+  DictActiveRequest,
   EditableSlice,
   EditableRowState,
   ColumnsFilterSlice,
@@ -27,7 +28,7 @@ export type {
 export { createInitialCrudState } from './contract/state';
 
 export { CRUD_EVENT } from './contract/events';
-export type { CrudEventType } from './contract/events';
+export type { CrudEventType, DictCommandContext } from './contract/events';
 export * as commands from './contract/events';
 // named command creators (also available via the `commands` namespace)
 export {
@@ -52,6 +53,12 @@ export {
   closeForm,
   doRemove,
   loadDict,
+  refreshDict,
+  invalidateDict,
+  hydrateDict,
+  searchDict,
+  dictLoaded,
+  dictLoadFailed,
   setCompact,
   editableEnable,
   editableDisable,
@@ -90,6 +97,19 @@ export type {
   TabsBinding,
   TabOption,
 } from './logic/projectors';
+export {
+  projectColumnDictControl,
+  projectDictControl,
+  projectDictSlice,
+  resolveDictBindingContext,
+  translateDictControlInteraction,
+} from './logic/projectors/dict';
+export type {
+  DictControlBinding,
+  DictControlDescriptor,
+  DictControlInteraction,
+  DictControlProjectionOptions,
+} from './logic/projectors/dict';
 
 export { buildNormalizedOptions } from './support/optionsBuild';
 export type {
@@ -141,6 +161,30 @@ export { createFormDraftEffects, formDraftStorageKey } from './support/formDraft
 export type { FormDraftStoragePort } from './support/formDraftEffects';
 
 // ---- dict + compute ----
+export { LEGACY_URL_DICT_PROVIDER, mapLegacyDictConfig } from './contract/dict';
+export type {
+  DictBinding,
+  DictBindingParam,
+  DictBindingTrigger,
+  DictCachePolicy,
+  DictContextRef,
+  DictContextSource,
+  DictDefinition,
+  DictInlineSource,
+  DictLoadIntent,
+  DictLoadMode,
+  DictNode,
+  DictNodeFields,
+  DictProvider,
+  DictProviderId,
+  DictProviderSource,
+  DictRequestCorrelation,
+  DictSerializablePrimitive,
+  DictSerializableRecord,
+  DictSerializableValue,
+  DictSource,
+  LegacySerializableDictConfig,
+} from './contract/dict';
 export {
   compute,
   asyncCompute,
@@ -154,6 +198,17 @@ export type { ComputeScope, ComputeFn } from './support/compute';
 export { createDictRegistry, getSharedDictRegistry, resetSharedDictRegistry } from './support/dictRegistry';
 export type { DictRegistry, DictConfig, DictRequest, DictLoadContext, DictOnReadyContext } from './support/dictRegistry';
 export { createDictEffects } from './support/dictEffects';
+export {
+  createDictProviderRuntime,
+  DictProviderNotFoundError,
+  DictProviderOperationNotSupportedError,
+} from './support/dictProviderRuntime';
+export type {
+  DictCacheInvalidation,
+  DictProviderRegistrations,
+  DictProviderRuntime,
+  DictProviderRuntimeOptions,
+} from './support/dictProviderRuntime';
 export { reduceDict } from './logic/reducers/dict';
 export { dict, isDict, getNodesFromDataMap, getLabelsFromDataMap } from './logic/projectors/compute';
 export type { DictFieldNames } from './logic/projectors/compute';

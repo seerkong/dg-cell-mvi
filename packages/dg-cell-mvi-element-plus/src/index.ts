@@ -48,6 +48,14 @@ export { default as DgToolbar } from './components/DgToolbar.vue';
 export { default as DgColumnsFilter } from './components/DgColumnsFilter.vue';
 export { default as DgCell } from './components/DgCell';
 export { default as DgSubTable } from './components/DgSubTable.vue';
+export {
+  createElementPlusDictControlBridge,
+  dispatchDictControlCommand,
+} from './support/dictControlBridge';
+export type {
+  ElementPlusDictControlBridge,
+  ElementPlusDictControlBridgeOptions,
+} from './support/dictControlBridge';
 
 // ---- admin chassis render components (pure UI: props/events only, NO admin-logic/admin-contract dep) ----
 export { default as DgAdminOutside } from './components/DgAdminOutside.vue';

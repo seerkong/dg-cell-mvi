@@ -12,7 +12,7 @@ import type {
   TableMode,
 } from '../contract/crudOptions';
 import type { ListStatus, SortState } from '../contract/state';
-import type { CrudState, DictSlice, EditableRowState } from '../contract/state';
+import type { CrudState, EditableRowState } from '../contract/state';
 import type { NormalizedColumn, NormalizedCrudOptions } from '../support/optionsBuild';
 import { projectForm, projectFormColumns } from './projectors/form';
 import type { ResolvedFormItem } from './projectors/form';
@@ -26,6 +26,7 @@ import type {
   RowHandleBinding,
   ToolbarBinding,
 } from './projectors/buttons';
+import { projectDictSlice, type DictControlBinding } from './projectors/dict';
 
 export type {
   ResolvedFormItem,
@@ -213,7 +214,7 @@ export interface CrudBinding<R = any> {
   actionbar: ActionbarBinding;
   toolbar: ToolbarBinding;
   columnsFilter: ColumnsFilterBinding;
-  dict: DictSlice;
+  dict: Record<string, DictControlBinding>;
   status: ListStatus;
   error: string | null;
   /**
@@ -436,7 +437,7 @@ export function projectCrudBinding<R = any>(
       cancelText: resolveT(config.t, I18N_KEY.columnsFilterCancel, '取消'),
       confirmText: resolveT(config.t, I18N_KEY.columnsFilterConfirm, '确定'),
     },
-    dict: state.dict,
+    dict: projectDictSlice(state, config),
     status: state.list.status,
     error: state.list.error,
     // outer-container passthrough (null when unset) — bound onto DgCrud's wrapper in the view.

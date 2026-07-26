@@ -23,6 +23,10 @@ import { createEditableEffects } from '../support/editableEffects';
 import { getSharedDictRegistry } from '../support/dictRegistry';
 import { createDictEffects } from '../support/dictEffects';
 import {
+  createDictProviderRuntime,
+  type DictProviderRegistrations,
+} from '../support/dictProviderRuntime';
+import {
   createColumnsFilterEffects,
   type ColumnsFilterStoragePort,
 } from '../support/columnsFilterEffects';
@@ -49,6 +53,11 @@ export interface CreateCrudStoreOptions<R = any> {
    * filtering (keep every button). Same injection pattern as `ui` / `storage`.
    */
   permission?: (code: string) => boolean;
+  /**
+   * Effect-side dictionary providers keyed by their serializable provider id. Instances are retained
+   * by this store's composition root and never copied into declarations or reducer state.
+   */
+  dictProviders?: DictProviderRegistrations;
   onError?: (error: unknown) => void;
 }
 
@@ -59,13 +68,14 @@ export function createCrudStore<R = any>(input: CreateCrudStoreOptions<R>): Crud
   });
   // a process-wide registry so `shared` dicts load once and survive page navigations.
   const dicts = getSharedDictRegistry({ dictRequest: (config.raw as any)?.dictRequest });
+  const providers = createDictProviderRuntime(input.dictProviders);
   const effects = {
     ...createRequestEffects<R>({ config, ui: input.ui }),
     ...createFormEffects<R>({ config }),
     ...createFormDraftEffects<R>({ config, storage: input.storage, ui: input.ui }),
     ...createRemoveEffects<R>({ config, ui: input.ui }),
     ...createEditableEffects<R>({ config }),
-    ...createDictEffects<R>({ config, dicts }),
+    ...createDictEffects<R>({ config, dicts, providers }),
     ...createColumnsFilterEffects<R>({ config, storage: input.storage }),
   };
   const runner = createEffectRunner<CrudState<R>>(effects);
