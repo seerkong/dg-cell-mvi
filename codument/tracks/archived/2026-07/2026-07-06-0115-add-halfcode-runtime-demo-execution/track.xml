@@ -15,18 +15,18 @@
   <TaskSpace id="space_add-halfcode-runtime-demo-execution" name="add-halfcode-runtime-demo-execution" version="1">
     <Description>三个 phase：装配与诊断修正、scope.runtime 可见性解析、runtime-counter e2e。</Description>
     <SubNodes>
-      <TaskGroup id="P1" name="装配与诊断修正" status="COMPLETED" order="0">
+      <TaskGroup id="P1" name="装配与诊断修正" status="DONE" order="0">
         <cdt:Gate>
           <cdt:Criterion>既有 runtimeAssembly/runtimeExecution 测试语义保持（诊断码断言按新语义更新属预期修改）</cdt:Criterion>
         </cdt:Gate>
         <SubNodes>
-          <Task id="T1.1" name="装配多遍收敛" status="COMPLETED" order="0" priority="P0">
+          <Task id="T1.1" name="装配多遍收敛" status="DONE" order="0" priority="P0">
             <Description>RuntimeInstance 装配改为多遍迭代至收敛（prototype 后置声明也能装配）；一轮零进展且仍有未装配实例 -> HALFCODE_RUNTIME_PROTOTYPE_UNRESOLVED（含环检测）。docs spec/runtime/nodes.md 同步声明顺序无关。</Description>
             <cdt:Acceptance>
               <cdt:Criterion id="T1.1-AC1" checked="true">倒序声明（derived 在 prototype 前）用例装配成功；prototype 环产出诊断而非死循环</cdt:Criterion>
             </cdt:Acceptance>
           </Task>
-          <Task id="T1.2" name="诊断码语义归位" status="COMPLETED" order="1" priority="P0">
+          <Task id="T1.2" name="诊断码语义归位" status="DONE" order="1" priority="P0">
             <Description>contract 新增 HALFCODE_RUNTIME_EXECUTION_FAILED（severity error）；create/derive/code entry 执行抛错用之；execution 符号解析失败改用 HALFCODE_RUNTIME_REF_UNRESOLVED；SCOPE_BINDING_FAILED 收窄回 bindScope/deriveScope 失败。</Description>
             <cdt:Acceptance>
               <cdt:Criterion id="T1.2-AC1" checked="true">三类失败各有独立诊断码断言</cdt:Criterion>
@@ -34,12 +34,12 @@
           </Task>
         </SubNodes>
       </TaskGroup>
-      <TaskGroup id="P2" name="scope.runtime 可见性解析" status="COMPLETED" order="1">
+      <TaskGroup id="P2" name="scope.runtime 可见性解析" status="DONE" order="1">
         <cdt:Gate>
           <cdt:Criterion>loader 只解析可见性，不读投影值（docs spec/runtime/refs.md 边界）</cdt:Criterion>
         </cdt:Gate>
         <SubNodes>
-          <Task id="T2.1" name="实现 scope.runtime:// 解析 helper" status="COMPLETED" order="0" priority="P0">
+          <Task id="T2.1" name="实现 scope.runtime:// 解析 helper" status="DONE" order="0" priority="P0">
             <Description>support 导出 resolveScopeRuntimeRef(assembly, scopeId, ref)：解析 scope.runtime://#id[/sub]，沿 scope 链由内向外找最近绑定该 RuntimeInstance 的 scope runtime object，返回 { runtime, subPath }；不可见 -> HALFCODE_RUNTIME_REF_UNRESOLVED。</Description>
             <cdt:Acceptance>
               <cdt:Criterion id="T2.1-AC1" checked="true">可见/不可见/带 subPath 三形态有单测</cdt:Criterion>
@@ -47,13 +47,13 @@
           </Task>
         </SubNodes>
       </TaskGroup>
-      <TaskGroup id="P3" name="runtime-counter e2e" status="COMPLETED" order="2">
+      <TaskGroup id="P3" name="runtime-counter e2e" status="DONE" order="2">
         <cdt:Gate>
           <cdt:Criterion>slicing track4 两条验收在真实 fixture 上成立</cdt:Criterion>
           <cdt:Criterion>contract+support 全包测试全绿</cdt:Criterion>
         </cdt:Gate>
         <SubNodes>
-          <Task id="T3.1" name="端到端测试" status="COMPLETED" order="0" priority="P0">
+          <Task id="T3.1" name="端到端测试" status="DONE" order="0" priority="P0">
             <Description>磁盘 load runtime-counter（依赖 G2R-T1 loader）-> assembleHalfcodeRuntimeUnit（symbol resolver 映射 vfs:// 到 fixture ts 模块导出）-> executeHalfcodeRuntimeCode 调 intent handler -> 断言 runtime 状态递增 -> resolveScopeRuntimeRef('scope.runtime://#counter/viewModel.value') 可见且经 runtime 协议读到更新后的值。</Description>
             <cdt:Acceptance>
               <cdt:Criterion id="T3.1-AC1" checked="true">intent 递增断言通过</cdt:Criterion>
