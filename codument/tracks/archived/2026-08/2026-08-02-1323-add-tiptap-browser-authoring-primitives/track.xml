@@ -1,0 +1,123 @@
+<Track id="add-tiptap-browser-authoring-primitives" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在 Tiptap adapter capsule 中补齐可组合的 table browser authoring 与 runtime-bound Mermaid NodeView。</Goal>
+    <Description>复用官方 table primitives，提供安全 Mermaid render Effect/NodeView，并保持 Domain XNL 与 revisioned authoring 单一写入边界。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-02T05:03:22Z</CreatedAt>
+    <UpdatedAt>2026-08-02T10:23:33Z</UpdatedAt>
+    <GapRound>2</GapRound>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="tiptap-presenter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="adapter-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="adapter-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/test/"/>
+    <MaterialBundle role="output" name="tiptap-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/tiptap-document/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-tiptap-browser-authoring-primitives" name="add-tiptap-browser-authoring-primitives" version="1">
+    <Description>按 characterization/contract、table、Mermaid、公共验证顺序补强 adapter。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="浏览器能力 contracts 与红测试" status="DONE" order="0">
+        <Description>冻结 public API、Effect 参数归位、safe sink 与 authority 边界。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="characterize 官方 table 与现有 adapter" status="DONE" order="0" priority="P0">
+            <Description>用真实 Editor 记录官方 table extension/commands、attrs 与现有 projection/normalizer 的交点。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">证据区分 schema presence、command availability、NodeView availability 与 public-root availability</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">明确不并存两套同名 table schema，也不复制 ProseMirror table topology 算法</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="编写 table 与 Mermaid public contract 红测试" status="DONE" order="1" priority="P0">
+            <Description>锁定 runtime-first Effect public types、outer facet 参数归位，以及 table/Mermaid package-root capability absence；具体 NodeView lifecycle 红测由 T3.2 在 T3.1 host foundation 存在后建立。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">package-root typecheck 锁定 outer NodeView facet 与 binding/input/config 形状；opaque implementation runtime 保留 class/泛型能力且不被误称为 TypeScript 可证明 exact</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">真实 Editor 红测试准确证明 table command/view 与 Mermaid host capability 尚缺，且未把尚不可到达的 lifecycle assertion 伪装为独立红证据</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Canonical table browser authoring" status="DONE" order="1">
+        <Description>以官方 Tiptap table nodes/commands 替换 schema-only 实现并保留领域语义。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="实现可组合 table extensions 与 command surface" status="DONE" order="0" priority="P0">
+            <Description>在 adapter 内组合官方 table primitives，保留 nodeId/colspan/rowspan；package-root exports 统一由 T4.1 写入。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">真实 Editor 可执行 insert/delete table、row/column、merge/split 与 header commands</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">extension registry 中每个 table node name 唯一，包内不保留并行 schema owner</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="验证 table round-trip 与 transaction 边界" status="DONE" order="1" priority="P0">
+            <Description>覆盖结构编辑、cell content、identity/span、Interaction normalizer 与 canonical GetPut。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">supported table projection/edit/parse 保持语义与稳定 identity</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">所有 document change 只发布 revision-free Interaction，不出现直接 XNL/authoring/persistence write</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Runtime-bound Mermaid NodeView" status="DONE" order="2">
+        <Description>实现 renderer-agnostic Effect contract、受限 host 与异步安全 lifecycle。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="实现 Mermaid render Effect 与 host contracts" status="DONE" order="0" priority="P0">
+            <Description>定义并实现 outer exact host facet：长期 render/diagnostic Effect binding 进入 runtime facet，source/requestId 进入 input，theme 进入 config；两个 opaque implementation runtime 可使用 class/泛型，DOM commit 由 NodeView host 私有持有。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">类型与运行时红测锁定 render/diagnostic Effect 遵守 output = fn(runtime, input, config)，source/requestId、theme 与长期 binding 严格归位</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">factory 允许 class/prototype/mixin outer runtime carrier，但拒绝 outer facet、binding、input/config 的额外 own keys/accessor/loose callbacks；opaque implementation runtime 不被展开，NodeView 不获得 raw Scope runtime、Domain AST、ValueHost、VFS/VCS、translator 或 writer authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 Mermaid NodeView lifecycle" status="DONE" order="1" priority="P0">
+            <Description>先建立不被 factory absence 遮蔽的逐项红测，再实现 mount/update/source transaction/stale result/reject/destroy 与结构化 diagnostics。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">独立用例分别拒绝 script、foreignObject、on* attr、javascript href、mismatched result/diagnostic requestId 与 stateful Proxy；structured rejected 与 malformed result 不 commit；只有最新 live request 可 commit，destroy 后私有 container 也无写入</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">NodeView source editor 事件只产生 Tiptap transaction 并归一为 Mermaid source Interaction；throw/reject 经独立 diagnostic Effect 且不改变 Domain truth</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="公共入口、文档与仓内 gate" status="DONE" order="3">
+        <Description>完成 capsule exports、文档、依赖边界与仓内 package-root consumer 验证。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="固定 package-root value exports 与 import smoke" status="DONE" order="0" priority="P0">
+            <Description>在 T1.2 已冻结并导出的 public contract types 基础上，唯一负责暴露最终 value/functions，并完成 typecheck、ESM/CJS smoke 与 package boundary tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">消费者无需 deep import 即可组合 table、Mermaid 与既有 embed capabilities</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">contract/logic/support 与其他 Halfcode packages 未新增 Tiptap/Vue/DOM 依赖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="同步 Tiptap Document 文档" status="DONE" order="1" priority="P1">
+            <Description>记录三参数 Mermaid Effect、table command 组合、authority 与安全边界。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">文档给出产品 composition root 绑定示例且不把 renderer implementation 写入 DSL/config</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">文档明确 transaction-only authoring 与 safe sink 生命周期</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">文档当前能力与未来边界和已完成的仓内 package-root 单 Editor 共存 gate 一致，不把已交付能力写成后续状态</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="运行 adapter 与 package-root consumer verification" status="DONE" order="2" priority="P0">
+            <Description>实跑完整 adapter tests/typecheck/import smoke，并以单一 public browser host 和单一 canonical registry，在仓内仅经 package root 构造真实 Editor 验证全部能力共存。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">adapter full suite、typecheck、ESM/CJS smoke、strict Codument validate 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">仓内 consumer probe 经单一 public browser host/registry 同时确认 table command/view、Mermaid NodeView/Effect 和 Component/Capsule lifecycle，无重复 extension、raw NodeViewRenderer、deep import 或第二 writer；跨仓 Workbench gate 不属于本 track</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule/>
+  <Hooks/>
+</Track>

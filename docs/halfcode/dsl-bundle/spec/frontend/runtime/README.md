@@ -63,6 +63,25 @@ Scope 不声明 runtime 内部结构，但它是装配边界：
 - `#admin-root` 是全新创建的 root runtime。
 - `#users-page` 以 root 为 prototype，结合 users-page scope assembly 派生。
 - 多个 Scope 可以绑定同一个 `RuntimeInstance`；是否共享状态由 runtime object 自己决定。
+- Document Scope 可使用 `runtime-instance://#...` 绑定 runtime object instance；
+  mounted Document targets use `unit-instance://<unit-instance-id>/<role>/<x-id>`
+  and are resolved by the Document occurrence runtime registry, not by static
+  XNL refs or DOM lookup. Document definition lookup, per-occurrence registry
+  creation, `openDocument`/`closeDocument`, and Scope occurrence assembly are
+  implemented runtime capabilities. They are supplied by the runtime first
+  argument; call-local `DocumentRuntimeConfig` is data-only and carries no
+  registry, definition table, or function object.
+- The generic Document authoring session is a runtime-only capability binding:
+  edit Scope receives only a proposal facet, view Scope receives no writer, and
+  host code keeps factory/control/persistence authority. It is not a new XNL
+  Authoring DSL and does not place functions or writers in config/input/plan
+  facts; see [XNL Document authoring session](../authoring/README.md).
+- The Document runtime now has a separate Tiptap/ProseMirror consumer adapter,
+  canonical GetPut/accepted PutGet laws and restricted NodeView assembly; see
+  [Tiptap Document Presenter](../tiptap-document/README.md). These capabilities
+  remain code/runtime-only and do not enter Scope config facts.
+- Workbench product browser E2E, generic Domain DSL editing and Agent
+  collaboration remain later mission stages.
 
 ## 4. 动态代码
 

@@ -1,0 +1,39 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/semantic-candidate-materializer">
+    <requirement id="semantic-candidate-materializer">
+      <statement>The foundation owner SHALL expose a package-root runtime-first semantic candidate materializer that applies an accepted XnlRichDocument and canonical translated RichDocument edit command atomically to XnlRichDocumentCandidateMaterializationResult, preserving stable #id structure and copy-origin handoff while owning no writer, VFS, session, revision, submit, persistence, Tiptap JSON or HTML authority.</statement>
+      <suite id="materialization" name="RichDocument semantic materialization">
+        <case id="all-normalizer-edit-kinds">
+          <given>A canonical command contains any valid combination of insert, delete, move, text, mark, table, code and mermaid-source edits emitted by the public normalizer.</given>
+          <when>The public semantic candidate materializer applies the command to the accepted RichDocument.</when>
+          <then>It SHALL return a normalized deeply immutable candidate whose semantic structure equals the requested final document, including exact inline marks, table topology and spans, code language/text and Mermaid source.</then>
+        </case>
+        <case id="sequential-accepted-baselines">
+          <given>A first canonical semantic edit is accepted and a second valid edit is projected and normalized from that latest accepted RichDocument.</given>
+          <when>The same package-root translator, materializer, identity allocator and trusted host process the second Interaction.</when>
+          <then>The second edit SHALL be evaluated only against the latest accepted baseline, SHALL be accepted without stale hidden materializer or identity facts, and SHALL preserve exact-once translation, materialization, allocation and submission.</then>
+        </case>
+        <case id="atomic-baseline-validation">
+          <given>A command contains stale before facts, invalid parent/index, unknown references, duplicate or overlapping operations, a cyclic move, conflicting text and mark results, or an unsupported semantic node.</given>
+          <when>The materializer validates and plans the command.</when>
+          <then>It SHALL reject the whole command against one accepted baseline with actionable diagnostics, SHALL NOT partially apply edits, and SHALL leave accepted input and all external authority unchanged.</then>
+        </case>
+        <case id="stable-move-new-copy-replacement">
+          <given>A command moves an accepted subtree, inserts a new subtree, copies an accepted subtree or replaces identity.</given>
+          <when>The candidate and copy origins are classified before trusted-host allocation.</when>
+          <then>Moved nodes SHALL retain every stable #id, new and replacement nodes SHALL have collision-safe temporary candidate ids, every copied persistent node SHALL produce an exact copyOrigin, and replacement SHALL remain delete-and-add rather than an ordinary id update.</then>
+        </case>
+        <case id="trusted-host-composition">
+          <given>A trusted authoring host composes the public canonical translator, materializer and an existing host-owned identity allocator.</given>
+          <when>A revision-free Interaction is submitted while accepted revision is stable or changes during materialization.</when>
+          <then>The host SHALL translate and materialize exactly once, allocate fresh ids only for new/copy/replacement identities, use the submission-time live revision when stable, and reject concurrent change without submitting when the revision changed.</then>
+        </case>
+        <case id="putget-and-authority">
+          <given>A supported canonical Interaction is accepted or a stale, malformed, lossy or persistence-failing proposal is evaluated.</given>
+          <when>The existing accepted-first authoring pipeline completes and reprojects the result.</when>
+          <then>Accepted edits SHALL satisfy PutGet, pre-acceptance failures SHALL advance neither live nor persisted truth, existing post-acceptance dirty-failed semantics SHALL remain intact, and no adapter or materializer surface SHALL expose writer, VFS, VCS, session, revision, submit or persistence authority.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

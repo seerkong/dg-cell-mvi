@@ -90,12 +90,18 @@ function exportNames(clause: ts.NamedExportBindings | undefined): string[] {
 }
 
 describe('schema-editor support public boundary', () => {
-  it('exports only the package-root capsule and all public processors keep arity three', () => {
+  it('keeps the package root and only the deliberate narrow capability subpaths', () => {
     const packageJson = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf8')) as {
       readonly exports: Readonly<Record<string, string>>;
     };
 
-    expect(packageJson.exports).toEqual({ '.': './src/index.ts' });
+    expect(packageJson.exports).toEqual({
+      '.': './src/index.ts',
+      './schema-editor': './src/schema-editor/index.ts',
+      './xnl-authoring': './src/xnl-authoring/index.ts',
+      './xnl-projection': './src/xnl-projection/index.ts',
+      './xnl-projection-presenter': './src/xnlProjectionPresenter.ts',
+    });
     expect(resolveSchemaEditorCommand).toHaveLength(3);
     expect(createSchemaEditorSession).toHaveLength(3);
     expect(resolveSchemaEditorScopeBridge).toHaveLength(3);
@@ -137,7 +143,7 @@ describe('schema-editor support public boundary', () => {
     for (const forbidden of [
       /from\s+['"]vue['"]/,
       /from\s+['"]element-plus['"]/,
-      /from\s+['"][^'"]*(?:flow|biz-process|work-flow)[^'"]*['"]/i,
+      /from\s+['"][^'"]*(?:flow|bp-ctrl-flow|work-ctrl-flow)[^'"]*['"]/i,
       /from\s+['"](?:node:)?(?:fs|path|http|https|net|tls|stream)['"]/,
       /\bdocument\.|\bwindow\.|\blocalStorage\b|\bindexedDB\b/,
       /\bfetch\s*\(/,

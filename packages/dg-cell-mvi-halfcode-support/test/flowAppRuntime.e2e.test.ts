@@ -9,14 +9,14 @@ import {
   listTasks,
   terminalStatusOf,
 } from 'task-manager-logic';
-import type { WorkFlowSnapshot, WorkFlowStore } from 'work-flow-contract';
+import type { WorkCtrlFlowSnapshot, WorkCtrlFlowStore } from 'work-ctrl-flow-contract';
 import {
   createHalfcodeAppRuntime,
   loadHalfcodeUnitBundle,
-  type BizProcessHandle,
+  type BPCtrlFlowHandle,
   type EagerDataFlowHandle,
-  type InstantFlowHandle,
-  type WorkFlowHandle,
+  type InstantCtrlFlowHandle,
+  type WorkCtrlFlowHandle,
 } from '../src';
 
 function memoryResolver(files: Record<string, string>): ImportResolver {
@@ -39,10 +39,10 @@ function memoryResolver(files: Record<string, string>): ImportResolver {
   };
 }
 
-class MemoryWorkFlowStore implements WorkFlowStore {
-  private readonly snapshots = new Map<string, WorkFlowSnapshot>();
+class MemoryWorkCtrlFlowStore implements WorkCtrlFlowStore {
+  private readonly snapshots = new Map<string, WorkCtrlFlowSnapshot>();
   async load(treeId: string) { return this.snapshots.get(treeId); }
-  async save(snapshot: WorkFlowSnapshot) { this.snapshots.set(snapshot.treeId, structuredClone(snapshot)); }
+  async save(snapshot: WorkCtrlFlowSnapshot) { this.snapshots.set(snapshot.treeId, structuredClone(snapshot)); }
   async remove(treeId: string) { this.snapshots.delete(treeId); }
 }
 
@@ -56,14 +56,14 @@ class MemoryTaskSpaceStore implements TaskSpaceStore {
 const files = {
   '/flow/manifest.xnl': `<AppBundle #demo.flow.Runtime apiVersion="halfcode.dg-cell-mvi/v1" version="1" (
     <Units [
-      <Unit kind="instant-flow" fqn="demo.flow.Instant" src="vfs://./instant.xnl">
+      <Unit kind="instant-ctrl-flow" fqn="demo.flow.Instant" src="vfs://./instant.xnl">
       <Unit kind="eager-data-flow" fqn="demo.flow.Eager" src="vfs://./eager.xnl">
-      <Unit kind="work-flow" fqn="demo.flow.Work" src="vfs://./work.xnl">
-      <Unit kind="biz-process" fqn="demo.flow.Biz" src="vfs://./biz/manifest.xnl">
+      <Unit kind="work-ctrl-flow" fqn="demo.flow.Work" src="vfs://./work.xnl">
+      <Unit kind="bp-ctrl-flow" fqn="demo.flow.Biz" src="vfs://./biz/manifest.xnl">
       <Unit kind="page" fqn="demo.flow.Page" src="vfs://./page/manifest.xnl">
     ]>
   )>`,
-  '/flow/instant.xnl': `<InstantFlow #demo.flow.Instant apiVersion="depa.flows/v1" version="1" (
+  '/flow/instant.xnl': `<InstantCtrlFlow #demo.flow.Instant apiVersion="depa.flows/v1" version="1" (
     <FlowContract #demo.flow.Instant {
       input = "vfs://./instant.types.ts#DemoInstantInput"
       output = "vfs://./instant.types.ts#DemoInstantOutput"
@@ -84,25 +84,25 @@ export interface DemoInstantOutput { answer: number; scopeId: string }`,
     }>
     <ReturnNode #return { inputs = { result = "flow-port://#double/result" } }>
   ]>`,
-  '/flow/work.xnl': `<WorkFlow #demo.flow.Work apiVersion="depa.flows/v1" version="1" (
+  '/flow/work.xnl': `<WorkCtrlFlow #demo.flow.Work apiVersion="depa.flows/v1" version="1" (
     <FlowContract #demo.flow.Work {
       input = "vfs://./work.types.ts#DemoWorkInput"
       output = "vfs://./work.types.ts#DemoWorkOutput"
     }>
   ) [
-    <CallFlow #scope-check { flow = "instant-flow://demo.flow.Instant" }>
+    <CallFlow #scope-check { flow = "instant-ctrl-flow://demo.flow.Instant" }>
     <ExternalJob #hold { signalKind = "job.completed" signalKey = "hold" }>
     <Return #done>
   ]>`,
   '/flow/work.types.ts': `export interface DemoWorkInput { requestId?: string }
 export interface DemoWorkOutput { status: 'Completed' }`,
-  '/flow/biz/manifest.xnl': `<BizProcess #demo.flow.Biz apiVersion="depa.flows/v1" version="1" (
+  '/flow/biz/manifest.xnl': `<BPCtrlFlow #demo.flow.Biz apiVersion="depa.flows/v1" version="1" (
     <FlowContract #demo.flow.Biz {
       input = "vfs://./biz.types.ts#DemoBizInput"
       output = "vfs://./biz.types.ts#DemoBizOutput"
     }>
   ) [
-    <CallFlow #scope-check { flow = "instant-flow://demo.flow.Instant" }>
+    <CallFlow #scope-check { flow = "instant-ctrl-flow://demo.flow.Instant" }>
     <TaskStep #review-step { task = "task-space://#review" }>
     <Return #done>
   ]>`,
@@ -121,15 +121,15 @@ export interface DemoBizOutput { status: 'Completed' }`,
 };
 
 describe('Halfcode AppRuntime Flow handles', () => {
-  it('executes InstantFlow and EagerDataFlow handles with the bound runtime', async () => {
+  it('executes InstantCtrlFlow and EagerDataFlow handles with the bound runtime', async () => {
     const { flowExecutions, runtime } = await createRuntime();
-    const instant = runtime.resolveFlow('demo.flow.Instant') as InstantFlowHandle;
+    const instant = runtime.resolveFlow('demo.flow.Instant') as InstantCtrlFlowHandle;
     const eager = runtime.resolveFlow('demo.flow.Eager') as EagerDataFlowHandle;
 
     expect(Object.keys(runtime.flows).sort()).toEqual([
       'demo.flow.Biz', 'demo.flow.Eager', 'demo.flow.Instant', 'demo.flow.Work',
     ]);
-    expect([instant.kind, eager.kind]).toEqual(['instant-flow', 'eager-data-flow']);
+    expect([instant.kind, eager.kind]).toEqual(['instant-ctrl-flow', 'eager-data-flow']);
     expect(instant.spec.flowContract).toEqual({
       id: 'demo.flow.Instant',
       input: 'vfs://./instant.types.ts#DemoInstantInput',
@@ -140,7 +140,7 @@ describe('Halfcode AppRuntime Flow handles', () => {
     const scopedInstant = runtime.resolveFlow('demo.flow.Instant', {
       unitFqn: 'demo.flow.Page',
       scopeId: 'page-scope',
-    }) as InstantFlowHandle;
+    }) as InstantCtrlFlowHandle;
     const scopedEager = runtime.resolveFlow('demo.flow.Eager', {
       unitFqn: 'demo.flow.Page',
       scopeId: 'page-scope',
@@ -158,16 +158,16 @@ describe('Halfcode AppRuntime Flow handles', () => {
 
   it('constructs lifecycle handles with injected stores, clock and task operations', async () => {
     const { flowExecutions, runtime } = await createRuntime();
-    const work = runtime.resolveFlow('demo.flow.Work') as WorkFlowHandle;
-    const biz = runtime.resolveFlow('demo.flow.Biz') as BizProcessHandle;
+    const work = runtime.resolveFlow('demo.flow.Work') as WorkCtrlFlowHandle;
+    const biz = runtime.resolveFlow('demo.flow.Biz') as BPCtrlFlowHandle;
     const scopedWork = runtime.resolveFlow('demo.flow.Work', {
       unitFqn: 'demo.flow.Page',
       scopeId: 'page-scope',
-    }) as WorkFlowHandle;
+    }) as WorkCtrlFlowHandle;
     const scopedBiz = runtime.resolveFlow('demo.flow.Biz', {
       unitFqn: 'demo.flow.Page',
       scopeId: 'page-scope',
-    }) as BizProcessHandle;
+    }) as BPCtrlFlowHandle;
 
     expect(work.spec.flowContract).toEqual({
       id: 'demo.flow.Work',
@@ -258,12 +258,12 @@ async function createRuntime() {
         }
         throw new Error(`Unexpected flow code ref: ${request.reference}`);
       },
-      resolveWorkFlowDependencies: () => ({
-        store: new MemoryWorkFlowStore(),
+      resolveWorkCtrlFlowDependencies: () => ({
+        store: new MemoryWorkCtrlFlowStore(),
         clock: { now: () => 1234 },
       }),
-      resolveBizProcessDependencies: () => ({
-        store: new MemoryWorkFlowStore(),
+      resolveBPCtrlFlowDependencies: () => ({
+        store: new MemoryWorkCtrlFlowStore(),
         taskStore: new MemoryTaskSpaceStore(),
         tasks: { applyOperation, findNode, findTask, isOperable, listTasks, terminalStatusOf },
         clock: { now: () => 1234 },

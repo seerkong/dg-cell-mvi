@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_RUNTIME_CONFIG_RESOLUTION_FAILED,
   HALFCODE_RUNTIME_DSL_UNSUPPORTED,
   HALFCODE_RUNTIME_EXECUTION_FAILED,
@@ -119,6 +120,7 @@ describe('runtime diagnostics', () => {
   it('exports runtime diagnostic codes with error severity', () => {
     expect(HALFCODE_UNIT_DIAGNOSTIC_CODES).toEqual(
       expect.arrayContaining([
+        HALFCODE_DOCUMENT_DSL_INVALID,
         HALFCODE_RUNTIME_SOURCE_AMBIGUOUS,
         HALFCODE_RUNTIME_PROTOCOL_MISMATCH,
         HALFCODE_RUNTIME_SCOPE_BINDING_FAILED,
@@ -127,6 +129,7 @@ describe('runtime diagnostics', () => {
         HALFCODE_RUNTIME_DSL_UNSUPPORTED,
       ]),
     );
+    expect(HALFCODE_UNIT_DIAGNOSTIC_SEVERITY[HALFCODE_DOCUMENT_DSL_INVALID]).toBe('error');
     expect(HALFCODE_UNIT_DIAGNOSTIC_SEVERITY[HALFCODE_RUNTIME_PROTOCOL_MISMATCH]).toBe('error');
     expect(HALFCODE_UNIT_DIAGNOSTIC_SEVERITY[HALFCODE_RUNTIME_SCOPE_BINDING_FAILED]).toBe('error');
     expect(HALFCODE_UNIT_DIAGNOSTIC_SEVERITY[HALFCODE_RUNTIME_EXECUTION_FAILED]).toBe('error');

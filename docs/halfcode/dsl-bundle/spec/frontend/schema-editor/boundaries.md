@@ -173,4 +173,4 @@ falling back to JSON, code, or textarea editing.
 
 ## Domain Neutrality
 
-The base contracts/compiler contain no XNL, Flow, BizProcess, or WorkFlow special case. Support lowering contains only canonical Halfcode shell source generation. Domain names and XNL mutation may appear only in a consumer-owned adapter such as the Workbench G4 capsule, never in the reusable Schema Editor base.
+The base contracts/compiler contain no XNL, Flow, BPCtrlFlow, or WorkCtrlFlow special case. Support lowering contains only canonical Halfcode shell source generation. Domain names and XNL mutation may appear only in a consumer-owned adapter such as the Workbench G4 capsule, never in the reusable Schema Editor base.

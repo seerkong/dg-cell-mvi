@@ -1,0 +1,55 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/rich-document-model">
+    <requirement id="rich-document-model">
+      <statement>The system SHALL define a serializable renderer-neutral RichDocument model and pure lower/parse logic over neutral Projection/Authoring data for supported blocks, marks, tables, code, Mermaid and Halfcode embeds; only support SHALL adapt concrete xnl-core XnlNode to or from neutral data and materialize final candidates, and normal authoring SHALL transform Domain XNL to RichDocument to Tiptap JSON without HTML or DOM as an intermediate fact.</statement>
+      <suite id="rich-document" name="RichDocument lowering">
+        <case id="supported-structure"><given>A valid RichDocument XNL source with stable block #id values.</given><when>The pure dialect lowers and parses it.</when><then>Supported semantic structure, order, marks and block identity SHALL be preserved under canonical normalization.</then></case>
+        <case id="unsupported-fail-closed"><given>The source contains an unsupported or lossy construct.</given><when>The dialect lowers or parses it.</when><then>The result SHALL contain actionable diagnostics and SHALL NOT silently fall back to HTML, raw JSON or plain text.</then></case>
+        <case id="identity-not-payload"><given>A stable block moves while retaining #id.</given><when>The accepted candidate is diffed.</when><then>#id SHALL align the tree and identify the move and SHALL NOT be emitted as an ordinary field update.</then></case>
+        <case id="concrete-xnl-adapter-owner"><given>Concrete xnl-core XnlNode input is lowered or a final candidate is materialized.</given><when>The package boundary is inspected.</when><then>Only support SHALL import xnl-core or xnl-vfs and SHALL reuse the existing parser and mutation engine; contract and logic SHALL operate on neutral data and SHALL introduce no parallel AST, parser or mutation engine.</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/tiptap-adapter">
+    <requirement id="tiptap-adapter">
+      <statement>The dedicated dg-cell-mvi-halfcode-tiptap-vue capsule SHALL project RichDocument to Tiptap/ProseMirror and normalize editor transactions into revision-free serializable XnlProjectionPresenterEditIntent data; a trusted host SHALL translate the Interaction and construct XnlAuthoringProposal with the current live revision, while ProseMirror state, selection, composition and history SHALL remain local projection state and SHALL NOT write Domain XNL or persistence directly.</statement>
+      <suite id="adapter" name="Tiptap adapter">
+        <case id="transaction-proposal"><given>A Tiptap transaction changes supported document content.</given><when>The adapter normalizes the transaction.</when><then>It SHALL emit only the revision-free kind="interaction" variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then></case>
+        <case id="trusted-host-proposal"><given>A trusted host receives a valid Interaction edit intent.</given><when>It translates the Interaction for the current projection and prepares authoring.</when><then>The host SHALL call translateXnlProjectionInteraction exactly once, then read the submission-time live revision and construct XnlAuthoringProposal; the adapter and NodeView SHALL neither receive nor call authoring submit.</then></case>
+        <case id="ime-history"><given>Composition, selection and undo/redo transactions occur.</given><when>The adapter groups and publishes edits.</when><then>IME SHALL publish only after the configured semantic boundary and undo/redo SHALL create proposals rather than mutate accepted XNL directly.</then></case>
+        <case id="non-document-transaction-silent"><given>A transaction changes only selection or metadata, or is an intermediate composition transaction without a document change.</given><when>The adapter observes it.</when><then>It SHALL emit no edit intent and SHALL NOT invoke the trusted bridge; selection or history metadata MAY accompany a genuine document-changing Interaction only as serializable provenance.</then></case>
+        <case id="dependency-isolation"><given>The Halfcode Document Presenter dependency slice is inspected.</given><when>Contract, logic, support, the existing Halfcode Vue renderer and the new adapter are scanned.</when><then>Within that slice, Tiptap, ProseMirror and NodeView dependencies SHALL exist only in the dedicated adapter; Vue MAY exist in the existing Vue renderer and new adapter, while contract, logic and support SHALL remain free of Vue, Tiptap, ProseMirror and DOM. The existing admin-element-plus HTML-first editor is a legacy baseline outside this slice, and this track SHALL add no Tiptap dependency to any other package.</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/halfcode-nodeview-host">
+    <requirement id="halfcode-nodeview-host">
+      <statement>A Halfcode Component or Capsule NodeView SHALL receive only the exact readonly view proven by XnlProjectionPresenterRuntimeFacet, immutable occurrence snapshot, DocumentInstanceRef and an emitEditIntent grant restricted to XnlProjectionPresenterEditIntent; the host adapter SHALL retain registry owner tokens and cleanup authority, and embedded code SHALL NOT possess raw Scope runtime, Domain AST, ValueHost, translator, authoring session, VFS/VCS or mutation writer authority.</statement>
+      <suite id="nodeview" name="Restricted NodeView host">
+        <case id="mount-update-unmount"><given>An embedded Halfcode occurrence has a stable namespaced x-id.</given><when>The NodeView host mounts, updates and unmounts it.</when><then>The runtime registry SHALL use a host-private owner-token lifecycle, preserve occurrence address and prevent stale cleanup from removing a replacement mount; embedded code SHALL never receive the token or unregister capability.</then></case>
+        <case id="authority-containment"><given>A NodeView adapter is constructed from a Scope containing extra capabilities.</given><when>The embedded component renders or requests an edit.</when><then>Only explicitly granted facade data/functions SHALL be visible and every edit SHALL leave as serializable proposal data.</then></case>
+        <case id="duplicate-address"><given>Two active embedded occurrences claim the same x-id in one Document occurrence.</given><when>They register.</when><then>The second registration SHALL fail with a structured diagnostic and SHALL NOT use last-wins or DOM lookup.</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/persistent-identity-allocation">
+    <requirement id="persistent-identity-allocation">
+      <statement>Persistent Domain #id allocation for new or copied RichDocument nodes SHALL be owned by a host/authoring identity allocator during candidate construction; move SHALL preserve #id, replacement SHALL be delete-and-add, and occurrence x-id SHALL be derived only after persistent identity exists.</statement>
+      <suite id="identity-allocation" name="Persistent and occurrence identity">
+        <case id="insert-fresh-id"><given>A Tiptap transaction inserts a new persistent document node.</given><when>The trusted host materializes the authoring candidate.</when><then>The host-owned allocator SHALL assign a fresh #id before occurrence x-id is derived.</then></case>
+        <case id="copy-and-move"><given>An existing subtree is copied or moved across parents.</given><when>The candidate is materialized and diffed.</when><then>Every copied persistent node SHALL receive a fresh #id, while every moved node SHALL retain its original #id and be recognized as a move.</then></case>
+        <case id="replacement-and-roles"><given>A node identity is replaced or one persistent node is projected in multiple roles.</given><when>The accepted candidate is projected.</when><then>Identity replacement SHALL be delete-and-add, and each role SHALL derive a distinct namespaced x-id from the same persistent #id.</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/bidirectional-laws">
+    <requirement id="bidirectional-laws">
+      <statement>Supported RichDocument fixtures SHALL satisfy canonical GetPut, and an accepted Tiptap Interaction SHALL satisfy PutGet through the existing accepted-first authoring session; stale, rejected or lossy pre-acceptance edits SHALL advance neither truth, while post-acceptance persistence failure SHALL retain advanced live truth, leave persisted truth unchanged and enter dirty-failed.</statement>
+      <suite id="laws" name="Projection laws">
+        <case id="getput"><given>A supported canonical Domain XNL document.</given><when>It is lowered, projected, parsed and normalized without an edit.</when><then>The result SHALL equal the normalized input and SHALL preserve stable block identity.</then></case>
+        <case id="putget"><given>A supported Tiptap edit proposal is accepted by the authoring owner.</given><when>The persisted XNL is reloaded and reprojected.</when><then>The visible semantic edit SHALL match the proposal and the adapter local draft SHALL not become a second truth.</then></case>
+        <case id="failure-no-promotion"><given>An edit is stale, invalid or lossy before acceptance, or persistence fails after acceptance.</given><when>The pipeline evaluates it.</when><then>Pre-acceptance failure SHALL advance neither live nor persisted revision; post-acceptance persistence failure SHALL keep the advanced accepted live revision and reproject it, keep persisted revision unchanged, enter dirty-failed, and reject further edits until retry or explicit reload.</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

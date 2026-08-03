@@ -7,11 +7,72 @@ import {
   type AdminShellPlanV3,
   type MessageDispatchPlan,
   type ScopeRuntimePlan,
+  type UnitCompileDocumentProjection,
   type UnitCompileInput,
   type UnitCompileResult,
   type UnitRenderPlan,
   type WiringPlan,
 } from '../src';
+
+type Equal<Left, Right> =
+  (<T>() => T extends Left ? 1 : 2) extends
+  (<T>() => T extends Right ? 1 : 2)
+    ? true
+    : false;
+type Expect<T extends true> = T;
+type HasKey<T, Key extends PropertyKey> = Key extends keyof T ? true : false;
+
+type DocumentProjectionRejectsDefinitionSource = Expect<
+  Equal<HasKey<UnitCompileDocumentProjection, 'definitionSource'>, false>
+>;
+type DocumentProjectionRejectsRawSource = Expect<
+  Equal<HasKey<UnitCompileDocumentProjection, 'rawSource'>, false>
+>;
+type DocumentProjectionRejectsXnlDocument = Expect<
+  Equal<HasKey<UnitCompileDocumentProjection, 'xnlDocument'>, false>
+>;
+
+interface LoadedDocumentProjectionSuperset extends UnitCompileDocumentProjection {
+  readonly definitionSource: {
+    readonly path: string;
+    readonly text: string;
+    readonly xnlDocument: unknown;
+  };
+  readonly rawSource: {
+    readonly path: string;
+    readonly text: string;
+    readonly xnlDocument: unknown;
+  };
+}
+
+const loaderDocumentProjection: LoadedDocumentProjectionSuperset = {
+  sourceDescriptor: {
+    kind: 'inline',
+    unitSourceRef: asHalfcodeRef('vfs://@/documents/system-design.xnl'),
+    region: 'body',
+  },
+  definitionSource: {
+    path: '/documents/system-design.xnl',
+    text: '<Document #dg.docs.SystemDesign>',
+    xnlDocument: { nodes: [] },
+  },
+  rawSource: {
+    path: '/documents/system-design.xnl',
+    text: '<Document #dg.docs.SystemDesign>',
+    xnlDocument: { nodes: [] },
+  },
+  rootNodeId: 'dg.docs.SystemDesign',
+  skeleton: [],
+};
+const compileDocumentProjection: UnitCompileDocumentProjection = loaderDocumentProjection;
+type DocumentProjectionAssertions = [
+  DocumentProjectionRejectsDefinitionSource,
+  DocumentProjectionRejectsRawSource,
+  DocumentProjectionRejectsXnlDocument,
+];
+
+void [compileDocumentProjection];
+void (undefined as unknown as DocumentProjectionAssertions);
 
 describe('v3 unit compile plans (P1 boundary)', () => {
   it('plan and input types round-trip through JSON (fully serializable)', () => {
@@ -143,6 +204,7 @@ describe('v3 unit compile plans (P1 boundary)', () => {
     const result: UnitCompileResult = {
       adminShellPlan,
       renderPlans: [renderPlan],
+      documentPlans: [],
       wiringPlan,
       scopeRuntimePlans,
       messageDispatchPlan,

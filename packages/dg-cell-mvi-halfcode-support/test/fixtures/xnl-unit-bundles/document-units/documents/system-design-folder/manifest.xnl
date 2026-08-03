@@ -1,0 +1,15 @@
+<Document #dg.docs.demo.SystemDesignFolder version="1.0.0" (
+  <DocumentContract {
+    mode = "view"
+    source = "xnl-source-ref"
+  }>
+  <DocumentSource {
+    ref = "vfs://../domain/system-design.xnl"
+  }>
+  <Scope #document-folder-root {
+    runtime = "runtime-instance://#document-runtime"
+  }>
+  <DocumentPresentation {
+    id = "system-design-folder"
+  }>
+)>

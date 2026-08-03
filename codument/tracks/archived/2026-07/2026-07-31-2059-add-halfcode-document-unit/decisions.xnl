@@ -1,0 +1,156 @@
+<decisions #add-halfcode-document-unit [
+  <decision #document-unit-position {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Document 应复用 Page/Component 还是成为独立具名 Unit？</?>
+    <options [
+      <option {
+        key = "independent-document-unit"
+        recommended = true
+      } (
+        <title ?>独立 Document Unit</?>
+        <description ?>复用 Capsule/Scope 能力，但保持 source/revision/mode/parameters contract。</?>
+        <tradeoff ?>需要扩展 Unit union、loader 与 compiler，但不会泄漏 URL 或 props 语义。</?>
+      )>
+      <option {
+        key = "page-or-component-alias"
+      } (
+        <title ?>Page/Component 别名</?>
+        <description ?>用既有 Unit 快速承载文档。</?>
+        <tradeoff ?>会错误继承 URL 或 props/slots contract，并模糊产品边界。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Mission 与用户讨论已确认 Capsule 公理和 Document 同级概念。</?>
+      <decision-text ?>采用独立具名 Document Unit；Capsule 保持 inline-only。</?>
+      <rationale ?>Document 的公共边界与 Page/Component 正交，不能通过别名安全表达。</?>
+      <evidence ?>现有 v3 Unit contracts 与 Mission design。</?>
+    )>
+  )>
+
+  <decision #document-instance-address {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Document 中运行实例怎样形成稳定目标引用？</?>
+    <options [
+      <option {
+        key = "unit-instance-uri"
+        recommended = true
+      } (
+        <title ?>Runtime registry URI</?>
+        <description ?>使用 unit-instance://unit/role/x-id，由每个 Document Unit instance registry 解析。</?>
+        <tradeoff ?>需要显式 namespace 与生命周期管理，但与 DOM 分离且可跨 Presenter。</?>
+      )>
+      <option {
+        key = "dom-selector"
+      } (
+        <title ?>DOM selector</?>
+        <description ?>通过 data-x-id/querySelector 查找目标。</?>
+        <tradeoff ?>把单次 render 结构误当权威地址，无法支持非 DOM Presenter 与稳定生命周期。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>用户要求 x-id 继续服务自定义区块指令，同时遵循 Runtime/Scope 装配。</?>
+      <decision-text ?>冻结 unit-instance 三段 URI，使用 per-unit-instance registry，禁止 DOM 寻址。</?>
+      <rationale ?>实例地址属于 Runtime actor；DOM 只应保存可回溯映射。</?>
+      <evidence ?>Mission identity model 与 Runtime object design。</?>
+    )>
+  )>
+
+  <decision #xnl-id-semantics {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>XNL #id 与 x-id 是否可以合并为同一身份？</?>
+    <options [
+      <option {
+        key = "separate-domain-and-instance-identities"
+        recommended = true
+      } (
+        <title ?>身份分离</?>
+        <description ?>#id 参与 tree 对齐/move；x-id 参与运行实例路由，允许单 role 默认映射。</?>
+        <tradeoff ?>需要两个 validator 与测试集合，但不会混淆持久事实和挂载实例。</?>
+      )>
+      <option {
+        key = "single-id"
+      } (
+        <title ?>单一 id</?>
+        <description ?>所有场景共用一个标识。</?>
+        <tradeoff ?>多 role、多实例与复制/移动会产生冲突，runtime 生命周期也会污染领域事实。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>用户明确纠正：xnl diff 依赖 #id 对齐和识别 move，#id 不是普通 payload 比较字段。</?>
+      <decision-text ?>保持双身份；#id 用于领域树身份，x-id 用于运行实例地址。</?>
+      <rationale ?>两者生命周期和 authority 不同，只允许受控默认映射，不允许概念合并。</?>
+      <evidence ?>xnl-core diff/mutation 语义与 Mission §6。</?>
+    )>
+  )>
+
+  <decision #document-source-and-occurrence {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Document 定义与一次实际打开怎样分离？</?>
+    <options [
+      <option {
+        key = "definition-plus-open-context"
+        recommended = true
+      } (
+        <title ?>定义与 occurrence 分离</?>
+        <description ?>Document 定义保存 contract/default source；DocumentOpenContext 提供 unitInstanceId、实际 source/revision/mode/parameters。</?>
+        <tradeoff ?>需要实例级 runtime assembly，但同一 FQN 多开可以隔离 Scope 与地址空间。</?>
+      )>
+      <option {
+        key = "fqn-singleton"
+      } (
+        <title ?>FQN 单例</?>
+        <description ?>每个 Document FQN 只装配一份 runtime。</?>
+        <tradeoff ?>多个窗口或嵌入 occurrence 会共享 state、Scope 和 x-id，无法正确建模。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>代码审阅确认现有 app runtime 按 FQN 装配，无法满足 Document 多实例。</?>
+      <decision-text ?>增加 DocumentOpenContext 和 occurrence-level runtime assembly；FQN 只定位定义。</?>
+      <rationale ?>Document 实例是运行时 actor namespace，必须与静态 Unit identity 分离。</?>
+      <evidence ?>halfcodeAppRuntime 当前 FQN map 与 Mission instance identity 模型。</?>
+    )>
+  )>
+
+  <decision #runtime-target-scheme-owner {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>unit-instance 与 Presentation identity 是否进入静态 domain scheme table？</?>
+    <options [
+      <option {
+        key = "separate-runtime-target"
+        recommended = true
+      } (
+        <title ?>静态定义与运行目标分离</?>
+        <description ?>document:// 由 Unit registry 解析；unit-instance:// 由 runtime registry 解析；Presentation 使用 runtime-owned stable id。</?>
+        <tradeoff ?>需要专用 resolver，但不会让静态 loader 误解析运行时地址或创造无 owner 的 domain。</?>
+      )>
+      <option {
+        key = "all-in-domain-table"
+      } (
+        <title ?>全部进入 domain scheme table</?>
+        <description ?>所有 URI 都交给当前 loader resolver。</?>
+        <tradeoff ?>runtime target 和未定义 Presentation domain 会被错误当成静态文件/registry 引用。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>fresh AttractorCheck 发现静态 domain resolver 与 runtime target owner 混合。</?>
+      <decision-text ?>只把 document definition scheme 放入 Unit registry；unit-instance 使用专用 runtime resolver，Presentation 暂用 stable id。</?>
+      <rationale ?>定位协议必须跟随事实 owner，不能因为都长得像 URI 就交给同一 resolver。</?>
+      <evidence ?>HALFCODE_SCHEME_TABLE 与 xnlUnitBundle 静态 ref resolution 实现。</?>
+    )>
+  )>
+]>

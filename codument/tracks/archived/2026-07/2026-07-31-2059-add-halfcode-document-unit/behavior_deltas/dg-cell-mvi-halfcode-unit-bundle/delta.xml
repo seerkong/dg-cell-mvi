@@ -1,0 +1,46 @@
+<behavior-patch capability="dg-cell-mvi-halfcode-unit-bundle" version="1">
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-bundle/requirements/unit-registry-loading">
+    <requirement id="unit-registry-loading">
+      <statement>v3 bundle loader SHALL 从 bundle.xnl 的 Units 注册加载 page/component/document 单元，并通过适配器加载四类 Flow 单元：frontend src 指向规范 XNL source，loader SHALL 交叉校验根 kind/FQN、加载注册 domain，并建立 FQN registry；单文件区段映射唯一来源为 contract 层 HALFCODE_SCHEME_TABLE。</statement>
+      <suite id="unit-loading" name="单元加载">
+        <case id="folder-unit">
+          <given>Units 注册 src 指向目录内的 frontend manifest/source，并注册同目录 domain 文件</given>
+          <when>loader 加载 bundle</when>
+          <then>该单元 SHALL 以根 #FQN 注册，其显式注册 domain 全部加载，缺省 domain 视为空</then>
+        </case>
+        <case id="single-file-unit">
+          <given>Units 注册 src 指向 Page、Component 或 Document 单文件</given>
+          <when>loader 加载 bundle</when>
+          <then>唯一子域 SHALL 按规范解析；Page/Component body 映射为 elements，Document body SHALL 保持有序 Domain XNL source</then>
+        </case>
+        <case id="fqn-conflict">
+          <given>两个单元声明相同 FQN</given>
+          <when>loader 建 FQN registry</when>
+          <then>SHALL 产出 HALFCODE_UNIT_FQN_CONFLICT 诊断，不静默覆盖</then>
+        </case>
+        <case id="kind-mismatch">
+          <given>Units 条目 kind 与目标根节点 kind 不一致</given>
+          <when>loader 加载该单元</when>
+          <then>SHALL 产出 HALFCODE_UNIT_KIND_MISMATCH 诊断</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-bundle/requirements/document-source-loading">
+    <requirement id="document-source-loading">
+      <statement>Document loader SHALL 支持互斥的根 [] 内联 source 与唯一 DocumentSource.ref 外部 source，保留原始 XNL 的全部节点家族、文本、注释和顺序，解析唯一的 DocumentContract、DocumentSource、Scope 和 DocumentPresentation，并只抽取显式 Halfcode Component/Capsule/Document embed 与 addressable skeleton；未知领域 tag MUST NOT 被自动解释为 UI atom，x-id MUST NOT 落入 inline props。</statement>
+      <suite id="document-loading" name="Document 加载">
+        <case id="preserve-source">
+          <given>Document 包含文本、领域节点、Component 与 Capsule</given>
+          <when>loader 加载</when>
+          <then>loaded unit SHALL 保留完整原始 XNL source，并返回独立的装配 skeleton，不产生 HTML/DOM/Tiptap 中间事实</then>
+        </case>
+        <case id="unique-subdomains">
+          <given>Document 重复声明 Contract、Source、Scope 或 Presentation 子域，或者同时声明内联正文与外部 Source</given>
+          <when>loader 加载</when>
+          <then>SHALL 产生结构化 error diagnostic，不选择最后一项</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

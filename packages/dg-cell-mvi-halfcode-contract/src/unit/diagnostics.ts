@@ -11,6 +11,8 @@ export const HALFCODE_UNIT_FQN_CONFLICT = 'HALFCODE_UNIT_FQN_CONFLICT';
 export const HALFCODE_UNIT_NOT_FOUND = 'HALFCODE_UNIT_NOT_FOUND';
 /** Unit used in an illegal position (e.g. Route.page resolving to a component). */
 export const HALFCODE_UNIT_KIND_MISMATCH = 'HALFCODE_UNIT_KIND_MISMATCH';
+/** Document definition/source/scope/presentation/address structure is invalid. */
+export const HALFCODE_DOCUMENT_DSL_INVALID = 'HALFCODE_DOCUMENT_DSL_INVALID';
 /** Category scheme ref resolved across unit boundaries (unit privacy, D7). */
 export const HALFCODE_REF_PRIVACY_VIOLATION = 'HALFCODE_REF_PRIVACY_VIOLATION';
 /** Scheme ref failed to parse or resolve. */
@@ -47,6 +49,7 @@ export const HALFCODE_UNIT_DIAGNOSTIC_CODES = [
   HALFCODE_UNIT_FQN_CONFLICT,
   HALFCODE_UNIT_NOT_FOUND,
   HALFCODE_UNIT_KIND_MISMATCH,
+  HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_REF_PRIVACY_VIOLATION,
   HALFCODE_REF_UNRESOLVED,
   HALFCODE_ROUTE_URLINPUTS_MISMATCH,
@@ -75,6 +78,7 @@ export const HALFCODE_UNIT_DIAGNOSTIC_SEVERITY: Readonly<
   [HALFCODE_UNIT_FQN_CONFLICT]: 'error',
   [HALFCODE_UNIT_NOT_FOUND]: 'error',
   [HALFCODE_UNIT_KIND_MISMATCH]: 'error',
+  [HALFCODE_DOCUMENT_DSL_INVALID]: 'error',
   [HALFCODE_REF_PRIVACY_VIOLATION]: 'error',
   [HALFCODE_REF_UNRESOLVED]: 'error',
   [HALFCODE_ROUTE_URLINPUTS_MISMATCH]: 'error',

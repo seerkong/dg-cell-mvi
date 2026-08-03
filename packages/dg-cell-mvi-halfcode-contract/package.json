@@ -1,26 +1,43 @@
 {
   "name": "dg-cell-mvi-halfcode-contract",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Canonical Halfcode document, artifact, authoring, and unit-runtime contracts.",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./test-fixtures/xnl-rich-document": {
+      "types": "./test-fixtures/xnl-rich-document.ts",
+      "import": "./test-fixtures/xnl-rich-document.ts",
+      "require": "./test-fixtures/xnl-rich-document.ts"
+    }
   },
+  "files": [
+    "src",
+    "test-fixtures"
+  ],
   "dependencies": {
     "eager-data-flow-contract": "workspace:*",
-    "instant-flow-contract": "workspace:*"
+    "instant-ctrl-flow-contract": "workspace:*"
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:xnl-rich-document-fixture": "vitest run test/xnl-rich-document-canonical-fixture.red.test.ts && tsc --noEmit -p typecheck/xnl-rich-document/tsconfig.json",
+    "typecheck:xnl-authoring": "tsc --noEmit -p typecheck/xnl-authoring/tsconfig.json",
+    "typecheck:xnl-rich-document": "tsc --noEmit -p typecheck/xnl-rich-document/tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "xnl-core": "0.1.9"
   }
 }

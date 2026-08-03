@@ -1,0 +1,16 @@
+<Document #dg.docs.demo.SystemDesignView version="1.0.0" (
+  <DocumentContract {
+    mode = "view"
+    source = "xnl-source-ref"
+    revision = "string?"
+  }>
+  <DocumentSource {
+    ref = "vfs://./domain/system-design.xnl"
+  }>
+  <Scope #document-view-root {
+    runtime = "runtime-instance://#document-runtime"
+  }>
+  <DocumentPresentation {
+    id = "system-design-view"
+  }>
+)>

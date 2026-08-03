@@ -1,0 +1,97 @@
+<Track id="fix-rich-document-sequential-semantic-materialization" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 RichDocument package-root authoring chain 对每次最新 accepted baseline 支持连续语义编辑。</Goal>
+    <Description>建立两次连续 edit 红证据，定位 translator/materializer/identity/concrete-XNL owner 并最小修复，以真实 Editor 与 Workbench Chromium 验收。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-08-03T00:36:00+03:00</CreatedAt>
+    <UpdatedAt>2026-08-03T02:29:00+03:00</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="semantic-materializer" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/xnl-rich-document/semanticMaterializer.ts"/>
+    <MaterialBundle role="input" name="trusted-host" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-rich-document/authoringBridge.ts"/>
+    <MaterialBundle role="input" name="tiptap-adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="input" name="workbench-evidence" domain="test" path="vfs://../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/tests/programmable-document-editor.test.ts"/>
+    <MaterialBundle role="output" name="foundation-code" domain="code" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="foundation-tests" domain="test" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_fix-rich-document-sequential-semantic-materialization" name="fix-rich-document-sequential-semantic-materialization" version="1" cdt:child-mode="dag">
+    <Description>先用两条独立链建立 stage-specific 红证据，再修复唯一 owner，最后跨仓库验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Sequential red baseline and stage isolation" status="DONE" order="0">
+        <Description>冻结最新 accepted baseline 上第二笔 edit 的失败，并定位第一个不一致 processor。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="建立 direct trusted-host sequential red" status="DONE" order="0" priority="P0">
+            <Description>用 foundation canonical fixture 执行 project/normalize/host accept/reproject 后第二次 edit，固定当前失败。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测证明第一笔 accepted、第二笔从最新 accepted baseline 构造且只因 foundation sequence gap 失败</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试不依赖 Workbench UI、HTML/DOM、transaction replay、document.replace 或 test-local materializer substitute</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="定位 translation materialization identity 或 concrete XNL stage" status="DONE" order="1" priority="P0">
+            <Description>逐边界记录第二笔 command/candidate/allocation/concrete candidate，确定第一个 invalid output 和 owner。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">证据精确指向一个 owner stage，不以最终 generic rejection 猜测根因</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">stale before facts 与真正 sequential-valid facts 被独立区分，现有 fail-closed 行为保持绿色</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Owner-side correction" status="DONE" order="1">
+        <Description>只在 P1 证明的 owner 修复最新 accepted baseline 处理，并补真实 Editor sequence。</Description>
+        <cdt:Gate><cdt:Criterion>P1 已定位第一个失败 stage，红测失败原因只指向该 owner</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="修复 sequential accepted baseline handling" status="DONE" order="0" priority="P0">
+            <Description>最小修复 owner processor，不放松 stale/identity 校验，不新增 authority。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Direct text-text 与 text-mark/structural sequence 均基于最新 accepted document 通过</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">stale/malformed second command 原子拒绝，stable/new/copy/replacement identity 规律不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="验证 real EditorState-bound two-transaction chain" status="DONE" order="1" priority="P0">
+            <Description>真实 package-root Editor bind、transaction、accepted reproject、第二 transaction，各发布一次 revision-free Interaction。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">两笔交易各 Effect exactly once，accepted feedback 后 schema/selection/plugin lineage 可继续</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">无 Editor/DOM/NodeView/session/revision/VFS/writer authority 或第二写入者</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="统一 transaction inline mark canonical order" status="DONE" order="2" priority="P0">
+            <Description>让 ProseMirror schema-rank marks 在 semantic before/after snapshots 中转换为 RichDocument canonical mark order，保持 exact-before 与 duplicate-mark fail-closed。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">带多重 marks 的 accepted RichDocument 在后一笔 text edit 中产生 canonical-order beforeInlineRuns 并可连续接受</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">projection/parse/normalizer 共用同一 RichDocument mark order，mark attrs 与 unsupported/duplicate diagnostics 不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Cross-repository verification" status="DONE" order="2">
+        <Description>运行 foundation full gates 与 Workbench focused/build/Chromium，独立验收并收口。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="运行 full tests typecheck smoke 与 Workbench E2E" status="DONE" order="0" priority="P0">
+            <Description>验证相关 foundation packages、public smoke、Workbench unit/typecheck/build/desktop+narrow Chromium。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Foundation full/typecheck/smoke 与 Workbench focused/typecheck/build/Chromium 全绿</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Strict validate 与 fresh independent verify PASS</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_fix-rich-document-sequential-semantic-materialization">
+      <Node id="P2"><After ref="P1"/></Node>
+      <Node id="P3"><After ref="P2"/></Node>
+    </Dag>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

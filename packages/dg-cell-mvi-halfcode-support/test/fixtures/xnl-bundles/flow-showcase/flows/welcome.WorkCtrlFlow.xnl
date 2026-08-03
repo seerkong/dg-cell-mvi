@@ -1,0 +1,15 @@
+<WorkCtrlFlow #dg.demo.flow.WelcomeWork apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.WelcomeWork {
+    input = "vfs://./flow-code/welcome.contracts.ts#WelcomeWorkInput"
+    output = "vfs://./flow-code/welcome.contracts.ts#WelcomeWorkOutput"
+  }>
+  <FlowAuthoring #dg.demo.flow.WelcomeWork { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #prepare { x = 80 y = 100 }>
+    <NodeLayout #pause { x = 360 y = 100 }>
+    <NodeLayout #done { x = 640 y = 100 }>
+  ]>
+) [
+  <Run #prepare { src = "vfs://./flow-code/welcome.work.ts#prepare" }>
+  <Timer #pause { durationMs = 1000 }>
+  <Return #done>
+]>

@@ -1,10 +1,10 @@
 <AppBundle #dg.demo.flow.Showcase apiVersion="halfcode.dg-cell-mvi/v1" version="0.1.0" (
   <Units [
-    <Unit kind="instant-flow" fqn="dg.demo.flow.WelcomeCtrl" src="vfs://./flows/welcome.InstantFlow.xnl">
+    <Unit kind="instant-ctrl-flow" fqn="dg.demo.flow.WelcomeCtrl" src="vfs://./flows/welcome.InstantCtrlFlow.xnl">
     <Unit kind="eager-data-flow" fqn="dg.demo.flow.WelcomeData" src="vfs://./flows/welcome.EagerDataFlow.xnl">
-    <Unit kind="instant-flow" fqn="dg.demo.flow.ComplexCtrl" src="vfs://./flows/complex-ctrl/manifest.xnl">
-    <Unit kind="work-flow" fqn="dg.demo.flow.WelcomeWork" src="vfs://./flows/welcome.WorkFlow.xnl">
-    <Unit kind="biz-process" fqn="dg.demo.flow.WelcomeBiz" src="vfs://./flows/welcome.BizProcess.xnl">
+    <Unit kind="instant-ctrl-flow" fqn="dg.demo.flow.ComplexCtrl" src="vfs://./flows/complex-ctrl/manifest.xnl">
+    <Unit kind="work-ctrl-flow" fqn="dg.demo.flow.WelcomeWork" src="vfs://./flows/welcome.WorkCtrlFlow.xnl">
+    <Unit kind="bp-ctrl-flow" fqn="dg.demo.flow.WelcomeBiz" src="vfs://./flows/welcome.BPCtrlFlow.xnl">
     <Unit kind="eager-data-flow" fqn="dg.demo.flow.TransformMain" src="vfs://./flows/transform-main/manifest.xnl">
     <Unit kind="eager-data-flow" fqn="dg.demo.flow.TransformSub" src="vfs://./flows/transform-sub/manifest.xnl">
   ]>

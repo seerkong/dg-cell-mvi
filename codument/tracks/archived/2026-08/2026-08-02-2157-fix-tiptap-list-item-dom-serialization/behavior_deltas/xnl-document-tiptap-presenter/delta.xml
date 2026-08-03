@@ -1,0 +1,25 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/canonical-list-browser-serialization">
+    <requirement id="canonical-list-browser-serialization">
+      <statement>The dedicated Tiptap adapter SHALL provide a canonical browser DOM serializer for listItem while preserving the RichDocument block+ content contract, stable node identity and revision-free transaction authoring; this view serializer SHALL NOT become HTML or DOM reverse-authoring authority.</statement>
+      <suite id="list-browser-view" name="Canonical list browser view">
+        <case id="real-editor-list-rendering">
+          <given>A package-root real Tiptap Editor receives canonical bullet and ordered lists.</given>
+          <when>The browser view mounts their listItem nodes.</when>
+          <then>The adapter SHALL render ul, ol and li elements without a missing toDOM failure and SHALL preserve list order and stable nodeId attributes.</then>
+        </case>
+        <case id="block-plus-grammar">
+          <given>A canonical listItem begins with a supported block such as blockquote rather than paragraph.</given>
+          <when>The schema validates and the real browser Editor renders it.</when>
+          <then>The listItem SHALL remain valid under content block+ and SHALL render through the same canonical serializer.</then>
+        </case>
+        <case id="no-reverse-authority">
+          <given>The adapter source and boundary tests are inspected.</given>
+          <when>The list serializer is distinguished from authoring inputs.</when>
+          <then>The serializer SHALL only lower a ProseMirror node to a browser output spec and SHALL NOT parse HTML or DOM, inspect page state, write Domain XNL or acquire mutation, VFS, session or persistence authority.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

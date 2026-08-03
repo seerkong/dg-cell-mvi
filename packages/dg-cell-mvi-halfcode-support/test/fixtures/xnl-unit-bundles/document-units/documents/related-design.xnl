@@ -1,0 +1,13 @@
+<Document #dg.docs.demo.RelatedDesign version="1.0.0" (
+  <DocumentContract {
+    mode = "view"
+    source = "xnl-source-ref"
+  }>
+  <DocumentSource {
+    ref = "vfs://./domain/related-design.xnl"
+  }>
+  <Scope #related-design-root>
+  <DocumentPresentation {
+    id = "related-design"
+  }>
+)>

@@ -1,0 +1,293 @@
+<Track id="add-xnl-document-authoring-session" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>建立 runtime-first、revisioned、可持久化恢复的 XNL Document authoring 唯一写入链。</Goal>
+    <Description>组合 Projection Command、XNL candidate/diff/dry-run/validation、ValueHost acceptance、VFS CAS persistence 与 Document Scope capability。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-07-31T18:07:58Z</CreatedAt>
+    <UpdatedAt>2026-08-01T12:38:27Z</UpdatedAt>
+    <GapRound>2</GapRound>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="projection-foundation" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-projection/"/>
+    <MaterialBundle role="input" name="document-runtime" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/unit/document.ts"/>
+    <MaterialBundle role="output" name="authoring-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-authoring/"/>
+    <MaterialBundle role="output" name="authoring-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/xnl-authoring/"/>
+    <MaterialBundle role="output" name="authoring-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-authoring/"/>
+    <MaterialBundle role="output" name="authoring-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/"/>
+    <MaterialBundle role="output" name="authoring-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/authoring/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-xnl-document-authoring-session" name="add-xnl-document-authoring-session" version="1">
+    <Description>以 contracts -> pure pipeline -> owner session -> persistence/Scope -> verification 顺序建立唯一写入链。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Authoring contracts 与红测试" status="DONE" order="0">
+        <Description>冻结事实等级、结果状态、runtime ports 和 serializable/public boundary。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="编写 authoring contract 红测试" status="DONE" order="0" priority="P0">
+            <Description>为 accepted/candidate/proposal/revision/persistence result/runtime ports 建立 runtime 与 type-level 红测试。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">测试拒绝 input/config 中的 function、writer、registry、persistence client 和 any/unknown 泄漏</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试区分 live revision、persisted revision、receipt 及 accepted/unchanged/rejected/conflict/failed 状态</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现 renderer-neutral authoring contracts" status="DONE" order="1" priority="P0">
+            <Description>实现泛型 readonly contracts、validation 和 public exports，不依赖 xnl-core/xnl-vfs/UI。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">contract tests/typecheck 全绿，公开 processors 保持三参数 runtime-first</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">facts 可序列化，runtime capability 与事实数据类型分离</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="封闭 revision authority 与 canonical XNL 泛型兼容" status="DONE" order="2" priority="P0">
+            <Description>修正 P1 AttractorCheck 暴露的 contract 缺口：revision token 保留 session/authority scope，receipt 保留 previous/current evidence 并校验一致；serializable/deep-readonly 泛型无索引签名即可承载递归普通 interface、optional 字段和 canonical XNL AST。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">同 value 的 foreign session live revision 与 foreign authority persisted revision 不能互换；applied receipt previous/current 与 result persisted revision 完全一致</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">真实普通 interface、递归 union、optional field 与 canonical XNL AST shape 无 cast/any/index signature 通过 typecheck；runtime 与静态 explicit undefined 语义一致</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC3" checked="true">focused/full contract tests、typecheck、strict validate 与 diff check 通过，contract/logic 仍无 xnl-core/xnl-vfs 依赖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.4" name="固定 canonical XNL contract typecheck 入口" status="DONE" order="3" priority="P0">
+            <Description>修正父层 spot-check 暴露的测试依赖漂移：用显式 test-only xnl-core 0.1.9 devDependency 和专用 exactOptionalPropertyTypes tsconfig/script 替代指向 support node_modules 的路径映射。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.4-AC1" checked="true">contract package 的专用 authoring typecheck 可从干净依赖图解析 xnl-core 0.1.9，并验证 canonical DataElementNode 与 explicit undefined 负向断言</cdt:Criterion>
+              <cdt:Criterion id="T1.4-AC2" checked="true">contract production dependencies/source 与 logic source 仍无 xnl-core/xnl-vfs，tsconfig 不引用 support 私有 node_modules</cdt:Criterion>
+              <cdt:Criterion id="T1.4-AC3" checked="true">focused/full contract tests、package/proprietary typechecks、strict validate 与 diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.5" name="封闭 conflict revision scope 关联校验" status="DONE" order="4" priority="P0">
+            <Description>修正 P1 第二轮 AttractorCheck：live conflict expected/actual 必须同 sessionId，persistence conflict expected/actual 必须同 authorityId，不能以相同 value 掩盖跨 scope token。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.5-AC1" checked="true">submit conflict validator 拒绝 foreign-session same-value expected/actual revisions</cdt:Criterion>
+              <cdt:Criterion id="T1.5-AC2" checked="true">persistence conflict validator 拒绝 foreign-authority same-value expected/actual revisions</cdt:Criterion>
+              <cdt:Criterion id="T1.5-AC3" checked="true">focused/full tests、package/dedicated typecheck、strict validate 与 diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Candidate 与 mutation pipeline" status="DONE" order="1">
+        <Description>实现不拥有状态的 ordered pipeline 和 xnl-core adapter。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="编写纯 pipeline 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 ordering、stale short-circuit、no-op、dry-run/validation rejection、immutability 与 PutGet 前置。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">测试锁定 materialize -> diff -> dry-run -> validate 顺序及失败不调用后续 capability</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">accepted base、command、candidate、mutation batch 不被 processor 修改</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 pure authoring coordinator" status="DONE" order="1" priority="P0">
+            <Description>在 logic 实现 runtime-first pipeline、diagnostics 和 deterministic affected identity output。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">logic tests 全绿且 logic 不导入 xnl-core/xnl-vfs</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">stale/reject/no-op 不产生可接受 candidate result</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 xnl-core mutation adapter" status="DONE" order="2" priority="P0">
+            <Description>在 support 适配真实 diffNodes/dryRunMutations，强制 metadataIdMode=identity 并补 move/replacement/duplicate identity tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">#id move 对齐且 replacement 为 delete+add，不产生普通 id payload update</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">strict dry-run 拒绝 duplicate/hidden identity replacement，accepted base 不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.4" name="允许合法无 identity XNL 节点" status="DONE" order="3" priority="P0">
+            <Description>修正 P2 AttractorCheck：保留 metadataIdMode=identity、duplicate/replacement/precondition 严格校验，但不要求领域树中每个合法 XNL 元素都携带 identity。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.4-AC1" checked="true">包含无 identity Units/Unit/TextElement 的合法 XNL 可通过空批次与正常 mutation dry-run</cdt:Criterion>
+              <cdt:Criterion id="T2.4-AC2" checked="true">duplicate identity、直接/隐藏 identity replacement、precondition 与 base immutability regressions 继续通过</cdt:Criterion>
+              <cdt:Criterion id="T2.4-AC3" checked="true">focused/full tests、三包 typecheck、strict validate 与 diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Revisioned ValueHost session" status="DONE" order="2">
+        <Description>实现串行 owner actor、accept-first 状态机和 persistence feedback。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="编写 session state-machine 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 concurrent submission、stale base、accept/no-op/reject、accepted immediate invalidation、dirty failure、persistence conflict、retry、expected-revision discard/reload 与 dispose。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">并发同 base 请求最多一个接受，其他返回 stale conflict</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">accepted-live 与 persisted revision 独立可观察；accepted 后立即 invalidation；failed/conflicted 不得表述为 saved；unchanged 不伪造 receipt</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 owner-local authoring session" status="DONE" order="1" priority="P0">
+            <Description>实现 open/getState/subscribe/submit、host-only retry/reloadDiscardingAccepted/dispose 与不可变 snapshot，所有稳定依赖来自 runtime ports。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">session tests 全绿，accept/reject/conflict/failure 状态转换符合 design</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">dirty/conflicted 时新 edit fail-closed；retry 不重跑 command；reload 要求 expected live revision、报告 discarded revision并发布新 accepted invalidation</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2A" name="封闭 session source 与 recovery scope" status="DONE" order="2" priority="P0">
+            <Description>修正父层 spot-check：reload 复用 open source、conflicted 禁止 retry、reload authority 不可漂移，并移除无定义语义的 initialDocument 输入。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2A-AC1" checked="true">open/reload 使用同一 frozen source，optional absence 不传 explicit undefined，foreign reload authority fail-closed</cdt:Criterion>
+              <cdt:Criterion id="T3.2A-AC2" checked="true">persistence-conflicted retry 不调用 publish/persist，必须通过 reload 恢复</cdt:Criterion>
+              <cdt:Criterion id="T3.2A-AC3" checked="true">initialDocument 未定义 surface 被移除，focused/full/typecheck/validate/diff checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="封闭 public authority surface" status="DONE" order="3" priority="P0">
+            <Description>新增专用 typecheck/residue tests，分离 host factory、Scope proposal client 与 host control，防止 callback、writer、raw mutable AST 或 persistence authority 泄漏。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">factory/control 仅 host 可见；edit Scope client 仅含 readonly state/subscribe/submit proposal；view facet 无 submit</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">runtime/config/input 与 package dependency boundary 扫描通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3A" name="强制动态入口 fail-closed 校验" status="DONE" order="4" priority="P0">
+            <Description>修正父层 spot-check：open/submit 必须在调用 persistence、materializer 或发布状态前执行公开事实/config validator；edit Scope proposal port 必须是精确的 state/subscribe/submit capability 形状，不得夹带 control、writer 或 persistence authority。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3A-AC1" checked="true">malformed/authority-bearing open input/config 与 proposal/submit config 在调用任何 runtime capability、发布 evaluating 状态前 fail-closed</cdt:Criterion>
+              <cdt:Criterion id="T3.3A-AC2" checked="true">trusted class/prototype/mixin proposal 实现可保留 private/internal 字段；constructor 只捕获 state/subscribe/submit 到新的 exact frozen Scope facade，公开 validator 仍拒绝 facade 上的额外 capability、getter/accessor 与控制/持久化字段</cdt:Criterion>
+              <cdt:Criterion id="T3.3A-AC3" checked="true">focused/full tests、package/dedicated typecheck、strict validate 与 diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.4" name="封闭异步事实快照与 dispose 边界" status="DONE" order="5" priority="P0">
+            <Description>修正 P3 AttractorCheck：所有动态事实在首次 await/入队前精确校验并深快照；coordinator 对 capability output exhaustive fail-closed；dispose 后不得启动任何后续 effect；Scope/session capability facade 保持精确冻结。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.4-AC1" checked="true">open、submit、retry、reload 的动态 input/config 在首次 await 或入队前完成 exact-shape validator、getter-safe 检查、deep clone/freeze；调用方后续修改不改变已提交事实</cdt:Criterion>
+              <cdt:Criterion id="T3.4-AC2" checked="true">materialize/diff/dry-run/validation 等 capability output 使用运行时 union validator 与 exhaustive switch；未知或畸形 status/document/mutation/diagnostic fail-closed 且 live/persisted state 不推进</cdt:Criterion>
+              <cdt:Criterion id="T3.4-AC3" checked="true">operation generation/cancellation 在每个 await 后及下一 effect 前复核；dispose 后不再启动 revision/read/publish/persist，也不返回 accepted/reloaded</cdt:Criterion>
+              <cdt:Criterion id="T3.4-AC4" checked="true">factory/opened/proposal/control/edit Scope capability 均为独立精确且冻结的 facade；原始 proposal port 后续增加 control/writer 或替换方法不改变 Scope surface</cdt:Criterion>
+              <cdt:Criterion id="T3.4-AC5" checked="true">新增并发 mutation、malformed result、retry/reload invalid input、各 await 点 dispose 与 nested facade freeze 回归；focused/full tests、三包 typecheck、strict validate 与 whitespace checks 全部通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.5" name="禁止历史 live revision token 复用" status="DONE" order="6" priority="P0">
+            <Description>修正 P3 第二轮 AttractorCheck：session owner 记录本 session 全部已签发 live revision value；allocator 返回任一历史 token 时在 acceptance/reload 前 fail-closed，保证旧 proposal 永久 stale。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.5-AC1" checked="true">初始 open、submit acceptance 与 reload allocation 共享 owner-local issued revision set；foreign、malformed、non-advancing 或任一历史 value 重用均被拒绝</cdt:Criterion>
+              <cdt:Criterion id="T3.5-AC2" checked="true">allocator 序列 r1→r2→r1 时第二次推进失败，accepted/live/persisted 保持 r2，不调用后续 invalidation/persist，旧 base-r1 proposal 永久 stale；submit 与 reload 均有回归</cdt:Criterion>
+              <cdt:Criterion id="T3.5-AC3" checked="true">focused/full tests、三包及专用 typecheck、strict validate 与 whitespace checks 全部通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.6" name="封闭 unchanged persistence revision 漂移" status="DONE" order="7" priority="P0">
+            <Description>修正 P3 第三轮 AttractorCheck：persistence unchanged 只能确认 expected persisted revision 本身；same-authority 但不同 value 的结果不得无 receipt 推进 persistence truth。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.6-AC1" checked="true">unchanged persistedRevision 使用 authorityId+value 与 expected persistedRevision 完全相等；foreign 或 same-authority/different-value 均映射为 incoherent failed</cdt:Criterion>
+              <cdt:Criterion id="T3.6-AC2" checked="true">畸形 unchanged 保留 accepted live fact，persisted revision 不推进，session 为 dirty-failed，且不生成 receipt</cdt:Criterion>
+              <cdt:Criterion id="T3.6-AC3" checked="true">focused/full tests、三包及专用 typecheck、strict validate 与 whitespace checks 全部通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="xnl-vfs persistence 与 Document Scope" status="DONE" order="3">
+        <Description>消费 xnl-vfs CAS authority 并把 session capability 装配到 editable Document runtime。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="接入本地 xnl-vfs workspace 与红测试" status="DONE" order="0" priority="P0">
+            <Description>使用相对 workspace 引用 xnl-core/collab-core/vfs，写真实 authority applied/unchanged/failed/conflict/reload tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">support 消费 xnl-vfs/revisioned-persistence 公共入口，不复制 CAS 实现</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">root/support realpath 指向相对本地 xnl workspaces，lockfile 为 workspace resolution，仅一个 xnl-core 0.1.9 instance，support ESM/CJS/type import smoke 通过且不引入 xnl-vcs</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.1A" name="校准真实 authority 红测 revision 基线" status="DONE" order="1" priority="P0">
+            <Description>修正父层 spot-check：红测夹具的 revisionFactory 与 MemoryRevisionedVfsAuthority 初始 sequence 必须一致，避免 T4.2 导出 adapter 后先因隐藏的 vfs:0/vfs:1 期望错位失败。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1A-AC1" checked="true">真实 authority probe 与 adapter 红测共享一致的 initial/applied revision 基线；未导出 adapter 时唯一失败仍是缺少 support API</cdt:Criterion>
+              <cdt:Criterion id="T4.1A-AC2" checked="true">workspace smoke、专用 typecheck、strict validate 与 whitespace checks 通过，T4.2 仍未实现</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="实现 revisioned persistence adapter" status="DONE" order="2" priority="P0">
+            <Description>实现 read/persist/retry/reload 映射、receipt clone 与 actual revision conflict feedback。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">真实 MemoryRevisionedVfsAuthority integration tests 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">persist success 后新 session reload 与 accepted snapshot 结构一致</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="装配 Document Scope authoring capability" status="DONE" order="3" priority="P0">
+            <Description>扩展 Document occurrence runtime：host-only factory/control 与 edit Scope proposal port 分型；view mode 不调用 factory，并对任何 leaked binding 失败关闭。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">edit root/Capsule/Component Scope 只共享 proposal port；factory/control 留在 host；host mismatch/partial open 完整回滚</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">view mode 即使 host 有 factory 也不调用、不暴露 submit，leaked assembly capability 失败；多个 edit occurrences namespace 隔离</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3A" name="对齐 Scope runtime capability 装配边界" status="DONE" order="4" priority="P0">
+            <Description>修正父层 spot-check：authoring proposal facet 必须通过派生 Scope runtime 传递，control 仅由 host 生命周期 closure 持有；view host 可完全无 authoring capability；runtime interface 支持 class/prototype/mixin；移除无 lease 语义的 authoringSessionId 字符串共享入口。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3A-AC1" checked="true">AssembleDocumentOccurrenceInput 只含事实数据且无 proposal/control/function；assembleOccurrence 的 runtime 参数携带精确 edit/view authoring facet，root/Capsule/Component 复用同一 proposal instance</cdt:Criterion>
+              <cdt:Criterion id="T4.3A-AC2" checked="true">view occurrence 在 host 完全没有 documentAuthoring 时成功且不触碰任何 getter；edit 才要求 host factory，control 仅 host closure 可见并一次性 dispose</cdt:Criterion>
+              <cdt:Criterion id="T4.3A-AC3" checked="true">class/prototype/mixin runtime 与 capability port 可按 interface 协议工作；动态 assembly 输出仍 getter-safe、精确 fail-closed，且无全局 registry</cdt:Criterion>
+              <cdt:Criterion id="T4.3A-AC4" checked="true">移除 DocumentOpenContext.authoringSessionId 及伪共享测试；默认 occurrence namespace 隔离，跨 Scope 共享只来自同一个显式绑定的 runtime session instance</cdt:Criterion>
+              <cdt:Criterion id="T4.3A-AC5" checked="true">focused/full tests、三包及专用 typecheck、strict validate、dependency/residue 与 whitespace checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.4" name="复用统一 Scope runtime 对象协议" status="DONE" order="5" priority="P0">
+            <Description>修正 P4 AttractorCheck：Document Scope 必须通过既有 runtime.bindScope/deriveScope 对象系统装配 authoring 与 Document ports，不得手工扁平化父 runtime 或扫描整棵 runtime 猜测 capability 泄漏。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.4-AC1" checked="true">Document root Scope 以 plan.rootScopeId 和 runtime-only bindings 调用统一 bindScope/deriveScope；无协议时只使用既有标准 fallback 或失败关闭</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC2" checked="true">private-field class、symbol capability、mixin、scope-local send/call dispatch、通用 dispose 均保留，且测试证明 bindScope 确实被调用</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC3" checked="true">泄漏校验只验证本边界拥有的 authoring facade 与 Document ports，不遍历或扁平化不属于本边界的父 runtime</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC4" checked="true">focused/full tests、三包及专用 typecheck、strict validate 与 whitespace checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.5" name="封闭 Document 动态 data-only 入口" status="DONE" order="6" priority="P0">
+            <Description>修正 P4 AttractorCheck：OpenDocumentInput、DocumentRuntimeConfig、resolveDefinition plan 与 assembly input 必须在 capability 调用和首次 await 前完成 getter-safe、exact、deep-serializable 校验及 clone/freeze 快照。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.5-AC1" checked="true">context/plan/config 中的 function、getter、authority object、额外字段和非法递归值在 reserve/factory/assemble 前失败关闭</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC2" checked="true">调用方在 open 后修改 input/config/plan 不影响传入 assembly 的事实，assembly input/config/plan 均为不可变快照</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC3" checked="true">合法 class/prototype runtime capability 不被 data-only validator 误判，事实与 capability 边界保持分离</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC4" checked="true">focused/full tests、三包及专用 typecheck、strict validate 与 whitespace checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.6" name="建立父子 occurrence lifecycle authority" status="DONE" order="7" priority="P0">
+            <Description>修正 P4 AttractorCheck：registry 原子记录 parent lease，父关闭阻止 late child commit 并级联回收 committed/pending children；所有 child occurrence dispose protocol 在 commit 前被 getter-safe 捕获为 once-only facade。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.6-AC1" checked="true">parent close 与 child open 竞态不能残留 child；已提交 nested child 级联关闭，pending reservation 回滚，parent remount lease 不误接管旧 child</cdt:Criterion>
+              <cdt:Criterion id="T4.6-AC2" checked="true">class/prototype child dispose exactly-once；accessor/malformed child 不触发 getter并导致完整 rollback</cdt:Criterion>
+              <cdt:Criterion id="T4.6-AC3" checked="true">close/rollback/重复 stale close 的 registry、instance 与 authoring control authority 一致，无孤儿 occurrence 或双重 dispose</cdt:Criterion>
+              <cdt:Criterion id="T4.6-AC4" checked="true">focused/full tests、三包及专用 typecheck、strict validate 与 whitespace checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.7" name="固化 workspace lock 与 Scope facade 语义" status="DONE" order="8" priority="P1">
+            <Description>修正 P4 AttractorCheck：让本地 XNL workspace resolution 在干净 checkout 可复现，并校正 T3.3A 的过时文案；trusted class/prototype/mixin proposal port 可有内部字段，公开 Scope facade 仍必须精确冻结。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.7-AC1" checked="true">canonical workspace lockfile 已作为待提交制品纳入版本控制策略且不再被忽略；测试验证提交后 clean-checkout 可获得相同本地 xnl-core/xnl-vfs resolution</cdt:Criterion>
+              <cdt:Criterion id="T4.7-AC2" checked="true">T3.3A-AC2 与 findings 明确区分 trusted implementation object 和公开 exact Scope facade，不再要求实现对象自身无额外内部字段</cdt:Criterion>
+              <cdt:Criterion id="T4.7-AC3" checked="true">单一 xnl-core 0.1.9、ESM/CJS/type smoke、无 xnl-vcs residue、strict validate 与 whitespace checks 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="文档、回归与 Mission 验证" status="DONE" order="4">
+        <Description>记录 runtime-only authoring 使用方式并完成跨包、identity、reload 与 PutGet 验证。</Description>
+        <SubNodes>
+          <Task id="T5.1" name="更新 authoring DSL/runtime 文档" status="DONE" order="0" priority="P1">
+            <Description>说明无新增 Authoring DSL、Scope runtime binding、三档使用、事实等级、状态机与后续 Presenter 非目标。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">文档不把 code capability/config 写成 XNL，不宣称 Tiptap/Agent/Workbench 已实现</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">文档准确说明 #id、x-id、live revision、persisted revision 与 receipt</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="执行全量验证矩阵" status="DONE" order="1" priority="P0">
+            <Description>运行三包 tests/typecheck、authoring public-surface typecheck、Document/Projection regressions、真实 renderer-neutral PutGet semantic oracle、dependency/residue、strict validate 与 diff check。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">focused/property/integration/full regressions 全绿；真实 compile/translate/accept/recompile 语义 oracle 证明 accepted PutGet</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC2" checked="true">contract &lt;- logic &lt;- support 与 external XNL owner 边界保持</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="形成 Mission AUTHORING-T2 验证证据" status="DONE" order="2" priority="P0">
+            <Description>以测试而非调用轨迹证明单一 writer、刷新恢复、accepted PutGet 语义链与 Presenter runtime 无 authority，并明确 Tiptap GetPut 尚未验证。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">报告引用真实 Dialect/Interaction/materializer/semantic oracle 测试，证明 Interaction -> Command -> Candidate -> diff/dry-run/validate -> accept -> recompile 语义一致</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC2" checked="true">报告覆盖 VFS reload、failure/conflict、无 DOM/HTML/renderer writer residue</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

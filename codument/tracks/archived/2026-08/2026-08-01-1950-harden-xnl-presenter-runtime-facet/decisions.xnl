@@ -1,0 +1,145 @@
+<decisions #harden-xnl-presenter-runtime-facet [
+  <decision #positive-capability-projection {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "0.98"
+    reversibility = "moderate"
+  } (
+    <question ?>Presenter runtime 权限边界应依赖字段黑名单、raw view 品牌，还是显式 capability construction？</?>
+    <options [
+      <option { key = "owned-positive-protocol" recommended = true } (
+        <title ?>Support-owned 正向 capability protocol</?>
+        <description ?>可信代码用 owned grants 从 Scope runtime 构造新的 exact frozen facade，runner 只消费内部 owner record。</?>
+        <tradeoff ?>公共创建 API 需要迁移，protocol 定义成为显式权限审查面。</?>
+      )>
+      <option { key = "field-denylist" } (
+        <title ?>字段名黑名单</?>
+        <description ?>扫描 writer、vfs、valueHost 等名称并拒绝。</?>
+        <tradeoff ?>改名和嵌套可以绕过，无法表达 capability possession 边界。</?>
+      )>
+      <option { key = "brand-raw-view" } (
+        <title ?>继续品牌 raw view</?>
+        <description ?>给任意 object 加 opaque brand 后原样传给 Presenter。</?>
+        <tradeoff ?>品牌只证明来源，不缩减权限，正是当前 GAP。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Fresh AttractorCheck 要求把保证收窄到 support-owned positive grants 和 direct possession containment。</?>
+      <decision-text ?>采用 support-owned grants 与 trusted code-owned protocol，生成独立 exact frozen facade；合法 source 的任意额外 ungranted capabilities 被排除且构造成功，raw host 直接当 view、forged/unknown grant、identity projection、accessor target、facet extra own key 与 owner mismatch 才 fail closed。</?>
+      <rationale ?>权限由构造和 possession 决定，不由属性命名、来源品牌或 TypeScript 断言决定。</?>
+      <evidence ?>AUTHORING-T2 probe 已证明当前 WeakSet brand 可透传 authority-bearing host。</?>
+    )>
+  )>
+
+  <decision #trusted-method-and-return-boundary {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "0.98"
+    reversibility = "moderate"
+  } (
+    <question ?>Runtime 对显式 granted method 能提供什么保证？</?>
+    <options [
+      <option { key = "policy-plus-return-containment" recommended = true } (
+        <title ?>Policy grant 与返回 containment</?>
+        <description ?>Method 属 trusted protocol 的权限与 effect review；wrapper 只允许 serializable snapshot 或同协议 owned facade 返回。</?>
+        <tradeoff ?>Runtime 阻止 raw object graph 返回，但不能证明或阻止 method 内部 effect。</?>
+      )>
+      <option { key = "claim-reflective-purity" } (
+        <title ?>声称自动识别纯函数</?>
+        <description ?>尝试通过 reflection、字段名或调用结果推断 method 无 effect。</?>
+        <tradeoff ?>JavaScript closure 和绑定 owner 使该承诺不可执行，也会制造错误安全感。</?>
+      )>
+      <option { key = "unchecked-method-result" } (
+        <title ?>只绑定方法不检查结果</?>
+        <description ?>允许 granted method 原样返回任意值。</?>
+        <tradeoff ?>Source 或 authority object graph 可经返回值重新进入 Presenter possession。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Fresh GAP 要求承认内部 effect 不可反射证明，同时至少阻止 method 返回 raw host 或 authority graph。</?>
+      <decision-text ?>Method grant 是 trusted policy；wrapper 对 sync/async result fail closed，只输出 immutable serializable snapshot 或同协议 owned facade。</?>
+      <rationale ?>这准确封闭可执行的 possession 边界，不把 return validation 冒充 effect purity proof。</?>
+      <evidence ?>Arbitrary closure 可捕获 authority；仅检查 facade shape 无法判断函数内部语义。</?>
+    )>
+  )>
+
+  <decision #preserve-scope-runtime-polymorphism {
+    priority = "P0"
+    status = "decided"
+  } (
+    <question ?>如何验证 class、prototype、mixin 与 Scope 多态而不扩大到 occurrence consumer integration？</?>
+    <options [
+      <option { key = "standalone-scope-source" recommended = true } (
+        <title ?>Standalone Scope source projection</?>
+        <description ?>从一个按既有 bindScope/deriveScope 得到的 Scope runtime 构造独立 Presenter facet。</?>
+        <tradeoff ?>证明 source 多态和 facet attenuation，但不预先解决真实 consumer wiring。</?>
+      )>
+      <option { key = "document-occurrence-wiring" } (
+        <title ?>修改 Document occurrence</?>
+        <description ?>扩展 Document contract 并接入 root、Capsule、Component consumer。</?>
+        <tradeoff ?>当前不存在对应 Presenter consumer，会制造预生成 contract 和虚假验收。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Fresh GAP 要求移除 DocumentOccurrenceAssembly 与 root/Capsule/Component 真实接入。</?>
+      <decision-text ?>仅验证现有 Scope runtime 作为 source 的 typed projection；本 Track diff 不修改 occurrence/public contract、不预生成 root/Capsule/Component Presenter facet、不新增 NodeView/submit bridge wiring，真实 consumer integration 归 TIPTAP track。</?>
+      <rationale ?>当前 Track 只应交付可验证的通用 Presenter facet，不为尚不存在的 consumer 预造接口。</?>
+      <evidence ?>现有 bindScope/deriveScope 足以提供 object/class/prototype/mixin source fixture。</?>
+    )>
+  )>
+
+  <decision #presenter-surface-and-edit-intent-output {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "1.0"
+    reversibility = "moderate"
+  } (
+    <question ?>如何同时保留 Presenter 正常 surface render 输出并约束编辑意图 authority？</?>
+    <options [
+      <option { key = "surface-plus-data-intent" recommended = true } (
+        <title ?>Surface render 与 data-only edit intent</?>
+        <description ?>正常 render 返回 surface data；编辑意图通道仅产 serializable Interaction 或 Domain Command proposal data，外部 owner 调 translator/session。</?>
+        <tradeoff ?>真实 NodeView 事件接线延后到 TIPTAP track。</?>
+      )>
+      <option { key = "submit-bridge" } (
+        <title ?>包装 proposal.submit</?>
+        <description ?>Facet 给 Presenter 一个可提交 proposal 的 bridge。</?>
+        <tradeoff ?>把 owner effect 重新包装进 Presenter capability，超出当前 contract。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>第二轮 fresh review 明确正常 render 仍产 surface data，只约束编辑意图通道为 serializable proposal data。</?>
+      <decision-text ?>保留 Presenter 的 surface data render output；编辑意图通道不携带 translator、authoring session、submit callback 或 submit authority，后续 owner 调用在 Presenter 外部。</?>
+      <rationale ?>Surface rendering 与 edit intent 是不同输出语义；只对后者施加 data-only authority boundary，避免误删既有 Presenter contract。</?>
+      <evidence ?>Behavior 原 case `two-neutral-presenters` 明确要求两个 Presenter 产生 distinct surface data；第二轮 fresh review 指出 proposal-only 文字与该 case 冲突。</?>
+    )>
+  )>
+
+  <decision #break-insecure-overload {
+    priority = "P1"
+    status = "decided"
+  } (
+    <question ?>是否保留接受任意 object 的旧 createXnlProjectionPresenterRuntimeFacet overload？</?>
+    <options [
+      <option { key = "remove-success-path" recommended = true } (
+        <title ?>移除不安全成功路径</?>
+        <description ?>类型层迁移到 protocol API，动态旧调用只返回明确 fail-closed diagnostic。</?>
+        <tradeoff ?>当前调用方与测试必须同步迁移。</?>
+      )>
+      <option { key = "legacy-compatible" } (
+        <title ?>保留 legacy raw view</?>
+        <description ?>新旧 overload 并存。</?>
+        <tradeoff ?>调用方仍可绕过 positive grants。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Corrective GAP 要求 raw arbitrary view 不再成功。</?>
+      <decision-text ?>不保留任何能成功包装 raw object 的兼容 overload；迁移现有 fixtures 到显式 protocol。</?>
+      <rationale ?>受控入口与等价 escape hatch 不能同时构成安全边界。</?>
+      <evidence ?>现有 raw-view factory 是可复现 authority leak 的直接路径。</?>
+    )>
+  )>
+]>

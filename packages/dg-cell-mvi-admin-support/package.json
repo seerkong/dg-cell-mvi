@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-admin-support",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "DEPA admin chassis framework-neutral support implementations (axios HttpPort, localStorage StoragePort, …). Depends only on dg-cell-mvi-admin-contract.",
   "main": "./src/index.ts",
@@ -10,12 +14,15 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "dg-cell-mvi-admin-contract": "^0.1.0",
+    "dg-cell-mvi-admin-contract": "^0.1.1",
     "axios": "^1.18.0",
     "mitt": "^3.0.1"
   },

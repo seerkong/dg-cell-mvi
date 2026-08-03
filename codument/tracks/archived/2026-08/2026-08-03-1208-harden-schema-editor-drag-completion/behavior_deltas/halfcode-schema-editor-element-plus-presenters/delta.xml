@@ -1,0 +1,19 @@
+<behavior-patch capability="halfcode-schema-editor-element-plus-presenters" version="1">
+  <upsert selector="behavior://halfcode-schema-editor-element-plus-presenters/requirements/collection-drag-completion">
+    <requirement id="collection-drag-completion">
+      <statement>The collection presenter SHALL translate a completed drag into exactly one serializable item.move interaction even when the browser omits native dragend, and SHALL NOT directly mutate accepted collection data.</statement>
+      <suite id="native-completion" name="Native drag completion">
+        <case id="dragend-arrives">
+          <given>Sortable reports a collection move and native dragend arrives</given>
+          <when>The drag session completes</when>
+          <then>The presenter SHALL emit exactly one item.move and cancel any pending fallback</then>
+        </case>
+        <case id="dragend-omitted">
+          <given>Sortable reports canonical old and new indices but the browser omits native dragend</given>
+          <when>The delayed completion fallback runs</when>
+          <then>The presenter SHALL emit exactly one item.move using the reported indices</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

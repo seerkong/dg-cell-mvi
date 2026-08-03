@@ -60,7 +60,7 @@
     </suite>
   </requirement>
   <requirement id="ctrlflow-structural-authoring">
-    <statement>InstantFlow, WorkFlow, and BizProcess SHALL support typed If branch and Fallback strategy insertion, removal, field editing, and drag reordering while preserving matching child bodies and canonical CtrlFlow port order.</statement>
+    <statement>InstantCtrlFlow, WorkCtrlFlow, and BPCtrlFlow SHALL support typed If branch and Fallback strategy insertion, removal, field editing, and drag reordering while preserving matching child bodies and canonical CtrlFlow port order.</statement>
     <suite id="if-and-fallback" name="If and Fallback structure">
       <case id="edit-if-branches">
         <given>An If node has structured branches with id, when, and optional config</given>
@@ -93,14 +93,14 @@
     <statement>Each supported Flow product SHALL expose product-owned flow-level StructureSchema and optional EditorPresentation for canonical root facts that are authorable, using the same Session and ValueHost protocol as node config.</statement>
     <suite id="flow-target" name="Flow-level editor target">
       <case id="edit-flow-config">
-        <given>A loaded InstantFlow, WorkFlow, BizProcess, or EagerDataFlow has authorable root configuration</given>
+        <given>A loaded InstantCtrlFlow, WorkCtrlFlow, BPCtrlFlow, or EagerDataFlow has authorable root configuration</given>
         <when>The user selects the flow-level configuration target and edits a field</when>
         <then>The edit SHALL use the product root schema, canonical mutation path, accepted feedback, and reload projection without fabricating derived fields</then>
       </case>
     </suite>
   </requirement>
   <requirement id="four-product-persistence-reload">
-    <statement>InstantFlow, WorkFlow, BizProcess, and EagerDataFlow schema-editor operations SHALL persist through the existing exact XnlMutation batch, dry-run, canonical validation, VFS commit, and browser reload lifecycle.</statement>
+    <statement>InstantCtrlFlow, WorkCtrlFlow, BPCtrlFlow, and EagerDataFlow schema-editor operations SHALL persist through the existing exact XnlMutation batch, dry-run, canonical validation, VFS commit, and browser reload lifecycle.</statement>
     <suite id="round-trip" name="Four-product persistence">
       <case id="same-batch-commit">
         <given>A valid flow-level or node-level schema-editor command produces an XnlMutation batch</given>

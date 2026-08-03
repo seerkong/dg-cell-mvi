@@ -1,0 +1,29 @@
+<behavior-patch capability="dg-cell-mvi-halfcode-unit-compile" version="1">
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-compile/requirements/document-unit-plan">
+    <requirement id="document-unit-plan">
+      <statement>v3 compiler SHALL 为每个 Document 定义产生只含 source ref、contract、Presentation ref、root Scope、嵌入 Unit 与实例地址 descriptor 的 DocumentUnitPlan；plan MUST NOT 复制 accepted XNL 或成为 writer。实际挂载 SHALL 由含 unitInstanceId 的 DocumentOpenContext 建立 occurrence-level runtime assembly；FQN MUST NOT 代替实例身份。Document 内 Capsule 与嵌入 Component SHALL 沿当前 occurrence 的 lexical Scope 继承/覆盖 Runtime，Page route target 仍 SHALL 只接受 Page。</statement>
+      <suite id="document-plan" name="Document 编译">
+        <case id="root-and-capsule-scope">
+          <given>Document root 与内部 Capsule 都声明 Scope</given>
+          <when>compiler 生成 ScopeRuntimePlan</when>
+          <then>Document root SHALL 成为根 Scope，Capsule Scope SHALL 指向其 lexical parent 并保留各自 runtime binding</then>
+        </case>
+        <case id="embed-component">
+          <given>Document 内容显式嵌入已注册 Component 与 Capsule</given>
+          <when>compiler 编译</when>
+          <then>DocumentUnitPlan SHALL 保留嵌入 Unit 与 addressable instance 计划，同时未知领域节点不进入普通 UnitRenderPlan</then>
+        </case>
+        <case id="document-not-route-page">
+          <given>Route.pageRef 指向 document:// 定义</given>
+          <when>compiler 编译路由</when>
+          <then>SHALL 产生 kind mismatch/not-found error，且 MUST NOT 将 Document 当作 Page</then>
+        </case>
+        <case id="same-fqn-multiple-occurrences">
+          <given>同一 Document FQN 使用两个不同 unitInstanceId 打开</given>
+          <when>compiler/runtime 装配两个 occurrence</when>
+          <then>两个 occurrence SHALL 拥有独立 root Scope、runtime 和 x-id namespace，FQN 仅共享定义</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

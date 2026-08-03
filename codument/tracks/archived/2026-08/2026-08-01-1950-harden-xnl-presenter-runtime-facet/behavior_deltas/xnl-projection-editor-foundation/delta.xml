@@ -1,0 +1,50 @@
+<behavior-patch capability="xnl-projection-editor-foundation" version="1">
+  <upsert selector="behavior://xnl-projection-editor-foundation/requirements/interaction-and-presenter-separation">
+    <requirement id="interaction-and-presenter-separation">
+      <statement>The system SHALL render ProjectionPlan as validated surface data through stable Presenter adapter registries and SHALL express Presenter edit intent only as serializable Interaction or Domain Command proposal data without translator, authoring-session or submit authority; Presenter runtime facets SHALL be exact frozen facades constructed from support-owned positive grants under a trusted code-owned protocol, the runtime SHALL exclude arbitrary ungranted source capabilities while allowing a valid source projection to succeed, and SHALL fail closed when facet or grant ownership/shape is invalid or a granted method returns a raw host or unowned object graph, while the protocol remains the review boundary for the authority and internal effects of explicitly granted methods.</statement>
+      <suite id="translation" name="Interaction translation">
+        <case id="command-proposal-only">
+          <given>A valid Interaction targets a node in a ProjectionPlan.</given>
+          <when>The current Dialect translates it.</when>
+          <then>The result SHALL be translated, rejected or unsupported, and SHALL NOT contain an accepted snapshot, mutation writer, ValueHost or VFS capability.</then>
+        </case>
+        <case id="two-neutral-presenters">
+          <given>One valid ProjectionPlan and two renderer-neutral Presenter adapter registries.</given>
+          <when>The plan is presented through each registry.</when>
+          <then>Both SHALL resolve stable ids and produce distinct surface data from the same plan without modifying the plan or Domain XNL.</then>
+        </case>
+        <case id="unknown-presenter">
+          <given>A plan references an unbound presenter id.</given>
+          <when>The presentation runner resolves the adapter.</when>
+          <then>It SHALL produce an actionable diagnostic and SHALL NOT silently choose a fallback implementation.</then>
+        </case>
+        <case id="explicit-minimum-capability-projection">
+          <given>A valid Scope runtime obtained through the existing bindScope or deriveScope path contains granted Presenter-safe capabilities and arbitrary additional ungranted capabilities.</given>
+          <when>Trusted code selects a support-owned protocol and constructs a Presenter runtime facet.</when>
+          <then>Construction SHALL succeed and expose a new exact frozen facade containing only positive grants; it SHALL exclude the Scope runtime identity, prototype, every ungranted source capability and raw nested host graph, and SHALL resolve the owned facade before invoking the Presenter.</then>
+        </case>
+        <case id="invalid-presenter-facets-fail-closed">
+          <given>A caller passes a raw host directly as the view or supplies a forged protocol or facet, an unknown or forged grant, identity projection, a grant targeting an accessor, a facet with an extra own key or a mismatched owner record.</given>
+          <when>The factory or presentation runner validates the runtime boundary.</when>
+          <then>The system SHALL fail before invoking the Presenter or an accessor and SHALL NOT select a fallback; arbitrary extra ungranted fields on an otherwise valid source SHALL NOT trigger this failure and SHALL instead be excluded because validation SHALL NOT depend on a forbidden-field-name list.</then>
+        </case>
+        <case id="granted-method-return-containment">
+          <given>A trusted code-owned protocol explicitly grants a bound method whose implementation may have internal effects and whose result may be serializable data, an owned facade, a raw host object or another object graph.</given>
+          <when>The Presenter invokes the method through its facade wrapper.</when>
+          <then>The wrapper SHALL directly return only an immutable serializable snapshot or a facade owned by the same protocol and SHALL throw a closed diagnostic for raw host, foreign authority or unowned object graphs without returning a result envelope; the public grant and protocol types SHALL reject incompatible host/view method arguments or contained return shapes, including narrowing an unknown host result into a concrete facade result; the system SHALL treat the grant as the authority and effect review boundary and SHALL NOT claim to infer closure purity or prevent the method's internal effects.</then>
+        </case>
+        <case id="halfcode-scope-runtime-polymorphism">
+          <given>A source Scope runtime produced by existing bindScope or deriveScope behavior implements an explicitly granted capability through an object, class, prototype chain or mixin and also has arbitrary additional ungranted capabilities.</given>
+          <when>The support protocol forms an independent typed Presenter facet from that source.</when>
+          <then>The projected interface SHALL preserve explicitly granted owner-bound method and strong typing semantics while excluding ungranted host possession, and SHALL NOT require any, an open string index signature or raw host casts.</then>
+        </case>
+        <case id="presenter-surface-and-edit-intent-output">
+          <given>A renderer-neutral Presenter adapter renders a ProjectionPlan and may express an edit intent.</given>
+          <when>The adapter produces normal render output or emits through its edit-intent channel.</when>
+          <then>Normal render output SHALL remain validated surface data; edit intent SHALL be serializable Interaction or Domain Command proposal data only, and SHALL contain no translator, authoring session, submit callback or submit authority.</then>
+        </case>
+      </suite>
+      <knowledge-hint target="xnl-projection-docs" href="behavior://xnl-projection-editor-foundation/interaction-and-presenter-separation" strength="hint" />
+    </requirement>
+  </upsert>
+</behavior-patch>

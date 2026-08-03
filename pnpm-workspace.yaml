@@ -1,0 +1,20 @@
+packages:
+  - "packages/*"
+  - "../depa-data-graph/packages/core"
+  - "../depa-data-graph/packages/vue"
+  - "../depa-flows.ts/packages/depa-behavior-tree"
+  - "../depa-flows.ts/packages/bp-ctrl-flow-contract"
+  - "../depa-flows.ts/packages/bp-ctrl-flow-logic"
+  - "../depa-flows.ts/packages/eager-data-flow-contract"
+  - "../depa-flows.ts/packages/eager-data-flow-logic"
+  - "../depa-flows.ts/packages/instant-ctrl-flow-contract"
+  - "../depa-flows.ts/packages/instant-ctrl-flow-logic"
+  - "../depa-flows.ts/packages/task-manager-contract"
+  - "../depa-flows.ts/packages/task-manager-logic"
+  - "../depa-flows.ts/packages/work-ctrl-flow-contract"
+  - "../depa-flows.ts/packages/work-ctrl-flow-logic"
+  - "../../lang/xnl.ts/packages/core"
+  - "../../lang/xnl.ts/packages/collab-core"
+  - "../../lang/xnl.ts/packages/vfs"
+
+linkWorkspacePackages: true

@@ -1,0 +1,18 @@
+<decisions #bind-tiptap-draft-to-editor-state [
+  <decision #binding-vs-host {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = false
+    confidence = "0.99"
+    reversibility = "moderate"
+  } (
+    <question ?>Foundation 应绑定真实 EditorState，还是拥有完整 Editor/browser controller？</?>
+    <answer { selected = "editor-state-binding" } (
+      <raw-answer ?>选择最小 EditorState binding，不新增完整 browser authoring host。</?>
+      <decision-text ?>Adapter 提供 bindXnlRichDocumentTiptapDraftToEditorState，直接复用真实 state lineage；产品继续拥有 Editor 与 UI lifecycle。</?>
+      <rationale ?>只修复 schema identity 根因，避免 foundation 同时拥有 DOM、NodeView、toolbar 与产品 controller。</?>
+      <evidence ?>Fresh coding AttractorCheck 比较 A/B 后选择 A；Workbench real Editor probe 证明 detached state 不可消费真实 transaction。</?>
+    )>
+  )>
+]>
+

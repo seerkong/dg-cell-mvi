@@ -52,7 +52,7 @@ describe('canonical contract surface', () => {
       kind: 'array',
       constraints,
       identity,
-      itemDefault: metadata.itemDefault,
+      itemDefault: metadata.itemDefault ?? null,
       item: {
         kind: 'object',
         fields: [{ key: 'id', schema: { kind: 'scalar', scalar: 'string' } }],
@@ -70,14 +70,15 @@ describe('canonical contract surface', () => {
     expect(contract.validateEditorPlan).toBeTypeOf('function');
   });
 
-  it('keeps the package root as the only public entry', () => {
+  it('keeps one production root plus the canonical test-fixture entry', () => {
     const packageJson = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')) as {
       exports?: Record<string, unknown>;
     };
     const exportKeys = Object.keys(packageJson.exports ?? {});
 
-    expect(exportKeys).toEqual(['.']);
+    expect(exportKeys).toEqual(['.', './test-fixtures/xnl-rich-document']);
     expect(exportKeys).not.toContain('./schema-editor');
-    expect(exportKeys.some((key) => /internal|schema-editor/.test(key))).toBe(false);
+    expect(exportKeys.filter((key) => key !== './test-fixtures/xnl-rich-document')
+      .some((key) => /internal|schema-editor|test-fixtures/.test(key))).toBe(false);
   });
 });

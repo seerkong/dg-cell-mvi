@@ -1,0 +1,53 @@
+<decisions #add-tiptap-browser-authoring-primitives [
+  <decision #table-owner {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "0.98"
+    reversibility = "moderate"
+  } (
+    <question ?>表格结构编辑由谁实现？</?>
+    <answer {
+      selected = "official-tiptap-table"
+    } (
+      <raw-answer ?>复用官方 Tiptap table extension 与 commands。</?>
+      <decision-text ?>adapter 组合官方 table 原语并保留 RichDocument identity attrs，不复制表格拓扑算法。</?>
+      <rationale ?>符合 vendor 原语优先，并避免自研表格命令与 ProseMirror 语义漂移。</?>
+      <evidence ?>Workbench 真实 Editor probe 证明当前自定义 table schema 没有 insertTable command。</?>
+    )>
+  )>
+  <decision #mermaid-effect-boundary {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "0.96"
+    reversibility = "moderate"
+  } (
+    <question ?>Mermaid renderer 如何进入 NodeView？</?>
+    <answer {
+      selected = "runtime-effect"
+    } (
+      <raw-answer ?>由产品 composition root 绑定 runtime-first render Effect。</?>
+      <decision-text ?>基础包定义 exact NodeView runtime，其中 render 与 diagnostic sink 是两个隔离的 Effect binding，各自持有窄 runtime 与三参数实现；source/requestId 属于 input，theme 属于 config；DOM commit 由 NodeView host 私有拥有。基础包不捆绑具体 Mermaid 实现。</?>
+      <rationale ?>保持 Effect 定义与实现分离，防止 loose callback/authority 偷渡，并让不同产品选择不同安全 render 策略。</?>
+      <evidence ?>Mission runtime 与 Halfcode 约束要求 output = fn(runtime, input, config)，Workbench probe 证明当前没有 public hook。</?>
+    )>
+  )>
+  <decision #authoring-authority {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+    confidence = "1.0"
+    reversibility = "low"
+  } (
+    <question ?>NodeView 与 table commands 是否可以直接修改 Domain XNL？</?>
+    <answer {
+      selected = "transaction-only"
+    } (
+      <raw-answer ?>不可以，只能产生 Tiptap transaction。</?>
+      <decision-text ?>所有浏览器编辑继续经 transaction normalizer、trusted translation 和 accepted authoring session。</?>
+      <rationale ?>保持 Domain XNL 的单一 writer 和 revisioned mutation chain。</?>
+      <evidence ?>已完成的 Tiptap Presenter 与 Authoring Session behavior 已锁定该边界。</?>
+    )>
+  )>
+]>

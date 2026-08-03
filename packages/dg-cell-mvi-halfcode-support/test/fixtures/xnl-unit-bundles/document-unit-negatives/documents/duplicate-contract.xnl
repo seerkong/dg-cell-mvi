@@ -1,0 +1,8 @@
+<Document #dg.docs.negative.DuplicateContract (
+  <DocumentContract { mode = "view" }>
+  <DocumentContract { mode = "edit" }>
+  <Scope #root>
+  <DocumentPresentation { id = "duplicate-contract" }>
+) [
+  <Paragraph #body ["body"]>
+]>

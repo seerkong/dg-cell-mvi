@@ -15,3 +15,6 @@ export * from './authoring';
 export * from './fixtures';
 export * from './unit';
 export * from './schema-editor';
+export * from './xnl-projection';
+export * from './xnl-authoring';
+export * from './xnl-rich-document';

@@ -1,0 +1,179 @@
+<Track id="add-xnl-projection-editor-foundation" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>建立 renderer-neutral 的 XNL Projection Editor contracts、递归 compiler、XNL adapter 与 Presenter 扩展基座。</Goal>
+    <Description>在现有 Halfcode contract/logic/support 三层增加 xnl-projection capsule，保持 Domain XNL、Presentation、Dialect、Plan、Presenter 与 writer 边界正交。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-07-31T04:28:50Z</CreatedAt>
+    <UpdatedAt>2026-07-31T09:56:29Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="schema-editor-reference" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/schema-editor/"/>
+    <MaterialBundle role="output" name="projection-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="projection-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="projection-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="projection-tests" domain="test" path="vfs://@/packages/"/>
+    <MaterialBundle role="output" name="projection-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/xnl-projection/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-xnl-projection-editor-foundation" name="add-xnl-projection-editor-foundation" version="1">
+    <Description>先用红测试固定非表单通用模型，再完成 contracts、compiler、XNL support 与中立 Presenter 验证，最后做公共面和依赖收口。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="通用 contract 行为基线" status="DONE" order="0">
+        <Description>以非表单领域树和两个 surface 固定 Projection foundation 的边界。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="编写 Projection contracts 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖纯数据 Presentation、开放 classification、递归 Plan、diagnostics、Interaction/Command 封闭结果、Presenter adapter 以及禁止 writer/renderer implementation 的 validation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明当前没有通用 xnl-projection contracts/public exports</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试使用非表单领域节点，且不出现 SchemaEditor plan kinds 作为通用模型</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Contracts 与 validator" status="DONE" order="1">
+        <Description>定义稳定、可序列化、renderer-neutral 的公共类型与验证规则。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="实现 Projection 公共 contracts" status="DONE" order="0" priority="P0">
+            <Description>实现 DomainRef、Presentation/rules、ProjectionPlan/node、classification、diagnostics、Dialect processor、Interaction/DomainCommand 和 PresenterAdapter 类型。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">contract API 不依赖 xnl-core、SchemaEditor、Vue、DOM、Tiptap、writer 或 persistence</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">所有 implementation hooks 只存在于代码侧 processor interfaces，不进入 serializable Presentation/Plan data</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 contract validation 与 root exports" status="DONE" order="1" priority="P0">
+            <Description>校验 stable ids、exact match rules、serializable options/data、plan identity、diagnostics 和 ownership fields，并从 package root 导出公开 capsule。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">非法 component/function/runtime/writer/cyclic data 被显式拒绝</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">消费者无需 deep import，既有 SchemaEditor exports 保持不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="递归 compiler 与 Interaction 翻译" status="DONE" order="2">
+        <Description>实现 runtime-owned Dialect、确定性递归、Presentation resolution 和纯 Domain Command proposal。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="编写 compiler 与 translator 红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 runtime.compile recursion、path/role/identity、later-wins Dialect composition、explicit/semantic/default/source-kind/unsupported 解析顺序、unsupported/lossy diagnostics、输入不可变和封闭 translation outcome。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">测试证明所有动态 processor 为三参数且 config 不携带函数、Dialect 或 Presenter implementation</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">unknown transformer/interaction 均失败关闭，不走 JSON/text fallback</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 generic Projection compiler" status="DONE" order="1" priority="P0">
+            <Description>实现 compiler runtime/factory、recursive node compilation、Dialect composition、Presentation exact-rule resolution、plan validation、diagnostics/provenance 和 immutable translation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">同一 Domain tree 在独立 runtime 中可得到不同 Dialect/Presentation 结果且无共享可变泄漏</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">compiler/translator 不 import xnl-core、renderer、ValueHost、mutation 或 persistence owner</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="XNL support 与中立 Presenter" status="DONE" order="3">
+        <Description>把真实 XnlNode 接入 generic compiler，并证明 Presenter 扩展不拥有领域写入。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="实现默认 XNL Dialect adapter" status="DONE" order="0" priority="P0">
+            <Description>实现 XnlNode child enumeration、DomainRef/#id、开放分类、默认 transformer/presenter refs、body/extend/array/record 确定顺序与 unsupported diagnostics。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">显式 #id 保留为 domain identity/provenance，不成为普通可编辑 payload 字段</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">xnl-core 依赖只出现在 support，完整 XNL node family 有确定投影或诊断</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="实现 support Presenter registry 与双 adapter 测试" status="DONE" order="1" priority="P0">
+            <Description>在 support 实现 stable id registry/composition 与 recursive presentation runner；用 outline 和 inspection 两个纯数据 adapter 展示同一 Plan，覆盖重复/未知 id diagnostic。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">两个 adapter 产生不同中立 surface 且不修改 Plan/Domain input</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Presenter input 不含 AST/VFS/ValueHost writer，unknown id 不静默 fallback</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="收敛 P4 AttractorCheck 偏差" status="DONE" order="2" priority="P0">
+            <Description>修正 Presenter 调用期 options/runtime 泛型边界、全组成分注入式 plan identity、undefined surface、三参数 processor arity 与共享默认常量可变性，并增加回归覆盖。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">Presenter 通过显式 config 接收 surfaceId/options，runner 保留受控 runtime 泛型能力且不授予 Domain writer</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">显式 nodeId 保持路径无关身份；无 nodeId 的合法 role/path 组合得到注入式 plan id，undefined surface 被拒绝，默认 bindings 不可变</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">默认 XNL children/classify/transformer 均保持 output = fn(runtime, input, config) 三参数形状</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.4" name="封闭 P4 深层身份与 authority 偏差" status="DONE" order="3" priority="P0">
+            <Description>保持 #id 路径无关的移动身份，修正 path-based unsupported identity、Presenter runtime facet、共享 presenter ref、默认 unsupported processor arity 与 diagnostic 严格验证。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.4-AC1" checked="true">相同 #id 在移动前后保持同一身份，重复 #id 显式冲突；所有无 #id/unsupported path identity 均注入且确定</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC2" checked="true">Presenter 只接收由装配侧显式提供的只读 runtime facet，不以可绕过字段黑名单冒充 authority 保证</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC3" checked="true">Plan presenter refs 不共享可变 binding，默认 unsupported processors 为三参数，Presenter diagnostics 完整严格校验</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.5" name="移除 generic payload identity 猜测" status="DONE" order="4" priority="P0">
+            <Description>generic compiler 不再从任意 node.id/node.tag 猜测 DomainRef；身份与 tag 只能由领域 adapter 显式提供。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.5-AC1" checked="true">普通 record 的重复 id/tag 保持 payload，不触发身份冲突或领域 tag 匹配</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC2" checked="true">默认 XNL adapter 仍仅从 Element #id/tag 显式传入 DomainRef，既有身份与移动测试保持通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="公共文档与验证收口" status="DONE" order="4">
+        <Description>固定 API、三层依赖、非目标与进入 Mission 双向规律验证的证据。</Description>
+        <SubNodes>
+          <Task id="T5.1" name="编写 XNL Projection foundation 文档" status="DONE" order="0" priority="P1">
+            <Description>记录三层 ownership、标准公式、Presentation/Dialect/Presenter 分离、XNL #id、diagnostics、Interaction proposal 和 SchemaEditor adapter 边界。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">文档示例不嵌入函数/组件/writer，不声称 Document/authoring/Tiptap 已实现</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.1A" name="适配 depa-data-graph 可写节点引用契约" status="DONE" order="1" priority="P0">
+            <Description>核对统一 signal/stream breaking change 后 set 的可写引用约束；Halfcode 在动态 MountedGraphModule 边界验证 input ref，不再把未知动态值断言为任意 GraphNodeIdLike 后直接写入。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1A-AC1" checked="true">Halfcode 通过 isNodeRef 验证动态 input，不用 any 或宽 GraphNodeIdLike 绕过只读 computed/stream ref 的编译期保护</cdt:Criterion>
+              <cdt:Criterion id="T5.1A-AC2" checked="true">Halfcode support 完整 typecheck 通过，depa-data-graph 的只读 ref 负类型测试仍保持有效</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="执行 foundation 验证矩阵" status="DONE" order="2" priority="P0">
+            <Description>运行 focused/full tests、三个 package typecheck、strict Codument validate、dependency/stale vocabulary/ownership residue scans，并记录 verification report。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">contract/logic/support 全量回归与 typecheck 通过</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC2" checked="true">TypeScript import 与 residue 扫描证明 contract &lt;- logic &lt;- support，且无 UI、Tiptap、DOM、VFS writer、SchemaEditor-kind 泄漏或 deep public subpath</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC3" checked="true">报告为 Mission PROJECTION-T2 提供 GetPut/PutGet、lossy diagnostic 与 DEPA review 输入</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="收敛 P5 设计文档 API 与 owner 漂移" status="DONE" order="3" priority="P0">
+            <Description>修正旧 Interaction translator 示例与 Presenter acceptedSnapshot 残留，使 Track design 与最终双 config channel、surfaceState contract 及 authoring 非目标一致。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">Interaction 示例使用当前公开 API，invocation config 不重复 runtime-owned Dialect identity</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC2" checked="true">Presenter 示例只使用 surfaceState 可序列化投影数据，accepted Domain snapshot 继续由后续 authoring owner 承担</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC3" checked="true">旧 API/residue 扫描、strict Codument validate 与文档一致性复核通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

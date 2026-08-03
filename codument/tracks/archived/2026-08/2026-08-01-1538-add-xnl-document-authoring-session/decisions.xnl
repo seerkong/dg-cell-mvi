@@ -1,0 +1,78 @@
+<decisions #add-xnl-document-authoring-session [
+  <decision #accept-first-recovery {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Live acceptance 已推进但 persistence 失败或冲突时，怎样保持事实与恢复语义一致？</?>
+    <options [
+      <option { key = "explicit-divergence-and-recovery" recommended = true } (
+        <title ?>显式 accepted-live 分叉与受控恢复</?>
+        <description ?>接受后立即重投影；失败保持 dirty，冲突暂停编辑；retry 或带 expectedLiveRevision 的显式 discard/reload 恢复。</?>
+        <tradeoff ?>状态机更完整，调用方必须明确展示未保存状态和破坏性 reload。</?>
+      )>
+      <option { key = "pretend-atomic" } (
+        <title ?>把 acceptance 与 persistence 当成原子事务</?>
+        <description ?>只有外部保存成功才向 UI 暴露编辑。</?>
+        <tradeoff ?>跨 authority 无法真实原子化，并可能出现 VFS 已写入但 live accept 失败的反向分叉。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Mission 已确定 ValueHost 是 live authority，VFS/VCS 是 persistence effect。</?>
+      <decision-text ?>采用 accept-first；立即发布 accepted invalidation，失败/冲突显式暂停，支持 retry 和显式 discard/reload，不实现自动 rebase。</?>
+      <rationale ?>这保持 authority 顺序真实，并让所有不可原子的外部结果可观察。</?>
+      <evidence ?>Mission design §7 与 xnl-vfs RevisionedVfsAuthority CAS contract。</?>
+    )>
+  )>
+
+  <decision #authoring-capability-facets {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Session factory、proposal submit 与恢复控制应当向哪些 runtime facet 可见？</?>
+    <options [
+      <option { key = "split-factory-proposal-control" recommended = true } (
+        <title ?>三种 capability 分型</?>
+        <description ?>factory/control 仅 host 可见，edit Scope 只获得 proposal port，view Scope 不获得任何 submit capability。</?>
+        <tradeoff ?>类型和 assembly validation 增加，但权限边界可以静态和运行时验证。</?>
+      )>
+      <option { key = "single-session-object" } (
+        <title ?>一个 session object 全面透传</?>
+        <description ?>所有 Scope 获得 factory、submit、retry、reload、dispose。</?>
+        <tradeoff ?>Presenter 和 view mode 会获得超出职责的 writer/lifecycle authority。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>DEPA authority 与 Document mode 要求 view 无 writer，嵌入区块只能提交 proposal。</?>
+      <decision-text ?>分离 host factory、Scope proposal client 和 host control；view assembly 对泄漏 fail-closed。</?>
+      <rationale ?>使用最小 capability surface 表达可见性，而不是依靠调用约定。</?>
+      <evidence ?>DEPA attractor I3/I4 与 Document occurrence runtime assembly。</?>
+    )>
+  )>
+
+  <decision #local-xnl-workspace-source {
+    priority = "P1"
+    status = "decided"
+  } (
+    <question ?>怎样保证 authoring adapter 消费的是已验证的当前 xnl.ts 公共 API？</?>
+    <options [
+      <option { key = "relative-workspace-links" recommended = true } (
+        <title ?>相对 workspace links</?>
+        <description ?>把 xnl.ts core/collab-core/vfs 加入 root workspaces，并验证 realpath、lockfile、单一 core instance 与入口 smoke。</?>
+        <tradeoff ?>本地多仓库 workspace 需要同时存在，但不会写绝对路径或误用旧 registry 包。</?>
+      )>
+      <option { key = "registry-version-only" } (
+        <title ?>只依赖 registry version</?>
+        <description ?>继续按 semver 安装发布物。</?>
+        <tradeoff ?>相同版本号可能尚未包含本 Mission 已验证的 revisioned persistence 修正。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>本 Mission 的 XNL 前置 tracks 在本地 xnl.ts workspace 完成并验证。</?>
+      <decision-text ?>使用相对 workspace links并加入真实解析检查；xnl-core 版本仍必须为 0.1.9。</?>
+      <rationale ?>ProjectRef 指向当前源码 owner，集成测试必须消费同一实际实现。</?>
+      <evidence ?>XNL-T3 report 与当前 dg-cell-mvi node_modules resolution。</?>
+    )>
+  )>
+]>

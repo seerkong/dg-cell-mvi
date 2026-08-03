@@ -1,0 +1,12 @@
+<AppBundle #dg.docs.negative apiVersion="halfcode.dg-cell-mvi/v1" version="1.0.0" (
+  <Units [
+    <Unit kind="document" fqn="dg.docs.negative.DuplicateContract" src="vfs://./documents/duplicate-contract.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.DuplicateSource" src="vfs://./documents/duplicate-source.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.DuplicateScope" src="vfs://./documents/duplicate-scope.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.DuplicatePresentation" src="vfs://./documents/duplicate-presentation.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.MixedSource" src="vfs://./documents/mixed-source.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.DuplicateXId" src="vfs://./documents/duplicate-x-id.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.RegisteredName" src="vfs://./documents/fqn-mismatch.xnl">
+    <Unit kind="document" fqn="dg.docs.negative.ActualPage" src="vfs://./pages/actual-page.xnl">
+  ]>
+)>

@@ -33,7 +33,7 @@
     <statement>CtrlFlow and DAGFlow SHALL share the structure command protocol while preserving distinct adapter-owned sequence, containment, data dependency, and completion dependency semantics.</statement>
     <suite id="family-semantics" name="Family-specific structure semantics">
       <case id="ctrlflow-insert-and-remove">
-        <given>An InstantFlow, WorkFlow, or BizProcess canvas exposes a next or child-body action</given>
+        <given>An InstantCtrlFlow, WorkCtrlFlow, or BPCtrlFlow canvas exposes a next or child-body action</given>
         <when>The user inserts or removes a node</when>
         <then>The adapter SHALL update ordered statement containment, splice simple sequences, and handle owned structural subtrees without persisting visual edges</then>
       </case>

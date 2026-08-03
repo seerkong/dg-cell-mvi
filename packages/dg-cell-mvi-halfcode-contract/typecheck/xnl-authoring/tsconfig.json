@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "moduleResolution": "bundler",
+    "noErrorTruncation": true
+  },
+  "include": ["../../test/xnl-authoring-contracts.typecheck.ts"]
+}

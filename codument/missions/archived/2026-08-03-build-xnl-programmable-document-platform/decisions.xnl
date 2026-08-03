@@ -1,0 +1,143 @@
+<decision #build-xnl-programmable-document-platform.foundation {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>通用编辑基座应当以 SchemaEditor 还是更一般的 XNL 投影模型为中心？</?>
+  <answer { }
+  (
+    <raw-answer ?>建立 XnlProjectionEditor；SchemaEditor、Tiptap、Graph 和领域 Presenter 都位于其上。</?>
+    <decision-text ?>XnlProjectionEditor 是通用基座，SchemaEditor 是结构化表单特化，不能成为所有领域编辑器的封闭内部模型。</?>
+    <rationale ?>不同领域的自然投影形态不同，通用层只应拥有递归投影、交互翻译、candidate/diff 和 accepted session 边界。</?>
+    <evidence ?>用户明确认可“SchemaEditor 是一种 Presenter、Tiptap 是另一种 Presenter”的产品结构。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.document-unit {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>Document 在 Halfcode Unit 与 Capsule 模型中的位置是什么？</?>
+  <answer { }
+  (
+    <raw-answer ?>Document 与 Page、Component 是同级产品概念，也能配置 Capsule 的机制资源。</?>
+    <decision-text ?>Capsule 保持唯一内联封装原语；Document 成为与 Page、Component 并列的具名 Unit 发布形态，并拥有 root Scope。</?>
+    <rationale ?>既满足文档作为微型应用的独立身份，又不破坏现有 Capsule 派生公理和 Scope 可见性模型。</?>
+    <evidence ?>Halfcode 当前公理已定义 Component/Page 为 Capsule 的具名派生，用户要求把 Document 纳入同一产品层级。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.identity {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>XNL #id 与历史 x-id 是否应合并？</?>
+  <answer { }
+  (
+    <raw-answer ?>x-id 要恢复对自定义 Vue 区块发送 mutation/action 的实例寻址职责。</?>
+    <decision-text ?>#id 是领域节点持久身份；x-id 是投影实例运行时地址。默认 x-id 等于 #id，多投影或多实例时显式命名空间化。</?>
+    <rationale ?>领域 identity 与运行实例 identity 生命周期不同；完全合并无法表达同一领域节点的正文、目录和其他多 role 投影。</?>
+    <evidence ?>旧 Tiptap 代码只保留 x-id DOM 属性，已经丢失原本的消息寻址语义。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.authority {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>文档编辑的权威数据和唯一写入链路是什么？</?>
+  <answer { }
+  (
+    <raw-answer ?>输入和输出都是 XNL 领域数据，编辑后对比产生 XNL mutation，并保持 dg-cell-mvi 的单向 mutation 机制。</?>
+    <decision-text ?>ValueHost accepted Domain XNL 与 revision 是活跃会话权威；Interaction 经 Domain Command、Candidate、diff、dry-run、validation 后才能接受并持久化到 XNL VFS/VCS。</?>
+    <rationale ?>这保持单一写入者和衍生投影不反写，允许 Tiptap、SchemaEditor、组件和 Agent 共享同一事务边界。</?>
+    <evidence ?>Flow Editor 与 SchemaEditor 已验证 ValueHost 和 XNL Mutation owner 链路，用户要求新文档组件沿用该思想。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.document-modes {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>文档源是否总要直接嵌入 Halfcode 组件标签？</?>
+  <answer { }
+  (
+    <raw-answer ?>既要支持富交互文档，也要支持把不同领域 XNL DSL 通过渲染模板加工成编辑器。</?>
+    <decision-text ?>平台同时支持显式嵌入 Component/Capsule 的可编程文档，以及 UI-free Domain XNL 加外部 Presentation 的纯领域 DSL 投影。</?>
+    <rationale ?>交互区块可能是文档语义本身，而 BO、本体和业务 DSL 则不应被视图实现污染。</?>
+    <evidence ?>用户列出了高交互文档、AI 系统设计文档和通用 DSL Editor 三类产品场景。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.tiptap {
+  priority = "P1"
+  status = "accepted"
+}
+(
+  <question ?>Tiptap、HTML 和 ProseMirror state 在新架构中是什么角色？</?>
+  <answer { }
+  (
+    <raw-answer ?>参考旧 Tiptap 封装，将 Tiptap、dg-cell-mvi 和 XNL 整合成组件。</?>
+    <decision-text ?>Tiptap 是文档型 Presenter Adapter；正常 authoring 直接在 Domain XNL model 与 ProseMirror/Tiptap model 间转换，HTML 只用于显式导入导出。</?>
+    <rationale ?>将编辑器内部格式降为可重建投影，避免 HTML 或 DOM 成为第二事实源。</?>
+    <evidence ?>现有 Tiptap 扩展能作为迁移素材，但其 DOM query 设置 x-id 的实现不满足新 authority 边界。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.ai {
+  priority = "P1"
+  status = "accepted"
+}
+(
+  <question ?>多 AI Agent 如何与人类和编辑器协作？</?>
+  <answer { }
+  (
+    <raw-answer ?>支持多个 AI Agent 生成、修改并与人协作，例如编写系统设计文档。</?>
+    <decision-text ?>Agent 使用与人类相同的 revisioned Domain Command 或 XnlMutation proposal 协议，不直接修改 DOM、Tiptap JSON 或 Presenter local state。</?>
+    <rationale ?>统一协议才能提供预览、审计、冲突、权限和 VFS/VCS 版本能力，并防止 Agent 绕过事实 owner。</?>
+    <evidence ?>用户将多 Agent 协同列为平台核心产品场景，并认可单向 mutation 与 Scope Runtime 设计。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.ownership {
+  priority = "P1"
+  status = "accepted"
+}
+(
+  <question ?>Mission 应由哪个项目承载？</?>
+  <answer { }
+  (
+    <raw-answer ?>基座应先打磨在 dg-cell-mvi，Workbench 用它重构具体编辑器。</?>
+    <decision-text ?>dg-cell-mvi 是 Mission host 和通用能力 owner；eidolon-workbench 是外部产品集成与反馈项目。</?>
+    <rationale ?>把控制面放在基础能力所有者处，防止通用协议成为 Workbench 私有实现，同时允许应用反馈驱动底层 corrective track。</?>
+    <evidence ?>现有 SchemaEditor Mission 与相关行为规范均由 dg-cell-mvi 拥有，Workbench 是首个真实消费方。</?>
+  )
+  >
+)>
+
+<decision #build-xnl-programmable-document-platform.xnl-authoring-prerequisite {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>XNL mutation 与 VFS/VCS 的现有公共能力是否足以直接实现 revisioned document authoring？</?>
+  <answer { }
+  (
+    <raw-answer ?>#id 已是 diff/move identity key，不应作为字段比较；其余 dry-run、precondition、identity diagnostics、move parity 与 persistence revision 仍需由 xnl.ts 完善。</?>
+    <decision-text ?>在 dg-cell-mvi Authoring Session 前增加两个 xnl.ts tracks，分别拥有 identity-based mutation correctness 与 revision-aware persistence primitives。</?>
+    <rationale ?>XNL 和存储原语应由其事实 owner 修正；在应用适配层复制、猜测或包裹不完整语义会形成第二套 mutation 引擎。</?>
+    <evidence ?>基线确认 apply 无统一 precondition/rollback，复杂 move 与重复 #id 门禁不足，VFS/VCS 也没有统一 CAS/receipt 语义；用户明确纠正 #id 是节点匹配和移动检测键。</?>
+  )
+  >
+)>

@@ -1,4 +1,4 @@
-import type { TaskOperationRequest, TaskOperationResult } from 'biz-process-contract';
+import type { TaskOperationRequest, TaskOperationResult } from 'bp-ctrl-flow-contract';
 import type {
   EagerDataFlowAuthoringPlan,
   EagerDataFlowInvocationOptions,
@@ -10,14 +10,14 @@ import type {
   DurableChildFlowResolver,
   ResumeSignal,
   TickOutcome,
-  WorkFlowClock,
-  WorkFlowStartOptions,
-  WorkFlowStore,
-} from 'work-flow-contract';
-import type { BizProcessTaskDependencies } from 'biz-process-logic/browser';
+  WorkCtrlFlowClock,
+  WorkCtrlFlowStartOptions,
+  WorkCtrlFlowStore,
+} from 'work-ctrl-flow-contract';
+import type { BPCtrlFlowTaskDependencies } from 'bp-ctrl-flow-logic/browser';
 import type { LoadedHalfcodeUnit } from './xnlUnitBundle';
 
-export type HalfcodeFlowKind = 'instant-flow' | 'work-flow' | 'biz-process' | 'eager-data-flow';
+export type HalfcodeFlowKind = 'instant-ctrl-flow' | 'work-ctrl-flow' | 'bp-ctrl-flow' | 'eager-data-flow';
 
 export interface HalfcodeFlowCodeResolutionRequest {
   reference: string;
@@ -42,7 +42,7 @@ interface HalfcodeFlowHandleBase<TKind extends HalfcodeFlowKind> {
   readonly fqn: UnitFqn;
 }
 
-export interface InstantFlowHandle extends HalfcodeFlowHandleBase<'instant-flow'> {
+export interface InstantCtrlFlowHandle extends HalfcodeFlowHandleBase<'instant-ctrl-flow'> {
   readonly spec: FlowBundleSpec;
   invoke<TOutput = unknown>(input?: unknown): Promise<TOutput>;
 }
@@ -55,16 +55,16 @@ export interface EagerDataFlowHandle extends HalfcodeFlowHandleBase<'eager-data-
   ): Promise<EagerDataFlowRecord>;
 }
 
-export interface WorkFlowHandle extends HalfcodeFlowHandleBase<'work-flow'> {
+export interface WorkCtrlFlowHandle extends HalfcodeFlowHandleBase<'work-ctrl-flow'> {
   readonly spec: FlowBundleSpec;
-  start(treeId: string, options?: WorkFlowStartOptions): Promise<TickOutcome>;
+  start(treeId: string, options?: WorkCtrlFlowStartOptions): Promise<TickOutcome>;
   resume(treeId: string, signal: ResumeSignal): Promise<TickOutcome>;
   refresh(treeId: string): Promise<TickOutcome>;
   fireDueDeadlines(treeId: string): Promise<TickOutcome>;
   getOutcome(treeId: string): Promise<TickOutcome | undefined>;
 }
 
-export interface BizProcessHandle extends HalfcodeFlowHandleBase<'biz-process'> {
+export interface BPCtrlFlowHandle extends HalfcodeFlowHandleBase<'bp-ctrl-flow'> {
   readonly spec: FlowBundleSpec;
   start(treeId: string, options?: { input?: Record<string, unknown> }): Promise<TickOutcome>;
   refresh(treeId: string): Promise<TickOutcome>;
@@ -74,10 +74,10 @@ export interface BizProcessHandle extends HalfcodeFlowHandleBase<'biz-process'> 
 }
 
 export type HalfcodeFlowHandle =
-  | InstantFlowHandle
+  | InstantCtrlFlowHandle
   | EagerDataFlowHandle
-  | WorkFlowHandle
-  | BizProcessHandle;
+  | WorkCtrlFlowHandle
+  | BPCtrlFlowHandle;
 
 export interface HalfcodeFlowHandleFactory {
   readonly kind: HalfcodeFlowKind;
@@ -88,28 +88,28 @@ export interface HalfcodeFlowHandleFactory {
 export type HalfcodeFlowHandleFactoryRegistry = Readonly<Record<string, HalfcodeFlowHandleFactory>>;
 export type HalfcodeFlowHandleRegistry = Readonly<Record<string, HalfcodeFlowHandle>>;
 
-export interface WorkFlowLifecycleDependencies {
-  store: WorkFlowStore;
-  clock?: WorkFlowClock;
+export interface WorkCtrlFlowLifecycleDependencies {
+  store: WorkCtrlFlowStore;
+  clock?: WorkCtrlFlowClock;
   durableChildren?: DurableChildFlowResolver;
 }
 
-export interface BizProcessLifecycleDependencies {
-  store: WorkFlowStore;
+export interface BPCtrlFlowLifecycleDependencies {
+  store: WorkCtrlFlowStore;
   taskStore: TaskSpaceStore;
-  tasks: BizProcessTaskDependencies;
-  clock?: WorkFlowClock;
+  tasks: BPCtrlFlowTaskDependencies;
+  clock?: WorkCtrlFlowClock;
   durableChildren?: DurableChildFlowResolver;
 }
 
 export interface MaterializeHalfcodeFlowsOptions {
   resolveCode: HalfcodeFlowCodeResolver;
-  resolveWorkFlowDependencies?(
+  resolveWorkCtrlFlowDependencies?(
     unit: LoadedHalfcodeUnit,
-  ): WorkFlowLifecycleDependencies | Promise<WorkFlowLifecycleDependencies>;
-  resolveBizProcessDependencies?(
+  ): WorkCtrlFlowLifecycleDependencies | Promise<WorkCtrlFlowLifecycleDependencies>;
+  resolveBPCtrlFlowDependencies?(
     unit: LoadedHalfcodeUnit,
-  ): BizProcessLifecycleDependencies | Promise<BizProcessLifecycleDependencies>;
+  ): BPCtrlFlowLifecycleDependencies | Promise<BPCtrlFlowLifecycleDependencies>;
 }
 
 export interface ResolveHalfcodeFlowOptions {

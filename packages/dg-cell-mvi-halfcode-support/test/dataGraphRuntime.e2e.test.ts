@@ -226,10 +226,13 @@ describe('real depa data graph Scope materialization', () => {
     });
     const graphMount = mounted?.['users-list'];
     if (!graphMount?.refs) throw new Error('async graph mount was not materialized');
-    const inputs = graphMount.refs.inputs as Record<string, GraphNodeIdLike>;
+    const queryRef = (graphMount.refs.inputs as Record<string, unknown>).query;
     const outputs = graphMount.refs.outputs as Record<string, GraphNodeIdLike>;
+    if (!isNodeRef(queryRef) || queryRef.section !== 'input') {
+      throw new Error('async graph input query ref was not materialized');
+    }
 
-    graphMount.graph.set(inputs.query, 'Ada');
+    graphMount.graph.set(queryRef, 'Ada');
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 

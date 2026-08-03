@@ -32,7 +32,10 @@ export {
 } from './xnlUnitBundle';
 export type {
   HalfcodeDomainFileInventory,
+  HalfcodeDocumentRawSource,
+  HalfcodeDocumentSkeletonNode,
   LoadHalfcodeUnitBundleOptions,
+  LoadedHalfcodeDocumentProjection,
   LoadedHalfcodeUnit,
   LoadedHalfcodeUnitBundle,
   LoadedHalfcodeUnitBundleApp,
@@ -44,6 +47,13 @@ export type {
   HalfcodeUnitRegistry,
   HalfcodeUnitRegistryEntry,
 } from './xnlUnitBundle';
+
+export { createDocumentInstanceRegistry } from './documentInstanceRegistry';
+export {
+  closeDocument,
+  createDocumentOccurrenceRegistry,
+  openDocument,
+} from './documentRuntimeAssembly';
 
 export { assembleHalfcodeRuntimeUnit } from './runtimeAssembly';
 export type {
@@ -86,8 +96,8 @@ export type { DefaultHalfcodeRuntimeObject } from './defaultRuntime';
 
 export { bindHalfcodeFlows, materializeHalfcodeFlows } from './flowMaterializer';
 export type {
-  BizProcessHandle,
-  BizProcessLifecycleDependencies,
+  BPCtrlFlowHandle,
+  BPCtrlFlowLifecycleDependencies,
   EagerDataFlowHandle,
   HalfcodeFlowCode,
   HalfcodeFlowCodeResolutionRequest,
@@ -97,11 +107,11 @@ export type {
   HalfcodeFlowHandleFactoryRegistry,
   HalfcodeFlowHandleRegistry,
   HalfcodeFlowKind,
-  InstantFlowHandle,
+  InstantCtrlFlowHandle,
   MaterializeHalfcodeFlowsOptions,
   ResolveHalfcodeFlowOptions,
-  WorkFlowHandle,
-  WorkFlowLifecycleDependencies,
+  WorkCtrlFlowHandle,
+  WorkCtrlFlowLifecycleDependencies,
 } from './flowHandles';
 
 export { adaptCallableEffectToMviHandler } from './callableEffectAdapter';
@@ -152,5 +162,71 @@ export type {
   SchemaEditorValueHostConfig,
   SchemaEditorWildcardBinding,
 } from './schema-editor';
+
+export {
+  composeXnlProjectionPresenterRegistries,
+  createDefaultXnlProjectionDialect,
+  createXnlProjectionInspectionPresenterAdapter,
+  createXnlProjectionOutlinePresenterAdapter,
+  createXnlProjectionPresenterCapabilityProtocol,
+  createXnlProjectionPresenterMethodGrant,
+  createXnlProjectionPresenterRegistry,
+  createXnlProjectionPresenterRuntimeFacet,
+  createXnlProjectionPresenterSnapshotGrant,
+  createXnlProjectionRootInput,
+  presentXnlProjection,
+  XNL_PROJECTION_DEFAULT_CLASSIFICATION_IDS,
+  XNL_PROJECTION_DEFAULT_PRESENTER_IDS,
+  XNL_PROJECTION_INSPECTION_SURFACE_ID,
+  XNL_PROJECTION_OUTLINE_SURFACE_ID,
+} from './xnl-projection';
+export type {
+  ComposeXnlProjectionPresenterRegistriesConfig,
+  ComposeXnlProjectionPresenterRegistriesInput,
+  CreateXnlProjectionNeutralPresenterAdapterConfig,
+  CreateXnlProjectionNeutralPresenterAdapterInput,
+  CreateXnlProjectionPresenterCapabilityProtocolInput,
+  CreateXnlProjectionPresenterMethodGrantInput,
+  CreateXnlProjectionPresenterRegistryConfig,
+  CreateXnlProjectionPresenterRegistryInput,
+  CreateXnlProjectionPresenterSnapshotGrantInput,
+  CreateDefaultXnlProjectionDialectOptions,
+  XnlProjectionNodeFamily,
+  XnlProjectionPresentationResult,
+  XnlProjectionPresentationRunnerConfig,
+  XnlProjectionPresentationRunnerInput,
+  XnlProjectionPresentationRunnerRuntime,
+  XnlProjectionPresenterRuntime,
+  XnlProjectionPresenterCapabilityFactoryConfig,
+  XnlProjectionPresenterCapabilityFactoryRuntime,
+  XnlProjectionPresenterCompatibleMethodSourceKey,
+  XnlProjectionPresenterCompatibleSnapshotSourceKey,
+  XnlProjectionPresenterRuntimeFacet,
+  XnlProjectionPresenterRegistry,
+  XnlProjectionPresenterRegistryEntry,
+  XnlProjectionPresenterRegistryResult,
+  XnlProjectionPresenterRegistryRuntime,
+  XnlProjectionPresenterResolution,
+  XnlProjectionRegisteredPresenterAdapter,
+  XnlProjectionRegisteredPresenterOutput,
+  XnlProjectionRegisteredPresenterRuntime,
+  XnlProjectionRootInputOptions,
+} from './xnl-projection';
+
+export {
+  createXnlAuthoringEditScopeFacet,
+  createXnlAuthoringSessionFactory,
+  createXnlCoreAuthoringMutationPort,
+  createXnlVfsAuthoringPersistencePort,
+  createXnlAuthoringViewScopeFacet,
+  mapXnlMutationDiagnostic,
+} from './xnl-authoring';
+export type {
+  XnlCoreAuthoringMutation,
+  XnlCoreAuthoringMutationPort,
+  XnlCoreAuthoringPath,
+} from './xnl-authoring';
+
+export * from './xnl-rich-document';
 
 export * from 'dg-cell-mvi-halfcode-contract';

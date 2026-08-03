@@ -1,0 +1,15 @@
+<SystemDesign #system-design [
+  <!-- external:overview-before-decisions -->
+  <Overview #overview [
+    "UI-free architecture source"
+  ]>
+  <Decision #runtime-owner {
+    status = "accepted"
+  } [
+    "Runtime is the occurrence authority."
+  ]>
+  <!-- external:appendix-after-decisions -->
+  <Appendix #appendix [
+    "No presenter nodes live here."
+  ]>
+]>

@@ -40,6 +40,7 @@ const FORBIDDEN_EXECUTABLE_KEYS = new Set([
 ]);
 
 const PAGE_CONTRACT_FORBIDDEN_KEYS = ['props', 'slots', 'exposes'] as const;
+const DOCUMENT_CONTRACT_FORBIDDEN_KEYS = ['urlInputs', 'props', 'slots', 'exposes'] as const;
 const FRONTEND_CONTRACT_FORBIDDEN_KEYS = ['input', 'output'] as const;
 const RETIRED_MESSAGE_KEYS = ['emits'] as const;
 
@@ -83,18 +84,7 @@ export function validatePageContract(value: unknown): HalfcodeUnitValidationResu
   validateMessageRefList(value.sends, '$.sends', issues);
   validateRetiredMessageKeys(value, issues);
 
-  if (value.elementContracts !== undefined) {
-    if (!Array.isArray(value.elementContracts)) {
-      issues.push({ path: '$.elementContracts', message: 'elementContracts must be an array.' });
-    } else {
-      value.elementContracts.forEach((contract, index) => {
-        const nested = validateUnitElementContract(contract);
-        for (const issue of nested.issues) {
-          issues.push({ ...issue, path: `$.elementContracts[${index}]${issue.path.slice(1)}` });
-        }
-      });
-    }
-  }
+  validateElementContractList(value.elementContracts, '$.elementContracts', issues);
 
   collectSerializableIssues(value, '$', issues);
   return { ok: issues.length === 0, issues };
@@ -134,6 +124,57 @@ export function validateComponentContract(value: unknown): HalfcodeUnitValidatio
 }
 
 /**
+ * Validate a DocumentContractSpec-shaped value. Document owns source/revision
+ * type descriptors, mode, parameters and message boundaries; Page and
+ * Component input channels are rejected even when their values are empty.
+ */
+export function validateDocumentContract(value: unknown): HalfcodeUnitValidationResult {
+  const issues: HalfcodeUnitValidationIssue[] = [];
+  if (!isPlainRecord(value)) {
+    issues.push({ path: '$', message: 'DocumentContract must be a plain serializable object.' });
+    return { ok: false, issues };
+  }
+
+  for (const key of DOCUMENT_CONTRACT_FORBIDDEN_KEYS) {
+    if (key in value) {
+      issues.push({
+        path: `$.${key}`,
+        message: `DocumentContract must not declare ${key}; its input boundary is source/revision/mode/parameters.`,
+      });
+    }
+  }
+  for (const key of FRONTEND_CONTRACT_FORBIDDEN_KEYS) {
+    if (key in value) {
+      issues.push({
+        path: `$.${key}`,
+        message: `DocumentContract must not declare ${key}; use accepts/sends for message traffic.`,
+      });
+    }
+  }
+
+  if (value.kind !== 'document-contract') {
+    issues.push({ path: '$.kind', message: 'DocumentContract kind must be "document-contract".' });
+  }
+  if (typeof value.fqn !== 'string' || !isUnitFqn(value.fqn)) {
+    issues.push({ path: '$.fqn', message: 'DocumentContract fqn must be a dot-separated unit FQN.' });
+  }
+  if (value.mode !== 'view' && value.mode !== 'edit') {
+    issues.push({ path: '$.mode', message: 'DocumentContract mode must be "view" or "edit".' });
+  }
+
+  validateOptionalTypeDescriptor(value.source, '$.source', issues);
+  validateOptionalTypeDescriptor(value.revision, '$.revision', issues);
+  validateStringRecord(value.parameters, '$.parameters', issues);
+  validateMessageRefList(value.accepts, '$.accepts', issues);
+  validateMessageRefList(value.sends, '$.sends', issues);
+  validateRetiredMessageKeys(value, issues);
+  validateElementContractList(value.elementContracts, '$.elementContracts', issues);
+
+  collectSerializableIssues(value, '$', issues);
+  return { ok: issues.length === 0, issues };
+}
+
+/**
  * Validate a UnitElementContractSpec-shaped value (esp. inline Capsule
  * contracts). input/output are rejected (v2 red line, kept); requires must be
  * the D14 three-part shape: command/effect/config refs.
@@ -153,6 +194,9 @@ export function validateUnitElementContract(value: unknown): HalfcodeUnitValidat
       });
     }
   }
+  if (typeof value.id !== 'string' || value.id.length === 0) {
+    issues.push({ path: '$.id', message: 'ElementContract id must be a non-empty string.' });
+  }
   validateMessageRefList(value.accepts, '$.accepts', issues);
   validateMessageRefList(value.sends, '$.sends', issues);
   validateRetiredMessageKeys(value, issues);
@@ -160,6 +204,54 @@ export function validateUnitElementContract(value: unknown): HalfcodeUnitValidat
 
   collectSerializableIssues(value, '$', issues);
   return { ok: issues.length === 0, issues };
+}
+
+function validateOptionalTypeDescriptor(
+  value: unknown,
+  path: string,
+  issues: HalfcodeUnitValidationIssue[],
+): void {
+  if (value !== undefined && typeof value !== 'string') {
+    issues.push({ path, message: 'Type descriptor must be a string when declared.' });
+  }
+}
+
+function validateStringRecord(
+  value: unknown,
+  path: string,
+  issues: HalfcodeUnitValidationIssue[],
+): void {
+  if (value === undefined) return;
+  if (!isPlainRecord(value)) {
+    issues.push({ path, message: 'Expected a plain object mapping names to type descriptor strings.' });
+    return;
+  }
+  for (const [key, descriptor] of Object.entries(value)) {
+    if (typeof descriptor !== 'string') {
+      issues.push({
+        path: `${path}.${key}`,
+        message: 'Type descriptor map values must be strings.',
+      });
+    }
+  }
+}
+
+function validateElementContractList(
+  value: unknown,
+  path: string,
+  issues: HalfcodeUnitValidationIssue[],
+): void {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    issues.push({ path, message: 'elementContracts must be an array.' });
+    return;
+  }
+  value.forEach((contract, index) => {
+    const nested = validateUnitElementContract(contract);
+    for (const issue of nested.issues) {
+      issues.push({ ...issue, path: `${path}[${index}]${issue.path.slice(1)}` });
+    }
+  });
 }
 
 /**

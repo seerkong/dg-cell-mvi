@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-core",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Stream+Signal MVI micro-framework runtime, ported onto depa-data-graph. Renderer-agnostic.",
   "main": "./src/index.ts",
@@ -10,6 +14,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"

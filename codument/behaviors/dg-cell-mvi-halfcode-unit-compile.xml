@@ -15,7 +15,7 @@
     </suite>
   </requirement>
   <requirement id="contract-checks">
-    <statement>compiler SHALL 做契约编译期校验：component 实例 props（内联+propsRef 引用形）对照 ComponentContract.props（未知/必填缺失 -&gt; HALFCODE_PROPS_CONTRACT_MISMATCH）；Capsule Requires 沿 scope 链核验 config/intents/effects（不满足 -&gt; HALFCODE_CAPSULE_REQUIRES_UNMET）。</statement>
+    <statement>compiler SHALL 做契约编译期校验：component 实例 props（内联+propsRef 引用形）对照 ComponentContract.props（未知/必填缺失 -&amp;gt; HALFCODE_PROPS_CONTRACT_MISMATCH）；Capsule Requires 沿 scope 链核验 config/intents/effects（不满足 -&amp;gt; HALFCODE_CAPSULE_REQUIRES_UNMET）。</statement>
     <suite id="contracts" name="契约校验">
       <case id="unknown-prop">
         <given>component 实例内联了 ComponentContract 未声明的 prop</given>
@@ -38,7 +38,7 @@
     <statement>compiler SHALL 把 app wiring 编译为 typed WiringPlan（from/to 对照 route 注册表，emit/accept 对照 PageContract）；page 声明的 emit 未被任何 Wire 接线 SHALL 产出 HALFCODE_INTENT_UNWIRED warning，不静默丢弃。</statement>
     <suite id="wiring" name="接线编译">
       <case id="wire-compiled">
-        <given>basic-admin 的 report.saved -&gt; users.refresh Wire</given>
+        <given>basic-admin 的 report.saved -&amp;gt; users.refresh Wire</given>
         <when>编译</when>
         <then>WiringPlan SHALL 含该绑定且端点解析为 route 实例</then>
       </case>
@@ -61,6 +61,31 @@
         <given>logic 包既有 v2 compiler 测试</given>
         <when>本 track 完成后运行</when>
         <then>SHALL 零修改全绿</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="document-unit-plan">
+    <statement>v3 compiler SHALL 为每个 Document 定义产生只含 source ref、contract、Presentation ref、root Scope、嵌入 Unit 与实例地址 descriptor 的 DocumentUnitPlan；plan MUST NOT 复制 accepted XNL 或成为 writer。实际挂载 SHALL 由含 unitInstanceId 的 DocumentOpenContext 建立 occurrence-level runtime assembly；FQN MUST NOT 代替实例身份。Document 内 Capsule 与嵌入 Component SHALL 沿当前 occurrence 的 lexical Scope 继承/覆盖 Runtime，Page route target 仍 SHALL 只接受 Page。</statement>
+    <suite id="document-plan" name="Document 编译">
+      <case id="root-and-capsule-scope">
+        <given>Document root 与内部 Capsule 都声明 Scope</given>
+        <when>compiler 生成 ScopeRuntimePlan</when>
+        <then>Document root SHALL 成为根 Scope，Capsule Scope SHALL 指向其 lexical parent 并保留各自 runtime binding</then>
+      </case>
+      <case id="embed-component">
+        <given>Document 内容显式嵌入已注册 Component 与 Capsule</given>
+        <when>compiler 编译</when>
+        <then>DocumentUnitPlan SHALL 保留嵌入 Unit 与 addressable instance 计划，同时未知领域节点不进入普通 UnitRenderPlan</then>
+      </case>
+      <case id="document-not-route-page">
+        <given>Route.pageRef 指向 document:// 定义</given>
+        <when>compiler 编译路由</when>
+        <then>SHALL 产生 kind mismatch/not-found error，且 MUST NOT 将 Document 当作 Page</then>
+      </case>
+      <case id="same-fqn-multiple-occurrences">
+        <given>同一 Document FQN 使用两个不同 unitInstanceId 打开</given>
+        <when>compiler/runtime 装配两个 occurrence</when>
+        <then>两个 occurrence SHALL 拥有独立 root Scope、runtime 和 x-id namespace，FQN 仅共享定义</then>
       </case>
     </suite>
   </requirement>

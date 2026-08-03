@@ -4,8 +4,15 @@ export default defineConfig({
     environment: 'node',
   },
   resolve: {
-    alias: {
-      'dg-cell-mvi-halfcode-contract': new URL('../dg-cell-mvi-halfcode-contract/src/index.ts', import.meta.url).pathname,
-    },
+    alias: [
+      {
+        find: /^dg-cell-mvi-halfcode-contract\/test-fixtures\/xnl-rich-document$/,
+        replacement: new URL('../dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document.ts', import.meta.url).pathname,
+      },
+      {
+        find: /^dg-cell-mvi-halfcode-contract$/,
+        replacement: new URL('../dg-cell-mvi-halfcode-contract/src/index.ts', import.meta.url).pathname,
+      },
+    ],
   },
 });

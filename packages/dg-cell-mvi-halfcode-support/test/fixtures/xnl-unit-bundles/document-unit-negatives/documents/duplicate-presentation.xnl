@@ -1,0 +1,8 @@
+<Document #dg.docs.negative.DuplicatePresentation (
+  <DocumentContract { mode = "view" }>
+  <Scope #root>
+  <DocumentPresentation { id = "first" }>
+  <DocumentPresentation { id = "second" }>
+) [
+  <Paragraph #body ["body"]>
+]>

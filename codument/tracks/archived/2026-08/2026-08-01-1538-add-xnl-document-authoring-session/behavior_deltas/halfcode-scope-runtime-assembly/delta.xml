@@ -1,0 +1,24 @@
+<behavior-patch capability="halfcode-scope-runtime-assembly" version="1">
+  <upsert selector="behavior://halfcode-scope-runtime-assembly/requirements/document-authoring-runtime">
+    <requirement id="document-authoring-runtime">
+      <statement>Editable Document occurrences SHALL receive an owner-local XNL authoring session capability through Scope runtime visibility; multiple Scopes MAY share one explicitly bound session instance, while config, DOM, Presenter state and global registries MUST NOT own or resolve the writer.</statement>
+      <suite id="authoring-visibility" name="Document authoring capability visibility">
+        <case id="scope-inheritance">
+          <given>A Document root Scope runtime owns an authoring session capability and a descendant Capsule or Component does not override it.</given>
+          <when>The descendant submits a document edit.</when>
+          <then>The request SHALL be delivered to the same owner-local session through runtime capability visibility.</then>
+        </case>
+        <case id="view-mode-no-writer">
+          <given>A Document occurrence is opened in view mode, whether or not its host runtime owns an authoring factory.</given>
+          <when>The occurrence and descendant Scope/Presenter facets are assembled.</when>
+          <then>The factory SHALL NOT be invoked, no facet SHALL expose submit, and any assembly result that leaks proposal/control/session capability SHALL fail closed and roll back.</then>
+        </case>
+        <case id="capability-facet-separation">
+          <given>An editable Document occurrence is assembled.</given>
+          <when>Host and descendant runtime capabilities are inspected.</when>
+          <then>The host SHALL retain factory and control ports while root/Capsule/Component edit Scopes receive only the proposal port.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

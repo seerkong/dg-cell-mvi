@@ -1,0 +1,8 @@
+<Document #dg.docs.negative.DuplicateXId (
+  <DocumentContract { mode = "edit" }>
+  <Scope #root>
+  <DocumentPresentation { id = "duplicate-x-id" }>
+) [
+  <Widget #first { "x-id" = "shared-target" }>
+  <Widget #second { "x-id" = "shared-target" }>
+]>

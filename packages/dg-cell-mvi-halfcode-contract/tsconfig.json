@@ -8,8 +8,13 @@
     "skipLibCheck": true,
     "noEmit": true,
     "isolatedModules": true,
+    "exactOptionalPropertyTypes": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document": ["./test-fixtures/xnl-rich-document.ts"],
+      "dg-cell-mvi-halfcode-contract": ["./src/index.ts"]
+    }
   },
   "include": ["src/**/*", "test/**/*"]
 }

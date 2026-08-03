@@ -1,0 +1,7 @@
+<Document #dg.docs.negative.DuplicateSource (
+  <DocumentContract { mode = "view" }>
+  <DocumentSource { ref = "vfs://./domain/first.xnl" }>
+  <DocumentSource { ref = "vfs://./domain/second.xnl" }>
+  <Scope #root>
+  <DocumentPresentation { id = "duplicate-source" }>
+)>

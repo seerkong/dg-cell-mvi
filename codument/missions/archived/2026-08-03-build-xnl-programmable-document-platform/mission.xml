@@ -1,0 +1,286 @@
+<Mission id="build-xnl-programmable-document-platform" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在 dg-cell-mvi 建立 XNL Projection Editor 与 Halfcode Document Unit，并在 Workbench 形成可编程文档、领域 DSL 编辑和多 Agent 协作平台。</Goal>
+    <Description>以 Domain XNL 为事实源，统一递归投影、x-id 实例寻址、Tiptap/Halfcode Presenter、revisioned XNL Mutation、VFS/VCS 和产品验证。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>light</QuestionSeverity>
+    <Revision>46</Revision>
+    <CreatedAt>2026-07-30T15:13:23Z</CreatedAt>
+    <UpdatedAt>2026-08-03T12:16:18+03:00</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+    <MaterialBundle role="output" name="halfcode-dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="halfcode-vue" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-vue/"/>
+    <MaterialBundle role="output" name="packages" domain="code" path="vfs://@/packages/"/>
+  </Ports>
+
+  <cdt:ProjectRefs>
+    <cdt:ProjectRef id="dg-cell-mvi" kind="host"/>
+    <cdt:ProjectRef id="eidolon-workbench" kind="external"/>
+    <cdt:ProjectRef id="xnl-ts" kind="external"/>
+  </cdt:ProjectRefs>
+
+  <cdt:ActorSets default="foundation-loop">
+    <cdt:ActorSet id="foundation-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="dg-cell-mvi">
+        <Description>依据 SchemaEditor 前置状态、Halfcode Unit 公理、XNL 能力和应用反馈切分 foundation tracks，并维护 contract 到产品验证的 DAG。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="dg-cell-mvi">
+        <Description>观察 projection/document contracts、loader/compiler/runtime、package 依赖、测试、现有 Mission 状态和 Workbench 回流证据。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="dg-cell-mvi">
+        <Description>比较 Domain XNL 单一事实源、Document Unit、x-id 寻址和 Presenter 边界的期望态与实际态，识别漂移和可并行工作。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="dg-cell-mvi">
+        <Description>连续创建、执行和验证一个 foundation track 生命周期；验证明确时继续推进，发现边界偏差时写证据并受控重规划。</Description>
+      </cdt:Actor>
+    </cdt:ActorSet>
+
+    <cdt:ActorSet id="workbench-product-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="eidolon-workbench">
+        <Description>将 Tiptap 历史能力、可编程文档、领域 DSL 和 Agent 协作场景切分为不拥有通用基座的产品 tracks。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="eidolon-workbench">
+        <Description>观察现有 Tiptap 扩展、Halfcode 集成、XNL VFS/VCS、浏览器 E2E、用户体验和 mutation residue。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="eidolon-workbench">
+        <Description>比较 Workbench 产品体验与 foundation contracts，判断应用可独立修复的问题和必须反馈到 dg-cell-mvi 的抽象缺口。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="eidolon-workbench">
+        <Description>执行一个 Workbench 集成、E2E 或反馈动作，并以可复现证据回传 foundation 控制环。</Description>
+      </cdt:Actor>
+    </cdt:ActorSet>
+
+    <cdt:ActorSet id="xnl-foundation-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="xnl-ts">
+        <Description>把 authoring 所需的 AST mutation 正确性与 revision-aware persistence 前置条件切成由 xnl.ts 独立拥有、可单独验收的 tracks。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="xnl-ts">
+        <Description>观察 xnl-core diff/apply/path identity、xnl-vfs atomic apply、xnl-vcs persistence receipt 和现有 parity/property tests 的真实行为。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="xnl-ts">
+        <Description>比较文档 authoring 的原子 dry-run、#id 完整差异、move parity 与 CAS 持久化要求，防止应用层复制或掩盖底层语义。</Description>
+      </cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="xnl-ts">
+        <Description>执行一个 xnl.ts corrective track，并以公共 API、性质测试和跨包兼容证据反馈 Mission。</Description>
+      </cdt:Actor>
+    </cdt:ActorSet>
+  </cdt:ActorSets>
+
+  <TaskSpace id="space_build_xnl_programmable_document_platform" name="build-xnl-programmable-document-platform" version="1" cdt:child-mode="dag">
+    <Description>从前置基线、通用投影基座和 Document Unit，逐步推进到 Tiptap、Workbench、领域 DSL 与 Agent 协作验证。</Description>
+    <SubNodes>
+      <TaskGroup id="BASELINE" name="前置基线与设计冻结" status="DONE" order="0">
+        <Description>核对现有 SchemaEditor Mission、Tiptap 能力、XNL mutation/VFS/VCS 和 Halfcode Unit 公理，冻结不重复实现的公共边界。</Description>
+        <SubNodes>
+          <Task id="BASELINE-T1" name="观察 SchemaEditor 前置 Mission 与公共契约" status="DONE" order="0">
+            <Description>确认 ValueHost、EditorPresentation、Dialect、Presenter registry 和 structured authoring 的稳定面；记录仍在进行的前置任务及其阻断范围。</Description>
+          </Task>
+          <Task id="BASELINE-T2" name="盘点 Tiptap、x-id 与 XNL authoring 证据" status="DONE" order="1">
+            <Description>冻结旧 Tiptap 扩展能力、DOM x-id 残留、ProseMirror 事务、XNL identity/diff/apply、VFS/VCS 与 Workbench host writer 的实际边界。</Description>
+          </Task>
+          <Task id="BASELINE-T3" name="确认首批 Track 切片与行为 delta" status="DONE" order="2">
+            <Description>根据证据确认以下 candidate tracks 仍满足单一 owner、单向依赖和可独立验收，不在 Mission 内直接改代码。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="PROJECTION" name="XNL Projection Editor 基座" status="DONE" order="1">
+        <Description>建立 renderer-neutral 的 Domain XNL 投影、Interaction 翻译、ProjectionPlan 和 Presenter 扩展协议。</Description>
+        <SubNodes>
+          <Task id="PROJECTION-T1" name="创建并执行 XNL Projection Editor foundation track" status="DONE" order="0">
+            <Description>实现 contracts、recursive compiler、Presentation/Dialect、ProjectionPlan、diagnostics 和至少两个中立 Presenter adapter 测试；不得把 SchemaEditor 结构种类提升为通用模型。</Description>
+            <cdt:TrackLink state="bound" id="add-xnl-projection-editor-foundation" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="PROJECTION-T2" name="验证递归投影与双向规律前置条件" status="DONE" order="1">
+            <Description>验证 deterministic/immutable recursive projection、path/role/#id identity、lossy/unsupported fail-closed diagnostics、dependency scan 与 DEPA owner boundary；compile 与 Domain Command proposal 不计为 GetPut/PutGet round-trip。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="DOCUMENT" name="Halfcode Document Unit 与实例寻址" status="DONE" order="2">
+        <Description>扩展 Halfcode Unit 标准、loader/compiler/runtime 和 Scope assembly，恢复 x-id 的稳定实例地址语义。</Description>
+        <SubNodes>
+          <Task id="DOCUMENT-T1" name="创建并执行 Halfcode Document Unit track" status="DONE" order="0">
+            <Description>定义 kind=document、document registry、DocumentContract/root Scope、Component/Capsule 嵌入、#id/x-id/InstanceRef 和 runtime address registry，并更新规范、fixtures 和 lifecycle tests。</Description>
+            <cdt:TrackLink state="bound" id="add-halfcode-document-unit" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="DOCUMENT-T2" name="验证 Capsule 公理与 Scope 可见性" status="DONE" order="1">
+            <Description>确认 Document 是 Capsule 的具名 Unit 派生而非 Page/Component 别名；嵌套 capability 复用既有可见性、覆盖和 diagnostics。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="XNL" name="XNL Authoring 基础原语" status="DONE" order="3" cdt:actor-set="xnl-foundation-loop">
+        <Description>先在 xnl.ts 修复 mutation 与持久化的公共正确性边界，再允许 dg-cell-mvi 声明原子、revisioned 的 authoring session。</Description>
+        <SubNodes>
+          <Task id="XNL-T1" name="创建并执行 authoring-safe XNL mutation track" status="DONE" order="0">
+            <Description>保持 #id 作为节点匹配与 move 检测的 identity key，补齐 clone-based dry-run、valueBefore/precondition、严格 identity diagnostics、节点类型变化语义和 move parity/property tests；不得把 #id 当作普通可更新字段比较。</Description>
+            <cdt:TrackLink state="bound" id="harden-xnl-authoring-mutations" project-ref="xnl-ts"/>
+          </Task>
+          <Task id="XNL-T1B" name="封闭 strict identity replacement bypass" status="DONE" order="1">
+            <Description>修复 strict mutation batch 可通过整节点或容器 TREE_UPDATE 原地替换 element #id 的漏洞；保持 #id 作为 diff identity，不把它变成普通比较字段，并验证 identity replacement 只能由 delete+add 表达。</Description>
+            <cdt:TrackLink state="bound" id="reject-xnl-identity-replacement-bypass" project-ref="xnl-ts"/>
+          </Task>
+          <Task id="XNL-T2" name="创建并执行 revision-aware persistence track" status="DONE" order="2">
+            <Description>为 VFS/VCS authoring adapter 提供可观察的 atomic result、expected revision/CAS、flush/receipt 语义和失败不推进保证，不把 live revision 混同于 commit id。</Description>
+            <cdt:TrackLink state="bound" id="add-xnl-revisioned-persistence-primitives" project-ref="xnl-ts"/>
+          </Task>
+          <Task id="XNL-T3" name="验证 XNL authoring 前置条件" status="DONE" order="3">
+            <Description>以 canonical round-trip、重复 #id、跨层 move、stale persistence、失败原子性和浏览器安全入口验证两个上游 track 的公共契约。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="AUTHORING" name="Revisioned XNL Authoring Session" status="DONE" order="4">
+        <Description>把 Interaction、Domain Command、Candidate、diff、dry-run、validation、accepted snapshot 与 VFS/VCS 持久化串为唯一写入链。</Description>
+        <SubNodes>
+          <Task id="AUTHORING-T1" name="创建并执行 XNL Document authoring session track" status="DONE" order="0">
+            <Description>实现通用 ValueHost/session、atomic mutation batch、accept/reject/conflict、persisted revision feedback、source x-id metadata 和 host persistence ports。</Description>
+            <cdt:TrackLink state="bound" id="add-xnl-document-authoring-session" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="AUTHORING-T1B" name="封闭 Presenter runtime facet authority 边界" status="DONE" order="1">
+            <Description>建立代码侧显式、最小权限的 Presenter capability projection；runtime 阻止 raw 或未授予 host capability 被 Presenter 直接持有，并拒绝 granted method 返回 raw host 或 unowned object graph。显式 grant 的权限与内部 effect 由 trusted code-owned protocol 审查，不伪称 JavaScript runtime 可证明任意 closure purity；同时保留 class/prototype/mixin 与强类型 runtime 的 Halfcode 装配能力。</Description>
+            <cdt:TrackLink state="bound" id="harden-xnl-presenter-runtime-facet" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="AUTHORING-T2" name="验证单一 writer 与刷新恢复" status="DONE" order="2">
+            <Description>证明当前 Presenter 不直接拥有 XNL/VFS writer，mission-owned Presenter protocol 不授予 Domain、ValueHost、VFS 或 mutation authority，runtime 阻止 raw/ungranted capability 与 unowned return graph 越界；显式 grant 的内部 effect 作为代码审查边界。accepted result 可持久化并从 VFS/VCS 重载复现，并实跑 Interaction -> Command -> Candidate -> diff/dry-run/validate -> accept -> reproject 的 PutGet 语义一致性。真实 NodeView、embedded block 与 Agent consumer 分别留给后续 TIPTAP、WORKBENCH 与 COLLAB 阶段验证。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="TIPTAP" name="Tiptap Document Presenter" status="DONE" order="5">
+        <Description>迁移旧 Tiptap 功能为隔离的 Vue Presenter Adapter，并接入 Halfcode Document、x-id 和 authoring session。</Description>
+        <SubNodes>
+          <Task id="TIPTAP-T1" name="创建并执行 Tiptap Halfcode Document Presenter track" status="DONE" order="0">
+            <Description>实现 RichDocument XNL 与 ProseMirror model 直接投影、transaction 归一化、marks/blocks/table/code/Mermaid、Halfcode NodeView host、IME/undo/redo 和 round-trip tests。</Description>
+            <cdt:TrackLink state="bound" id="add-tiptap-halfcode-document-presenter" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="TIPTAP-T2" name="验证无 HTML/DOM authority" status="DONE" order="1">
+            <Description>扫描并验证正常 authoring 不经 HTML 反推 XNL、不通过 querySelector 设置 x-id，Tiptap local draft 不越过 ValueHost。</Description>
+          </Task>
+          <Task id="TIPTAP-T3" name="验证 Tiptap Presenter 双向规律" status="DONE" order="2">
+            <Description>在真实 lowering/parse、Presenter 与 accepted authoring 链路齐备后，实跑 normalize(lower(project(domain))) == normalize(domain) 的 GetPut，以及 accepted edit 重新投影与 Interaction 语义一致的 PutGet；lossy Presenter 必须产生显式 diagnostic。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="TIPTAP_BROWSER" name="Tiptap 浏览器 Authoring 原语补强" status="DONE" order="6" cdt:actor-set="foundation-loop">
+        <Description>依据 Workbench 的真实 Editor probe，在 adapter owner 中补齐 canonical table command/view、Mermaid NodeView 与安全 render Effect，再恢复产品 track。</Description>
+        <SubNodes>
+          <Task id="TIPTAP_BROWSER-T1" name="创建并执行浏览器 authoring primitive corrective track" status="DONE" order="0">
+            <Description>在 dg-cell-mvi-halfcode-tiptap-vue 提供可组合的 table authoring commands/view 与 Mermaid NodeView；安全 Mermaid render 只经 runtime 注入 Effect contract，保持 Domain XNL、transaction normalizer 和 authoring owner 不变。</Description>
+            <cdt:TrackLink state="bound" id="add-tiptap-browser-authoring-primitives" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="TIPTAP_BROWSER-T2" name="验证 Workbench public-root capability gate" status="DONE" order="1">
+            <Description>从 Workbench public-root alias 重跑真实 Editor probe，证明 table command/view、Mermaid NodeView、安全 render Effect 与既有 Component/Capsule lifecycle 同时可用，无 deep import 或第二 writer。</Description>
+          </Task>
+          <Task id="TIPTAP_BROWSER-T3" name="提供 RichDocument canonical semantic materializer" status="DONE" order="2">
+            <Description>依据 Workbench T2.2 真实集成证据，在 foundation owner 提供 package-root canonical translator 与 runtime-first semantic candidate materializer，覆盖 normalizer 的八类 edit 并接入 existing trusted host/allocator chain。</Description>
+            <cdt:TrackLink state="bound" id="add-rich-document-semantic-materializer" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="TIPTAP_BROWSER-T4" name="修复 canonical listItem 浏览器序列化" status="DONE" order="3">
+            <Description>依据 Workbench 真实 Editor 证据，在 Tiptap adapter owner 为保留 block+ grammar 的 listItem 补受控 DOM serializer，收窄 serializer 与 reverse-authoring authority 的测试边界，并以 package-root/Workbench 浏览器消费链验收。</Description>
+            <cdt:TrackLink state="bound" id="fix-tiptap-list-item-dom-serialization" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="TIPTAP_BROWSER-T5" name="绑定 local draft 到真实 EditorState" status="DONE" order="4">
+            <Description>依据 Workbench 真实 transaction 证据，在 Tiptap adapter owner 提供 package-root EditorState binding，使 Editor、draft 与 transaction 共享 schema lineage，并保持既有 revision-free Interaction、composition/history/reproject 与 authority 边界。</Description>
+            <cdt:TrackLink state="bound" id="bind-tiptap-draft-to-editor-state" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="TIPTAP_BROWSER-T6" name="修复连续 accepted semantic edit materialization" status="DONE" order="5">
+            <Description>依据 Workbench direct control evidence，在 foundation owner 修复第二笔基于最新 accepted RichDocument 的 semantic materialization，并以 direct trusted-host 与 real EditorState-bound 两条链验收。</Description>
+            <cdt:TrackLink state="bound" id="fix-rich-document-sequential-semantic-materialization" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="WORKBENCH" name="Workbench 可编程文档产品" status="DONE" order="7" cdt:actor-set="workbench-product-loop">
+        <Description>用真实微型 AppBundle 证明文档正文、Halfcode 交互区块、Scope capability 和 VFS/VCS 可以共同工作。</Description>
+        <SubNodes>
+          <Task id="WORKBENCH-T1" name="创建并执行 Workbench 可编程文档集成 track" status="DONE" order="0">
+            <Description>迁移历史 Tiptap 产品能力，构建 RichDocument 与混合 Component/Capsule demo，接入 Document Unit、authoring session 和真实浏览器 E2E。</Description>
+            <cdt:TrackLink state="bound" id="integrate-programmable-document-workbench" project-ref="eidolon-workbench"/>
+          </Task>
+          <Task id="WORKBENCH-T2" name="回流 foundation 缺口" status="DONE" order="1">
+            <Description>将应用中发现的身份、transaction、Scope、Presenter 或 persistence 抽象缺口写为 evidence；需要底层修正时受控新增 dg-cell-mvi corrective track。</Description>
+          </Task>
+          <Task id="WORKBENCH-T2A" name="补齐 IndexedDB revisioned VFS authority" status="DONE" order="2">
+            <Description>在 xnl-vfs owner 中实现可重开、跨实例原子 CAS 的 browser-persistent RevisionedVfsAuthority；Workbench 不以私有 load/save wrapper 模拟一致性。</Description>
+            <cdt:TrackLink state="bound" id="add-indexeddb-revisioned-vfs-authority" project-ref="xnl-ts"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="DOMAIN" name="领域 DSL 投影编辑验证" status="DONE" order="8" cdt:actor-set="workbench-product-loop">
+        <Description>用保持 UI-free 的非 Flow XNL 领域 DSL 证明模板化多 Presenter 编辑，不为每类 DSL 专项开发编辑器。</Description>
+        <SubNodes>
+          <Task id="DOMAIN-T1" name="创建并执行领域 XNL Projection Editor demo track" status="DONE" order="0">
+            <Description>以系统设计或本体 DSL 组合 Tiptap、SchemaEditor、Graph 和 Halfcode Component Presenter，编辑后回写完整有效的领域 XNL Mutation。</Description>
+            <cdt:TrackLink state="bound" id="add-xnl-domain-projection-editor-demo" project-ref="eidolon-workbench"/>
+          </Task>
+          <Task id="DOMAIN-T2" name="验证更换 Presentation 而非重写 Editor" status="DONE" order="1">
+            <Description>同一 Domain XNL 至少使用两套 Presentation 或业务 Scope binding，并验证领域源不含 Vue/Presenter implementation。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="COLLAB" name="多 Agent 文档协作" status="DONE" order="9" cdt:actor-set="workbench-product-loop">
+        <Description>让人类和多个 Agent 通过相同 proposal/revision/mutation 协议协作，并沉淀审计与冲突体验。</Description>
+        <SubNodes>
+          <Task id="COLLAB-T1" name="创建并执行 Agent-assisted XNL authoring track" status="DONE" order="0">
+            <Description>实现 actor/correlation/base-revision/target/rationale proposal、dry-run preview、accept/reject/conflict、权限和 VCS provenance；不直接修改 Presenter state。</Description>
+            <cdt:TrackLink state="bound" id="add-agent-assisted-xnl-document-authoring" project-ref="eidolon-workbench"/>
+          </Task>
+          <Task id="COLLAB-T2" name="验证并发冲突与人机协作" status="DONE" order="1">
+            <Description>覆盖两个 Agent 与人工交错编辑、stale revision、拒绝、重提和刷新恢复；根据证据决定是否需要后续 CRDT/OT Mission。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="VERIFY" name="Mission 验证与收口" status="DONE" order="10">
+        <Description>跨仓库验证通用基座、Document Unit、Tiptap、领域 DSL、Agent 协作和事实源边界。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="执行跨仓库成功判据验证" status="DONE" order="0">
+            <Description>检查所有 bound tracks、DSL/behavior、package graph、round-trip/property/unit/typecheck/build/browser E2E、VFS/VCS reload、mutation writer residue 和 DEPA invariants。</Description>
+          </Task>
+          <Task id="VERIFY-T1A" name="封闭 Schema Editor native drag completion 偏差" status="DONE" order="1">
+            <Description>依据全量 Flow E2E 观测，在 Presenter owner 中补充可取消的 native onEnd fallback，保持 exactly-once item.move 与单向 mutation authority。</Description>
+            <cdt:TrackLink state="bound" id="harden-schema-editor-drag-completion" project-ref="dg-cell-mvi"/>
+          </Task>
+          <Task id="VERIFY-T2" name="形成收口与后续演进判断" status="DONE" order="2">
+            <Description>确认 Mission 节点均完成或明确 supersede，记录直接 Route、Flow Editor 接入和 CRDT/OT 是否需要独立后续 Mission。</Description>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Dag for="space_build_xnl_programmable_document_platform">
+      <Node id="PROJECTION"><After ref="BASELINE"/></Node>
+      <Node id="DOCUMENT"><After ref="BASELINE"/></Node>
+      <Node id="XNL"><After ref="BASELINE"/></Node>
+      <Node id="AUTHORING"><After ref="PROJECTION"/><After ref="DOCUMENT"/><After ref="XNL"/></Node>
+      <Node id="TIPTAP"><After ref="AUTHORING"/></Node>
+      <Node id="TIPTAP_BROWSER"><After ref="TIPTAP"/></Node>
+      <Node id="WORKBENCH"><After ref="TIPTAP_BROWSER"/></Node>
+      <Node id="DOMAIN"><After ref="WORKBENCH"/></Node>
+      <Node id="COLLAB"><After ref="DOMAIN"/></Node>
+      <Node id="VERIFY"><After ref="COLLAB"/></Node>
+    </Dag>
+  </Schedule>
+
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-tracks="10" on-limit="checkpoint" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

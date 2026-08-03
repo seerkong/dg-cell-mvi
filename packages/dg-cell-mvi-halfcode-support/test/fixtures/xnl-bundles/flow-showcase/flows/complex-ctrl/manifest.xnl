@@ -1,4 +1,4 @@
-<InstantFlow #dg.demo.flow.ComplexCtrl apiVersion="depa.flows/v1" version="0.1.0" (
+<InstantCtrlFlow #dg.demo.flow.ComplexCtrl apiVersion="depa.flows/v1" version="0.1.0" (
   <FlowContract #dg.demo.flow.ComplexCtrl {
     input = "vfs://./flow-code/complex.ctrl.types.ts#ComplexCtrlInput"
     output = "vfs://./flow-code/complex.ctrl.types.ts#ComplexCtrlOutput"

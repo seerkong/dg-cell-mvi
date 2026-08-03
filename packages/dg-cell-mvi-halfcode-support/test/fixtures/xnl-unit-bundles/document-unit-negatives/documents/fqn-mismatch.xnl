@@ -1,0 +1,7 @@
+<Document #dg.docs.negative.ActualName (
+  <DocumentContract { mode = "view" }>
+  <Scope #root>
+  <DocumentPresentation { id = "fqn-mismatch" }>
+) [
+  <Paragraph #body ["body"]>
+]>

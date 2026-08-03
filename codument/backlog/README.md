@@ -8,7 +8,13 @@
 
 | 优先级 | 工作项 | 关联 behavior/需求 | owner 文档 | track | 状态 | AI 自主度 | 阻塞 | 最后检查 |
 |---|---|---|---|---|---|---|---|---|
-| P0 | `<一句话>` | `behaviors/<cap>` 或 `<待澄清>` | `docs/...` 或 `<无>` | `tracks/<id>` 或 `<未开>` | `needs-track` | `blocked` | `<占位未替换>` | `<YYYY-MM-DD>` |
+| P1 | 建立可复用的领域 DSL onboarding/compiler 工具链，让新增 XNL DSL 主要提供 Dialect、classifier、transformer registry 与 Presentation，而不重写 Editor | `behaviors/xnl-projection-editor-foundation.xml` | `docs/halfcode/dsl-bundle/spec/frontend/xnl-projection/` | `<未开>` | `needs-track` | `plan-first` | 需要选择首批非 SystemDesign 领域 DSL，并冻结“接入而非专项开发 Editor”的验收标准 | `2026-08-03` |
+| P1 | 将现有 Flow Editor 重构为 XnlProjectionEditor 的 Graph Presenter/领域 adapter，保留 CtrlFlowEditor 与 DAGFlowEditor 产品交互 | `behaviors/xnl-projection-editor-foundation.xml`、`behaviors/workbench-flow-schema-editor.xml`、`behaviors/workbench-flow-structure-authoring.xml` | `docs/halfcode/dsl-bundle/spec/frontend/xnl-projection/`、`docs/halfcode/dsl-bundle/spec/flow/` | `<未开>` | `needs-track` | `plan-first` | 需先盘点 Flow 专用 ValueHost、mutation、projection 与通用基座的重叠和迁移边界；应作为独立 Mission | `2026-08-03` |
+| P1 | 把 Agent proposal/review 基座产品化为真实多 Agent 文档生成、修改、权限与调度体验 | `eidolon-workbench:behaviors/agent-assisted-xnl-authoring.xml`、`behaviors/xnl-document-authoring-session.xml` | `docs/halfcode/dsl-bundle/spec/frontend/authoring/` | `<未开>` | `needs-track` | `ask-first` | 需确认 Agent transport、身份认证、Runtime 接入、任务编排和用户交互边界 | `2026-08-03` |
+| P2 | 为 Document Unit 设计直接 Route target 与 URL/open-context 契约 | `behaviors/dg-cell-mvi-halfcode-unit-dsl.xml` | `docs/halfcode/dsl-bundle/spec/frontend/document.md` | `<未开>` | `needs-track` | `research-only` | 当前 Page/Document host 已满足场景；缺少必须绕过 Page 的真实路由需求 | `2026-08-03` |
+| P2 | 评估并设计 CRDT/OT、实时光标与离线并发合并能力 | `behaviors/xnl-document-authoring-session.xml` | `docs/halfcode/dsl-bundle/spec/frontend/authoring/` | `<未开>` | `needs-track` | `research-only` | 需要真实多人并发、离线编辑和冲突合并需求；当前 revision gate + VFS/VCS 已满足已知场景 | `2026-08-03` |
+| P2 | 为 Workbench Flow Editor 新增 AICtrlWorkflow 产品 adapter | `behaviors/halfcode-profiled-flow-runtime.xml`、`eidolon-workbench:behaviors/workbench-flow-schema-editor.xml` | `docs/halfcode/dsl-bundle/spec/flow/` | `<未开>` | `needs-track` | `ask-first` | Workbench 历史上未支持 AIAgentWorkflow；需确认产品入口、节点 palette、配置与运行时需求 | `2026-08-03` |
+| P2 | 清理 Workbench Flow Editor 对 `visual-graph/src` 的跨 package 深层导入，建立稳定 public exports | `<待补 package-boundary behavior>` | `<待补 visual-graph owner 文档>` | `<未开>` | `needs-track` | `plan-first` | 需先定义 visual-graph 公共 surface，并盘点所有现存 deep import 消费方 | `2026-08-03` |
 
 ## AI 自主度（沿用 codument 校验/审查语义）
 

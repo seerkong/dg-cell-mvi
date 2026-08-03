@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noErrorTruncation": true
+  },
+  "include": ["./document-runtime-public-surface.typecheck.ts"]
+}

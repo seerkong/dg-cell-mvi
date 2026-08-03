@@ -40,6 +40,7 @@ XNL 节点完整形态：`<Tag #id { 属性 } ( 单一区段 ) [ 列表段 ]>`�
   <Units [
     <Unit kind="page" fqn="dg.admin.basic.UsersPage" src="vfs://./pages/users/manifest.xnl">
     <Unit kind="component" fqn="dg.materials.StatusBadge" src="vfs://./components/status-badge.xnl">
+    <Unit kind="document" fqn="dg.docs.SystemDesign" src="vfs://./documents/system-design.xnl">
   ]>
 )>
 ```
@@ -50,7 +51,7 @@ XNL 节点完整形态：`<Tag #id { 属性 } ( 单一区段 ) [ 列表段 ]>`�
 - `( <Units [...]> )`：Units 是单一区段 → `()`；其内 Unit 是列表 → `[]`。`kind` 声明意图，`fqn` 是注册表身份，`src` 指向目标 manifest 或单文件单元；**kind 真源是目标根节点 tag**，不符报 `HALFCODE_UNIT_KIND_MISMATCH`。
 - 单文件 App：`(...)` 内并列内联各域区段（`<Routes>`、`<Wiring>`、`<Config>`…）+ `<Units>`，与域文件根节点同型（M-N6）。
 
-### Page / Component 的**定义**（单元根）
+### Page / Component / Document 的**定义**（单元根）
 
 > 这里是单元的**定义**（`<Page>` / `<Component>` 根节点，声明一个 FQN 单元长什么样）。单元的**使用**是另一回事——在别的元素树里用 FQN tag 实例化（`<dg.materials.CrudTable #t>`，见 §3）。定义一次、使用多次。
 
@@ -75,6 +76,11 @@ XNL 节点完整形态：`<Tag #id { 属性 } ( 单一区段 ) [ 列表段 ]>`�
 ```
 
 同一个根 tag（`Page`/`Component`）覆盖单/多文件两形态；靠**内容**区分（M-N1）：有内联域区段 = 单文件；无内联域 = 多文件薄清单（域按目录中各 `<域名>.xnl` 的根 tag 发现）。manifest 是薄清单：FQN + version（元数据位）+ 默认 title。**没有** route/mount/props——路由归 App，输入契约归 contracts。
+
+`Document` 是同级具名 Unit，但它的边界是 source/revision type/mode/parameters。
+Document 根 `[]` 是 ordered Domain XNL source，不是 Page/Component `elements`
+域；外部 source 用唯一 `DocumentSource.ref`。Document 的完整规则见
+[Document Unit](document.md)。
 
 ## 3. 元素树节点（elements 域）
 
@@ -391,6 +397,6 @@ Config 仍是纯静态数据：不放函数、effect 实现、graph 对象或 ru
 
 ## 9. 保留字清单
 
-结构词（codec 白名单）：`AppBundle` `Page` `Component` `Units` `Unit` `Elements` `Capsule` `Slot` `Slots` `Contracts` `PageContract` `ComponentContract` `ElementContract` `Props` `Exposes` `Accepts` `Sends` `Requires` `SlotDef` `Scopes` `Scope` `MessagePolicy` `MessageRule` `Commands` `Command` `CommandsDef` `CommandDef` `Events` `Event` `EventsDef` `EventDef` `EffectBindings` `FuncEffect` `InterfaceEffect` `DataGraphBindings` `GraphObject` `GraphMount` `NodeBindings` `ComputedBinding` `ProcessorBinding` `AsyncBinding` `ConsumerBinding` `GraphExtension` `DataGraph` `GraphModule` `Inputs` `State` `Outputs` `Internals` `GraphSlot` `GraphNodes` `SignalNode` `ComputedNode` `ProcessorNode` `AsyncNode` `ConsumerNode` `DataGraphSeed` `GraphSeed` `Runtime` `RuntimeInstance` `Routes` `Route` `Wiring` `Wire` `Config` `ConfigEntry` `Imports` `Import` `Prefabs` + 各域根节点。
+结构词（codec 白名单）：`AppBundle` `Page` `Component` `Document` `Units` `Unit` `Elements` `Capsule` `Slot` `Slots` `Contracts` `PageContract` `ComponentContract` `DocumentContract` `DocumentSource` `DocumentPresentation` `ElementContract` `Props` `Exposes` `Accepts` `Sends` `Requires` `SlotDef` `Scopes` `Scope` `MessagePolicy` `MessageRule` `Commands` `Command` `CommandsDef` `CommandDef` `Events` `Event` `EventsDef` `EventDef` `EffectBindings` `FuncEffect` `InterfaceEffect` `DataGraphBindings` `GraphObject` `GraphMount` `NodeBindings` `ComputedBinding` `ProcessorBinding` `AsyncBinding` `ConsumerBinding` `GraphExtension` `DataGraph` `GraphModule` `Inputs` `State` `Outputs` `Internals` `GraphSlot` `GraphNodes` `SignalNode` `ComputedNode` `ProcessorNode` `AsyncNode` `ConsumerNode` `DataGraphSeed` `GraphSeed` `Runtime` `RuntimeInstance` `Routes` `Route` `Wiring` `Wire` `Config` `ConfigEntry` `Imports` `Import` `Prefabs` + 各域根节点。
 
 本规范只定义当前 canonical 标签与字段。已删除的历史标签不属于输入协议，也不会进入 loader、compiler 或 fixture 的兼容分支。

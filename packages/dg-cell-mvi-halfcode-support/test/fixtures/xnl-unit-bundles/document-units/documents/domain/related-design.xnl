@@ -1,0 +1,5 @@
+<RelatedDesign #related-design [
+  <Summary #summary [
+    "Related UI-free document."
+  ]>
+]>

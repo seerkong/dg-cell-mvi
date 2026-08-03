@@ -1,0 +1,3 @@
+<Page #dg.docs.negative.ActualPage version="1.0.0" [
+  <h1 #title { text = "Not a Document" }>
+]>

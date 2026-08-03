@@ -17,7 +17,8 @@
 import type { SerializableValue, UnitFqn, UnitKind } from './common';
 import type { HalfcodeRef } from './refs';
 import type { InlineProps, ElementsSpec } from './element';
-import type { UnitContractSpec } from './contracts';
+import type { DocumentContractSpec, DocumentPresentationSpec, UnitContractSpec } from './contracts';
+import type { DocumentSourceDescriptor, DocumentUnitPlan } from './document';
 import type { MessagePolicySpec } from './messages';
 import type { DataGraphScopePlan } from './dataGraph';
 import type { CallableEffectBindingsSpec, RuntimeScopeBindingSpec } from './runtime';
@@ -75,6 +76,27 @@ export interface UnitCompileDomainDocument {
   nodes: UnitDomainNodeSpec[];
 }
 
+export interface UnitCompileDocumentSkeletonNode {
+  readonly kind: 'domain-node' | 'component-embed' | 'capsule' | 'document-embed';
+  readonly tag: string;
+  readonly id?: string;
+  readonly xId?: string;
+  readonly projectionRole?: string;
+  readonly scopeId?: string;
+  readonly scope?: RuntimeScopeBindingSpec;
+  readonly inlineProps?: Readonly<Record<string, unknown>>;
+  readonly children: readonly UnitCompileDocumentSkeletonNode[];
+}
+
+export interface UnitCompileDocumentProjection {
+  readonly sourceDescriptor?: DocumentSourceDescriptor;
+  readonly contract?: DocumentContractSpec;
+  readonly rootNodeId: string;
+  readonly rootScope?: RuntimeScopeBindingSpec;
+  readonly presentation?: DocumentPresentationSpec;
+  readonly skeleton: readonly UnitCompileDocumentSkeletonNode[];
+}
+
 /** Contract-level view of one loaded unit (both folder and single-file forms). */
 export interface UnitCompileUnit {
   fqn: UnitFqn;
@@ -87,6 +109,8 @@ export interface UnitCompileUnit {
   domains: Record<string, UnitCompileDomainDocument>;
   elements?: ElementsSpec;
   contract?: UnitContractSpec;
+  /** Present only for Document units; compiler reads only the structured plan view. */
+  document?: UnitCompileDocumentProjection;
   /** Parsed predefined Scope bindings supplied by LoadedHalfcodeUnit. */
   scopeRuntimeBindings?: RuntimeScopeBindingSpec[];
 }
@@ -325,6 +349,7 @@ export interface UnitCompileDiagnostic {
 export interface UnitCompilePlans {
   adminShellPlan: AdminShellPlanV3;
   renderPlans: UnitRenderPlan[];
+  documentPlans: DocumentUnitPlan[];
   wiringPlan: WiringPlan;
   scopeRuntimePlans: ScopeRuntimePlan[];
   messageDispatchPlan: MessageDispatchPlan;

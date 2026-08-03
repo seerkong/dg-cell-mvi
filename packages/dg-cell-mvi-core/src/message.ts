@@ -46,7 +46,7 @@ export function eventMessage<TPayload>(
 export function appMessageToEvent<TPayload>(message: AppMessage<TPayload>): AppEvent<TPayload> {
   const id = messageId(message.type);
   return {
-    type: `${message.kind === 'command' ? 'commands' : 'events'}://#${id}`,
+    type: `${message.kind}://#${id}`,
     payload: message.payload,
     message: {
       kind: message.kind,
@@ -59,9 +59,9 @@ export function appMessageToEvent<TPayload>(message: AppMessage<TPayload>): AppE
 
 /** Decode only canonical kind-preserving transport events. */
 export function appEventToMessage<TPayload>(event: AppEvent<TPayload>): AppMessage<TPayload> | undefined {
-  const match = /^(commands|events):\/\/#([^/]+)$/.exec(event.type);
+  const match = /^(command|event):\/\/#([^/]+)$/.exec(event.type);
   if (!match) return undefined;
-  const kind = match[1] === 'commands' ? 'command' : 'event';
+  const kind = match[1] as AppMessageKind;
   const id = match[2];
   if (event.message && !matchesTransportIdentity(event.message, kind, id)) return undefined;
   return {

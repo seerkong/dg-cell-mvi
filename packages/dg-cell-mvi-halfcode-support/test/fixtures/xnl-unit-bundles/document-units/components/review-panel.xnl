@@ -1,0 +1,11 @@
+<Component #dg.docs.ReviewPanel version="1.0.0" (
+  <Contracts #review-panel-contracts (
+    <ComponentContract #dg.docs.ReviewPanel (
+      <Props {
+        tone = "string?"
+      }>
+    )>
+  )>
+) [
+  <div #review-panel-shell>
+]>

@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-halfcode-element-plus",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Canonical Element Plus materials and component registry for dg-cell-mvi-halfcode.",
   "main": "./src/index.ts",
@@ -10,9 +14,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
-    "dg-cell-mvi-halfcode-vue": "^0.1.0",
+    "dg-cell-mvi-halfcode-vue": "^0.1.1",
     "monaco-editor": "^0.55.1",
     "sortablejs": "^1.15.6",
     "vanilla-jsoneditor": "^3.12.0"
@@ -28,9 +35,9 @@
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/sortablejs": "^1.15.9",
-    "dg-cell-mvi-halfcode-contract": "^0.1.0",
-    "dg-cell-mvi-halfcode-logic": "^0.1.0",
-    "dg-cell-mvi-halfcode-support": "^0.1.0",
+    "dg-cell-mvi-halfcode-contract": "^0.1.1",
+    "dg-cell-mvi-halfcode-logic": "^0.1.1",
+    "dg-cell-mvi-halfcode-support": "^0.1.1",
     "element-plus": "^2.11.4",
     "jsdom": "^27.4.0",
     "typescript": "^5.4.5",

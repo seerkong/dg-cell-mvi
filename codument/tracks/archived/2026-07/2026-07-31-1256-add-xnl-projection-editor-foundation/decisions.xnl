@@ -1,0 +1,94 @@
+<decisions #add-xnl-projection-editor-foundation [
+  <decision #projection-package-ownership {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>XNL Projection Editor foundation 应属于哪些物理包？</?>
+    <options [
+      <option {
+        key = "existing-halfcode-layers"
+        recommended = true
+      } (
+        <title ?>现有 Halfcode 三层 capsule</?>
+        <description ?>分别在 contract、logic、support 内新增 xnl-projection 公开 capsule。</?>
+        <tradeoff ?>共享既有包版本；未来只有出现独立发布需求时再拆包。</?>
+      )>
+      <option {
+        key = "new-package-family"
+      } (
+        <title ?>新建三组 npm 包</?>
+        <description ?>单独创建 projection contract/logic/support 包。</?>
+        <tradeoff ?>边界更显眼，但当前会增加包、构建和依赖维护成本。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Mission 自动执行，依据现有包依赖与实际代码选择。</?>
+      <decision-text ?>采用现有 Halfcode 三层中的独立 xnl-projection capsule。</?>
+      <rationale ?>当前已有正确单向依赖与发布入口，新包没有独立生命周期证据。</?>
+      <evidence ?>halfcode contract/logic/support package manifests 与现有 schema-editor capsule。</?>
+    )>
+  )>
+
+  <decision #projection-domain-model {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>通用 ProjectionPlan 是否复用 SchemaEditor 的结构种类？</?>
+    <options [
+      <option {
+        key = "open-domain-classification"
+        recommended = true
+      } (
+        <title ?>开放领域分类</?>
+        <description ?>Plan 节点只固定 domain ref、classification、presenter、payload、children 与 diagnostics。</?>
+        <tradeoff ?>各 Dialect 需显式提供分类和 transformer，但不会被表单结构绑架。</?>
+      )>
+      <option {
+        key = "reuse-schema-editor-kinds"
+      } (
+        <title ?>复用表单结构 kind</?>
+        <description ?>把所有领域节点映射为 group/field/collection/map/union。</?>
+        <tradeoff ?>实现快，但会把 SchemaEditor 的局部语言误当作通用领域模型。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>Mission 与用户已明确 SchemaEditor 不是通用内部模型。</?>
+      <decision-text ?>采用开放 classification id/traits；SchemaEditor 作为后续 Presenter/adapter 消费者。</?>
+      <rationale ?>领域 XNL、富文档、图和表单具有不同结构语义，通用层只固定投影协议。</?>
+      <evidence ?>Mission design 的 XnlProjectionEditor 分层与 SchemaEditor 非目标。</?>
+    )>
+  )>
+
+  <decision #projection-code-data-boundary {
+    priority = "P0"
+    status = "decided"
+    durable_candidate = true
+  } (
+    <question ?>Presentation、Dialect 与 Presenter implementation 如何分离？</?>
+    <options [
+      <option {
+        key = "data-refs-code-registries"
+        recommended = true
+      } (
+        <title ?>纯数据引用与代码 registry</?>
+        <description ?>Presentation 只保存 stable id/options；Dialect processors 与 Presenter adapters 由 runtime registry 绑定。</?>
+        <tradeoff ?>需要显式装配 runtime，但可保持可序列化、可覆盖和强类型代码实现。</?>
+      )>
+      <option {
+        key = "embed-implementations"
+      } (
+        <title ?>配置嵌入函数或组件</?>
+        <description ?>直接在 Presentation/config 放 transformer 或 component。</?>
+        <tradeoff ?>破坏 DSL/实现分离、序列化与 Scope 装配。</?>
+      )>
+    ]>
+    <answer (
+      <raw-answer ?>用户已确认 stable presenter id 与 transformer registry 的 DEPA 设计。</?>
+      <decision-text ?>Presentation 保持纯数据；所有实现由代码 registry 和 runtime 提供。</?>
+      <rationale ?>满足 output = fn(runtime,input,config)，防止 renderer、writer 或 effect 混入事实数据。</?>
+      <evidence ?>DEPA attractor 与既有 SchemaEditor Dialect/Presentation 设计。</?>
+    )>
+  )>
+]>

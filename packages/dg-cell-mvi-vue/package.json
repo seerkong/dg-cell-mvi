@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-vue",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "UI-library-neutral Vue 3 adaptation of dg-cell-mvi-crud: the useCrud composable + the UiRegistry interface/injection keys + UI-neutral helpers (DgRender/exportCsv/cellResolve). Zero UI-library dependency — the concrete Element impl lives in the Element UI package.",
   "main": "./src/index.ts",
@@ -10,9 +14,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
-    "dg-cell-mvi-core": "^0.1.0",
-    "dg-cell-mvi-crud": "^0.1.0",
+    "dg-cell-mvi-core": "^0.1.1",
+    "dg-cell-mvi-crud": "^0.1.1",
     "depa-data-graph-core": "^1.0.1",
     "depa-data-graph-vue": "^1.0.1"
   },

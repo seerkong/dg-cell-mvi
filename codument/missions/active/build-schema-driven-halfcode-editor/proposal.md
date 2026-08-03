@@ -22,7 +22,7 @@
 - 在 support 中实现 pure `EditorPlan -> canonical shell App Bundle` lowering 与独立 ValueHost/session；在 Vue/Element Plus adapters 中实现动态 collection item template 和默认 presenters。
 - 提供 schema-only、schema + presentation overlay、custom dialect/full editor 三档用法。
 - 让 flow-level config 与 node-level config 使用同一基座，并通过可选预制 `EditorPresentation` 控制体验。
-- 完整迁移 InstantFlow、WorkFlow、BizProcess、EagerDataFlow 配置编辑，消除默认 JSON textarea authoring。
+- 完整迁移 InstantCtrlFlow、WorkCtrlFlow、BPCtrlFlow、EagerDataFlow 配置编辑，消除默认 JSON textarea authoring。
 - 用相同 `user.phone` 业务语义在业务 A/B 绑定不同 transformer/组件，证明业务定制与组件沉淀可复用。
 
 ## 非目标

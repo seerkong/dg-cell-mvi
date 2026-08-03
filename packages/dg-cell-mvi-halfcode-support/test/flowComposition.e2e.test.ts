@@ -12,15 +12,15 @@ import {
 import type {
   DurableChildFlowHandle,
   DurableChildFlowResolver,
-  WorkFlowSnapshot,
-  WorkFlowStore,
-} from 'work-flow-contract';
+  WorkCtrlFlowSnapshot,
+  WorkCtrlFlowStore,
+} from 'work-ctrl-flow-contract';
 import {
   createHalfcodeAppRuntime,
   loadHalfcodeUnitBundle,
-  type BizProcessHandle,
-  type InstantFlowHandle,
-  type WorkFlowHandle,
+  type BPCtrlFlowHandle,
+  type InstantCtrlFlowHandle,
+  type WorkCtrlFlowHandle,
 } from '../src';
 
 function memoryResolver(files: Record<string, string>): ImportResolver {
@@ -43,14 +43,14 @@ function memoryResolver(files: Record<string, string>): ImportResolver {
   };
 }
 
-class MemoryWorkFlowStore implements WorkFlowStore {
-  private readonly snapshots = new Map<string, WorkFlowSnapshot>();
+class MemoryWorkCtrlFlowStore implements WorkCtrlFlowStore {
+  private readonly snapshots = new Map<string, WorkCtrlFlowSnapshot>();
 
   async load(treeId: string) {
     return this.snapshots.get(treeId);
   }
 
-  async save(snapshot: WorkFlowSnapshot) {
+  async save(snapshot: WorkCtrlFlowSnapshot) {
     this.snapshots.set(snapshot.treeId, structuredClone(snapshot));
   }
 
@@ -94,70 +94,70 @@ class RecordingDurableChildren implements DurableChildFlowResolver {
 const files = {
   '/flow/manifest.xnl': `<AppBundle #demo.flow.Composition (
     <Units [
-      <Unit kind="instant-flow" fqn="demo.flow.InstantParent" src="vfs://./parents/instant/manifest.xnl">
-      <Unit kind="instant-flow" fqn="demo.flow.InstantChild" src="vfs://./children/instant/manifest.xnl">
-      <Unit kind="instant-flow" fqn="demo.flow.MismatchedParent" src="vfs://./parents/mismatch/manifest.xnl">
-      <Unit kind="instant-flow" fqn="demo.flow.MissingParent" src="vfs://./parents/missing/manifest.xnl">
-      <Unit kind="work-flow" fqn="demo.flow.WorkSyncParent" src="vfs://./parents/work-sync/manifest.xnl">
-      <Unit kind="work-flow" fqn="demo.flow.WorkDurableParent" src="vfs://./parents/work-durable/manifest.xnl">
-      <Unit kind="biz-process" fqn="demo.flow.BizSyncParent" src="vfs://./parents/biz-sync/manifest.xnl">
-      <Unit kind="biz-process" fqn="demo.flow.BizDurableParent" src="vfs://./parents/biz-durable/manifest.xnl">
-      <Unit kind="work-flow" fqn="demo.flow.DurableChild" src="vfs://./children/durable/manifest.xnl">
+      <Unit kind="instant-ctrl-flow" fqn="demo.flow.InstantParent" src="vfs://./parents/instant/manifest.xnl">
+      <Unit kind="instant-ctrl-flow" fqn="demo.flow.InstantChild" src="vfs://./children/instant/manifest.xnl">
+      <Unit kind="instant-ctrl-flow" fqn="demo.flow.MismatchedParent" src="vfs://./parents/mismatch/manifest.xnl">
+      <Unit kind="instant-ctrl-flow" fqn="demo.flow.MissingParent" src="vfs://./parents/missing/manifest.xnl">
+      <Unit kind="work-ctrl-flow" fqn="demo.flow.WorkSyncParent" src="vfs://./parents/work-sync/manifest.xnl">
+      <Unit kind="work-ctrl-flow" fqn="demo.flow.WorkDurableParent" src="vfs://./parents/work-durable/manifest.xnl">
+      <Unit kind="bp-ctrl-flow" fqn="demo.flow.BizSyncParent" src="vfs://./parents/biz-sync/manifest.xnl">
+      <Unit kind="bp-ctrl-flow" fqn="demo.flow.BizDurableParent" src="vfs://./parents/biz-durable/manifest.xnl">
+      <Unit kind="work-ctrl-flow" fqn="demo.flow.DurableChild" src="vfs://./children/durable/manifest.xnl">
     ]>
   )>`,
   '/flow/parents/instant/manifest.xnl': controlFlow(
-    'InstantFlow',
+    'InstantCtrlFlow',
     'demo.flow.InstantParent',
-    '<CallFlow #child { flow = "instant-flow://demo.flow.InstantChild" }>',
+    '<CallFlow #child { flow = "instant-ctrl-flow://demo.flow.InstantChild" }>',
   ),
   '/flow/children/instant/manifest.xnl': controlFlow(
-    'InstantFlow',
+    'InstantCtrlFlow',
     'demo.flow.InstantChild',
     '<Return #done { src = "vfs://./child-code.ts#answer" }>',
   ),
   '/flow/parents/mismatch/manifest.xnl': controlFlow(
-    'InstantFlow',
+    'InstantCtrlFlow',
     'demo.flow.MismatchedParent',
-    '<CallFlow #child { flow = "work-flow://demo.flow.InstantChild" }>',
+    '<CallFlow #child { flow = "work-ctrl-flow://demo.flow.InstantChild" }>',
   ),
   '/flow/parents/missing/manifest.xnl': controlFlow(
-    'InstantFlow',
+    'InstantCtrlFlow',
     'demo.flow.MissingParent',
-    '<CallFlow #child { flow = "instant-flow://demo.flow.Absent" }>',
+    '<CallFlow #child { flow = "instant-ctrl-flow://demo.flow.Absent" }>',
   ),
   '/flow/parents/work-sync/manifest.xnl': controlFlow(
-    'WorkFlow',
+    'WorkCtrlFlow',
     'demo.flow.WorkSyncParent',
-    '<CallFlow #child { flow = "instant-flow://demo.flow.InstantChild" }>',
+    '<CallFlow #child { flow = "instant-ctrl-flow://demo.flow.InstantChild" }>',
   ),
   '/flow/parents/work-durable/manifest.xnl': controlFlow(
-    'WorkFlow',
+    'WorkCtrlFlow',
     'demo.flow.WorkDurableParent',
-    '<CallFlow #child { flow = "work-flow://demo.flow.DurableChild" }>',
+    '<CallFlow #child { flow = "work-ctrl-flow://demo.flow.DurableChild" }>',
   ),
   '/flow/parents/biz-sync/manifest.xnl': controlFlow(
-    'BizProcess',
+    'BPCtrlFlow',
     'demo.flow.BizSyncParent',
-    '<CallFlow #child { flow = "instant-flow://demo.flow.InstantChild" }>',
+    '<CallFlow #child { flow = "instant-ctrl-flow://demo.flow.InstantChild" }>',
   ),
   '/flow/parents/biz-sync/task.space.xnl': '<TaskSpace #tasks version=1 []>',
   '/flow/parents/biz-durable/manifest.xnl': controlFlow(
-    'BizProcess',
+    'BPCtrlFlow',
     'demo.flow.BizDurableParent',
-    '<CallFlow #child { flow = "work-flow://demo.flow.DurableChild" }>',
+    '<CallFlow #child { flow = "work-ctrl-flow://demo.flow.DurableChild" }>',
   ),
   '/flow/parents/biz-durable/task.space.xnl': '<TaskSpace #tasks version=1 []>',
   '/flow/children/durable/manifest.xnl': controlFlow(
-    'WorkFlow',
+    'WorkCtrlFlow',
     'demo.flow.DurableChild',
     '<ExternalJob #hold { signalKind = "child.completed" signalKey = "hold" }>',
   ),
 };
 
 describe('Halfcode bundle-local Flow composition', () => {
-  it('links InstantFlow CallFlow to the target unit code context and fails missing or mismatched refs explicitly', async () => {
+  it('links InstantCtrlFlow CallFlow to the target unit code context and fails missing or mismatched refs explicitly', async () => {
     const { runtime, codeContexts } = await createRuntime();
-    const parent = runtime.resolveFlow('demo.flow.InstantParent') as InstantFlowHandle;
+    const parent = runtime.resolveFlow('demo.flow.InstantParent') as InstantCtrlFlowHandle;
 
     await expect(parent.invoke({ value: 4 })).resolves.toEqual({
       answer: 5,
@@ -172,20 +172,20 @@ describe('Halfcode bundle-local Flow composition', () => {
       unitPath: '/flow/children/instant/manifest.xnl',
     });
 
-    const mismatch = runtime.resolveFlow('demo.flow.MismatchedParent') as InstantFlowHandle;
+    const mismatch = runtime.resolveFlow('demo.flow.MismatchedParent') as InstantCtrlFlowHandle;
     await expect(mismatch.invoke()).rejects.toMatchObject({
       cause: {
         message: expect.stringMatching(
-          /work-flow:\/\/demo\.flow\.InstantChild.*InstantFlow #demo\.flow\.InstantChild/,
+          /work-ctrl-flow:\/\/demo\.flow\.InstantChild.*InstantCtrlFlow #demo\.flow\.InstantChild/,
         ),
       },
     });
 
-    const missing = runtime.resolveFlow('demo.flow.MissingParent') as InstantFlowHandle;
+    const missing = runtime.resolveFlow('demo.flow.MissingParent') as InstantCtrlFlowHandle;
     await expect(missing.invoke()).rejects.toMatchObject({
       cause: {
         message: expect.stringMatching(
-          /instant-flow:\/\/demo\.flow\.Absent.*same AppBundle/,
+          /instant-ctrl-flow:\/\/demo\.flow\.Absent.*same AppBundle/,
         ),
       },
     });
@@ -193,8 +193,8 @@ describe('Halfcode bundle-local Flow composition', () => {
 
   it('supplies definition linking to durable engines for synchronous Instant children', async () => {
     const { runtime, codeContexts } = await createRuntime();
-    const work = runtime.resolveFlow('demo.flow.WorkSyncParent') as WorkFlowHandle;
-    const biz = runtime.resolveFlow('demo.flow.BizSyncParent') as BizProcessHandle;
+    const work = runtime.resolveFlow('demo.flow.WorkSyncParent') as WorkCtrlFlowHandle;
+    const biz = runtime.resolveFlow('demo.flow.BizSyncParent') as BPCtrlFlowHandle;
 
     await expect(work.start('work-sync', { input: { value: 6 } })).resolves.toMatchObject({
       status: 'Completed',
@@ -205,15 +205,15 @@ describe('Halfcode bundle-local Flow composition', () => {
     expect(codeContexts.filter(({ unitFqn }) => unitFqn === 'demo.flow.InstantChild')).toHaveLength(2);
   });
 
-  it('forwards explicit durable child lifecycle dependencies and refresh on WorkFlow and BizProcess handles', async () => {
+  it('forwards explicit durable child lifecycle dependencies and refresh on WorkCtrlFlow and BPCtrlFlow handles', async () => {
     const workChildren = new RecordingDurableChildren();
     const bizChildren = new RecordingDurableChildren();
     const { runtime } = await createRuntime({
       'demo.flow.WorkDurableParent': workChildren,
       'demo.flow.BizDurableParent': bizChildren,
     });
-    const work = runtime.resolveFlow('demo.flow.WorkDurableParent') as WorkFlowHandle;
-    const biz = runtime.resolveFlow('demo.flow.BizDurableParent') as BizProcessHandle;
+    const work = runtime.resolveFlow('demo.flow.WorkDurableParent') as WorkCtrlFlowHandle;
+    const biz = runtime.resolveFlow('demo.flow.BizDurableParent') as BPCtrlFlowHandle;
 
     await expect(work.start('work-parent', { input: { requestId: 'work' } })).resolves.toMatchObject({
       status: 'Waiting',
@@ -222,10 +222,10 @@ describe('Halfcode bundle-local Flow composition', () => {
       status: 'Waiting',
     });
     expect(workChildren.starts).toEqual([
-      expect.objectContaining({ reference: 'work-flow://demo.flow.DurableChild' }),
+      expect.objectContaining({ reference: 'work-ctrl-flow://demo.flow.DurableChild' }),
     ]);
     expect(bizChildren.starts).toEqual([
-      expect.objectContaining({ reference: 'work-flow://demo.flow.DurableChild' }),
+      expect.objectContaining({ reference: 'work-ctrl-flow://demo.flow.DurableChild' }),
     ]);
 
     workChildren.nextStatus = 'Completed';
@@ -238,7 +238,7 @@ describe('Halfcode bundle-local Flow composition', () => {
 });
 
 function controlFlow(
-  form: 'InstantFlow' | 'WorkFlow' | 'BizProcess',
+  form: 'InstantCtrlFlow' | 'WorkCtrlFlow' | 'BPCtrlFlow',
   fqn: string,
   statements: string,
 ): string {
@@ -261,8 +261,8 @@ async function createRuntime(
     unitFqn: string;
     unitPath: string;
   }> = [];
-  const workStores = new Map<string, MemoryWorkFlowStore>();
-  const bizStores = new Map<string, MemoryWorkFlowStore>();
+  const workStores = new Map<string, MemoryWorkCtrlFlowStore>();
+  const bizStores = new Map<string, MemoryWorkCtrlFlowStore>();
   const taskStores = new Map<string, MemoryTaskSpaceStore>();
   const runtime = await createHalfcodeAppRuntime(bundle, {
     resolveSymbol: () => undefined,
@@ -284,12 +284,12 @@ async function createRuntime(
           unitFqn: unit.fqn,
         });
       },
-      resolveWorkFlowDependencies: (unit) => ({
-        store: getOrCreate(workStores, unit.fqn, () => new MemoryWorkFlowStore()),
+      resolveWorkCtrlFlowDependencies: (unit) => ({
+        store: getOrCreate(workStores, unit.fqn, () => new MemoryWorkCtrlFlowStore()),
         durableChildren: durableChildren[unit.fqn],
       }),
-      resolveBizProcessDependencies: (unit) => ({
-        store: getOrCreate(bizStores, unit.fqn, () => new MemoryWorkFlowStore()),
+      resolveBPCtrlFlowDependencies: (unit) => ({
+        store: getOrCreate(bizStores, unit.fqn, () => new MemoryWorkCtrlFlowStore()),
         taskStore: getOrCreate(taskStores, unit.fqn, () => new MemoryTaskSpaceStore()),
         tasks: { applyOperation, findNode, findTask, isOperable, listTasks, terminalStatusOf },
         durableChildren: durableChildren[unit.fqn],

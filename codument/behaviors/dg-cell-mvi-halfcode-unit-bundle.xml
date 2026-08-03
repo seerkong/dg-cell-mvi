@@ -1,24 +1,24 @@
 <behaviors capability="dg-cell-mvi-halfcode-unit-bundle" version="1">
   <requirement id="unit-registry-loading">
-    <statement>v3 bundle loader SHALL 从 bundle.xnl 的 Units 注册递归加载 page/component 单元：path 指向文件夹时读薄 manifest 与其注册的 domain 文件；指向 .xnl 文件时按单文件形态把区段节点映射为 domain（映射唯一来源为 contract 层 HALFCODE_SCHEME_TABLE）；并建 FQN 注册表。</statement>
+    <statement>v3 bundle loader SHALL 从 bundle.xnl 的 Units 注册加载 page/component/document 单元，并通过适配器加载四类 Flow 单元：frontend src 指向规范 XNL source，loader SHALL 交叉校验根 kind/FQN、加载注册 domain，并建立 FQN registry；单文件区段映射唯一来源为 contract 层 HALFCODE_SCHEME_TABLE。</statement>
     <suite id="unit-loading" name="单元加载">
       <case id="folder-unit">
-        <given>Units 注册 path 指向 pages/users/ 文件夹（page.xnl manifest + page.*.xnl domain 文件）</given>
+        <given>Units 注册 src 指向目录内的 frontend manifest/source，并注册同目录 domain 文件</given>
         <when>loader 加载 bundle</when>
-        <then>该单元 SHALL 以 manifest #FQN 注册，其显式注册的 domain 全部加载，缺省 domain 视为空</then>
+        <then>该单元 SHALL 以根 #FQN 注册，其显式注册 domain 全部加载，缺省 domain 视为空</then>
       </case>
       <case id="single-file-unit">
-        <given>Units 注册 path 指向 components/status-badge.xnl 单文件（根节点 #FQN + 内联区段 + 数组段元素树）</given>
+        <given>Units 注册 src 指向 Page、Component 或 Document 单文件</given>
         <when>loader 加载 bundle</when>
-        <then>区段节点 SHALL 按对照表映射为等价 domain，元素树取自数组段，与多文件形态产出同型结构</then>
+        <then>唯一子域 SHALL 按规范解析；Page/Component body 映射为 elements，Document body SHALL 保持有序 Domain XNL source</then>
       </case>
       <case id="fqn-conflict">
         <given>两个单元声明相同 FQN</given>
-        <when>loader 建 FQN 注册表</when>
+        <when>loader 建 FQN registry</when>
         <then>SHALL 产出 HALFCODE_UNIT_FQN_CONFLICT 诊断，不静默覆盖</then>
       </case>
       <case id="kind-mismatch">
-        <given>Units 条目 kind=&quot;page&quot; 但目标 manifest 根是 Component</given>
+        <given>Units 条目 kind 与目标根节点 kind 不一致</given>
         <when>loader 加载该单元</when>
         <then>SHALL 产出 HALFCODE_UNIT_KIND_MISMATCH 诊断</then>
       </case>
@@ -43,7 +43,7 @@
     <statement>类别 scheme 引用 SHALL 只在所属单元（或 app 级文件对应 app domains）内解析：本地解析失败 SHALL 产出 HALFCODE_REF_UNRESOLVED；若该引用能在其他单元 domain 中解析到，SHALL 升级为 HALFCODE_REF_PRIVACY_VIOLATION。</statement>
     <suite id="privacy" name="单元私有性">
       <case id="local-resolution">
-        <given>users page 的 elements 引用 &quot;scopes://#users-filter&quot; 且本单元 scopes domain 含该 id</given>
+        <given>users page 的 elements 引用 &amp;quot;scopes://#users-filter&amp;quot; 且本单元 scopes domain 含该 id</given>
         <when>loader 建 ref 索引</when>
         <then>解析 SHALL 成功且无诊断</then>
       </case>
@@ -61,6 +61,21 @@
         <given>test/fixtures/xnl-unit-bundles 全目录</given>
         <when>结构扫描测试运行</when>
         <then>SHALL 不存在 .json/.xml 配置文件；page 域文件 SHALL 不含 route=/mount=/props 契约字段</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="document-source-loading">
+    <statement>Document loader SHALL 支持互斥的根 [] 内联 source 与唯一 DocumentSource.ref 外部 source，保留原始 XNL 的全部节点家族、文本、注释和顺序，解析唯一的 DocumentContract、DocumentSource、Scope 和 DocumentPresentation，并只抽取显式 Halfcode Component/Capsule/Document embed 与 addressable skeleton；未知领域 tag MUST NOT 被自动解释为 UI atom，x-id MUST NOT 落入 inline props。</statement>
+    <suite id="document-loading" name="Document 加载">
+      <case id="preserve-source">
+        <given>Document 包含文本、领域节点、Component 与 Capsule</given>
+        <when>loader 加载</when>
+        <then>loaded unit SHALL 保留完整原始 XNL source，并返回独立的装配 skeleton，不产生 HTML/DOM/Tiptap 中间事实</then>
+      </case>
+      <case id="unique-subdomains">
+        <given>Document 重复声明 Contract、Source、Scope 或 Presentation 子域，或者同时声明内联正文与外部 Source</given>
+        <when>loader 加载</when>
+        <then>SHALL 产生结构化 error diagnostic，不选择最后一项</then>
       </case>
     </suite>
   </requirement>

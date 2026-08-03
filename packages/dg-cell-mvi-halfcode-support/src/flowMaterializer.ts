@@ -1,30 +1,30 @@
-import { BizProcessEngine } from 'biz-process-logic/browser';
+import { BPCtrlFlowEngine } from 'bp-ctrl-flow-logic/browser';
 import type {
   EagerDataFlowAuthoringPlan,
   EagerDataFlowExecutable,
 } from 'eager-data-flow-contract';
 import { materializeEagerDataFlowPlan } from 'eager-data-flow-logic/browser';
 import type { FlowBundleSpec, UnitFqn } from 'dg-cell-mvi-halfcode-contract';
-import { materializeInstantFlowSpec } from 'instant-flow-logic/browser';
-import { WorkFlowEngine } from 'work-flow-logic/browser';
-import type { WorkFlowRuntime } from 'work-flow-contract';
+import { materializeInstantCtrlFlowSpec } from 'instant-ctrl-flow-logic/browser';
+import { WorkCtrlFlowEngine } from 'work-ctrl-flow-logic/browser';
+import type { WorkCtrlFlowRuntime } from 'work-ctrl-flow-contract';
 import type {
-  BizProcessHandle,
+  BPCtrlFlowHandle,
   EagerDataFlowHandle,
   HalfcodeFlowCodeResolutionRequest,
   HalfcodeFlowHandle,
   HalfcodeFlowHandleFactory,
   HalfcodeFlowHandleFactoryRegistry,
-  InstantFlowHandle,
+  InstantCtrlFlowHandle,
   MaterializeHalfcodeFlowsOptions,
-  WorkFlowHandle,
+  WorkCtrlFlowHandle,
 } from './flowHandles';
 import type { LoadedHalfcodeUnit, LoadedHalfcodeUnitBundle } from './xnlUnitBundle';
 
 const CONTROL_FORM_BY_SCHEME = {
-  'instant-flow': 'InstantFlow',
-  'work-flow': 'WorkFlow',
-  'biz-process': 'BizProcess',
+  'instant-ctrl-flow': 'InstantCtrlFlow',
+  'work-ctrl-flow': 'WorkCtrlFlow',
+  'bp-ctrl-flow': 'BPCtrlFlow',
 } as const;
 
 export async function materializeHalfcodeFlows(
@@ -69,18 +69,18 @@ export async function materializeHalfcodeFlows(
     if (!unit.flow) continue;
     const fqn = unit.fqn;
     switch (unit.kind) {
-      case 'instant-flow': {
-        const spec = requireControlSpec(unit, 'InstantFlow');
-        const flow = materializeInstantFlowSpec(
+      case 'instant-ctrl-flow': {
+        const spec = requireControlSpec(unit, 'InstantCtrlFlow');
+        const flow = materializeInstantCtrlFlowSpec(
           spec,
           (request) => resolveFlowCode(options, unit, request),
           resolveFlow,
         );
-        factories[fqn] = cachedFactory('instant-flow', fqn, (runtime): InstantFlowHandle => ({
-          kind: 'instant-flow',
+        factories[fqn] = cachedFactory('instant-ctrl-flow', fqn, (runtime): InstantCtrlFlowHandle => ({
+          kind: 'instant-ctrl-flow',
           fqn,
           spec,
-          invoke: <TOutput>(input?: unknown) => flow.run({ input, runtime: runtime as WorkFlowRuntime }) as Promise<TOutput>,
+          invoke: <TOutput>(input?: unknown) => flow.run({ input, runtime: runtime as WorkCtrlFlowRuntime }) as Promise<TOutput>,
         }));
         break;
       }
@@ -95,24 +95,24 @@ export async function materializeHalfcodeFlows(
         }));
         break;
       }
-      case 'work-flow': {
-        const spec = requireControlSpec(unit, 'WorkFlow');
-        const dependencies = await options.resolveWorkFlowDependencies?.(unit);
-        if (!dependencies) throw new Error(`WorkFlow ${fqn} requires injected snapshot store dependencies.`);
-        factories[fqn] = cachedFactory('work-flow', fqn, (runtime): WorkFlowHandle => {
-          const engine = new WorkFlowEngine({
+      case 'work-ctrl-flow': {
+        const spec = requireControlSpec(unit, 'WorkCtrlFlow');
+        const dependencies = await options.resolveWorkCtrlFlowDependencies?.(unit);
+        if (!dependencies) throw new Error(`WorkCtrlFlow ${fqn} requires injected snapshot store dependencies.`);
+        factories[fqn] = cachedFactory('work-ctrl-flow', fqn, (runtime): WorkCtrlFlowHandle => {
+          const engine = new WorkCtrlFlowEngine({
             definition: {
               spec,
               resolveCode: (request) => resolveFlowCode(options, unit, request),
               resolveFlow,
             },
             store: dependencies.store,
-            runtime: runtime as WorkFlowRuntime,
+            runtime: runtime as WorkCtrlFlowRuntime,
             clock: dependencies.clock,
             durableChildren: dependencies.durableChildren,
           });
           return {
-            kind: 'work-flow', fqn, spec,
+            kind: 'work-ctrl-flow', fqn, spec,
             start: (treeId, startOptions) => engine.start(treeId, startOptions),
             resume: (treeId, signal) => engine.resume(treeId, signal),
             refresh: (treeId) => engine.refresh(treeId),
@@ -122,12 +122,12 @@ export async function materializeHalfcodeFlows(
         });
         break;
       }
-      case 'biz-process': {
-        const spec = requireControlSpec(unit, 'BizProcess');
-        const dependencies = await options.resolveBizProcessDependencies?.(unit);
-        if (!dependencies) throw new Error(`BizProcess ${fqn} requires injected snapshot/task dependencies.`);
-        factories[fqn] = cachedFactory('biz-process', fqn, (runtime): BizProcessHandle => {
-          const engine = new BizProcessEngine({
+      case 'bp-ctrl-flow': {
+        const spec = requireControlSpec(unit, 'BPCtrlFlow');
+        const dependencies = await options.resolveBPCtrlFlowDependencies?.(unit);
+        if (!dependencies) throw new Error(`BPCtrlFlow ${fqn} requires injected snapshot/task dependencies.`);
+        factories[fqn] = cachedFactory('bp-ctrl-flow', fqn, (runtime): BPCtrlFlowHandle => {
+          const engine = new BPCtrlFlowEngine({
             definition: {
               spec,
               resolveCode: (request) => resolveFlowCode(options, unit, request),
@@ -136,12 +136,12 @@ export async function materializeHalfcodeFlows(
             store: dependencies.store,
             taskStore: dependencies.taskStore,
             tasks: dependencies.tasks,
-            runtime: runtime as WorkFlowRuntime,
+            runtime: runtime as WorkCtrlFlowRuntime,
             clock: dependencies.clock,
             durableChildren: dependencies.durableChildren,
           });
           return {
-            kind: 'biz-process', fqn, spec,
+            kind: 'bp-ctrl-flow', fqn, spec,
             start: (treeId, startOptions) => engine.start(treeId, startOptions),
             refresh: (treeId) => engine.refresh(treeId),
             getOutcome: (treeId) => engine.getOutcome(treeId),
@@ -168,7 +168,7 @@ function createBundleLocalFlowResolver(
       );
     }
 
-    const parsed = /^(instant-flow|work-flow|biz-process):\/\/([\w.-]+)$/.exec(reference);
+    const parsed = /^(instant-ctrl-flow|work-ctrl-flow|bp-ctrl-flow):\/\/([\w.-]+)$/.exec(reference);
     if (!parsed) {
       throw new Error(
         `CallFlow ${reference} from ${caller.form} #${caller.fqn} is not a canonical CtrlFlow URI.`,
@@ -208,7 +208,7 @@ export function bindHalfcodeFlows(
 
 function requireControlSpec(
   unit: LoadedHalfcodeUnit,
-  form: 'InstantFlow' | 'WorkFlow' | 'BizProcess',
+  form: 'InstantCtrlFlow' | 'WorkCtrlFlow' | 'BPCtrlFlow',
 ): FlowBundleSpec {
   if (!unit.flow || unit.flow.form !== form) {
     throw new Error(`Flow ${unit.fqn} is not a ${form} spec.`);

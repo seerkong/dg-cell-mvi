@@ -18,7 +18,7 @@ const FORBIDDEN_CAPSULE_SOURCE = [
   /\bxnl\b/i,
   /\bdatabase\b/i,
   /\bpersistence\b|\bpersist(?:ence|ed|ing)?\b/i,
-  /\bFlow\b|BizProcess|WorkFlow|instant-flow|eager-data-flow/i,
+  /\bFlow\b|BPCtrlFlow|WorkCtrlFlow|instant-ctrl-flow|eager-data-flow/i,
   /\bDOM\b|\bdocument\.|\bwindow\./,
   /\bfetch\s*\(/,
 ] as const;

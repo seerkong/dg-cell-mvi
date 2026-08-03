@@ -1,0 +1,8 @@
+<Document #dg.docs.negative.MixedSource (
+  <DocumentContract { mode = "view" }>
+  <DocumentSource { ref = "vfs://./domain/first.xnl" }>
+  <Scope #root>
+  <DocumentPresentation { id = "mixed-source" }>
+) [
+  <Paragraph #inline-body ["inline and external are mutually exclusive"]>
+]>

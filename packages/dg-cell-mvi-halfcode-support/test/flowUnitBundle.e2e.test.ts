@@ -54,14 +54,14 @@ describe('canonical Flow products in an AppBundle', () => {
     const bundle = loadHalfcodeUnitBundle(memoryResolver({
       '/flow/manifest.xnl': `<AppBundle #demo.flow.App (
         <Units [
-          <Unit kind="instant-flow" fqn="demo.flow.Instant" src="vfs://./instant.xnl">
-          <Unit kind="work-flow" fqn="demo.flow.Work" src="vfs://./work.xnl">
-          <Unit kind="biz-process" fqn="demo.flow.Biz" src="vfs://./biz.xnl">
+          <Unit kind="instant-ctrl-flow" fqn="demo.flow.Instant" src="vfs://./instant.xnl">
+          <Unit kind="work-ctrl-flow" fqn="demo.flow.Work" src="vfs://./work.xnl">
+          <Unit kind="bp-ctrl-flow" fqn="demo.flow.Biz" src="vfs://./biz.xnl">
           <Unit kind="eager-data-flow" fqn="demo.flow.Parent" src="vfs://./parent.xnl">
           <Unit kind="eager-data-flow" fqn="demo.flow.Child" src="vfs://./child.xnl">
         ]>
       )>`,
-      '/flow/instant.xnl': `<InstantFlow #demo.flow.Instant apiVersion="depa.flows/v1" version="1" (
+      '/flow/instant.xnl': `<InstantCtrlFlow #demo.flow.Instant apiVersion="depa.flows/v1" version="1" (
         <FlowContract #demo.flow.Instant {
           input = "vfs://./instant.types.ts#DemoInstantInput"
           output = "vfs://./instant.types.ts#DemoInstantOutput"
@@ -71,7 +71,7 @@ describe('canonical Flow products in an AppBundle', () => {
       ]>`,
       '/flow/instant.types.ts': `export interface DemoInstantInput { requestId?: string }
 export interface DemoInstantOutput { ok: true }`,
-      '/flow/work.xnl': `<WorkFlow #demo.flow.Work apiVersion="depa.flows/v1" version="1" (
+      '/flow/work.xnl': `<WorkCtrlFlow #demo.flow.Work apiVersion="depa.flows/v1" version="1" (
         <FlowContract #demo.flow.Work {
           input = "vfs://./work.types.ts#DemoWorkInput"
           output = "vfs://./work.types.ts#DemoWorkOutput"
@@ -89,7 +89,7 @@ export interface DemoInstantOutput { ok: true }`,
       ]>`,
       '/flow/work.types.ts': `export interface DemoWorkInput { approved?: boolean }
 export interface DemoWorkOutput { status: 'completed' | 'fallback' }`,
-      '/flow/biz.xnl': `<BizProcess #demo.flow.Biz apiVersion="depa.flows/v1" version="1" (
+      '/flow/biz.xnl': `<BPCtrlFlow #demo.flow.Biz apiVersion="depa.flows/v1" version="1" (
         <FlowContract #demo.flow.Biz {
           input = "vfs://./biz.types.ts#DemoBizInput"
           output = "vfs://./biz.types.ts#DemoBizOutput"
@@ -106,9 +106,9 @@ export interface DemoBizOutput { status: 'completed' }`,
 
     expect(bundle.diagnostics).toEqual([]);
     expect(Object.values(bundle.registry).map(({ kind }) => kind)).toEqual([
-      'instant-flow',
-      'work-flow',
-      'biz-process',
+      'instant-ctrl-flow',
+      'work-ctrl-flow',
+      'bp-ctrl-flow',
       'eager-data-flow',
       'eager-data-flow',
     ]);
@@ -118,15 +118,15 @@ export interface DemoBizOutput { status: 'completed' }`,
     const biz = bundle.units['demo.flow.Biz'].flow;
     const parent = bundle.units['demo.flow.Parent'].flow;
     expect([instant?.form, work?.form, biz?.form, parent?.form]).toEqual([
-      'InstantFlow',
-      'WorkFlow',
-      'BizProcess',
+      'InstantCtrlFlow',
+      'WorkCtrlFlow',
+      'BPCtrlFlow',
       'EagerDataFlow',
     ]);
     expect([
-      instant?.form === 'InstantFlow' ? instant.flowContract : undefined,
-      work?.form === 'WorkFlow' ? work.flowContract : undefined,
-      biz?.form === 'BizProcess' ? biz.flowContract : undefined,
+      instant?.form === 'InstantCtrlFlow' ? instant.flowContract : undefined,
+      work?.form === 'WorkCtrlFlow' ? work.flowContract : undefined,
+      biz?.form === 'BPCtrlFlow' ? biz.flowContract : undefined,
     ]).toEqual([
       {
         id: 'demo.flow.Instant',
@@ -145,7 +145,7 @@ export interface DemoBizOutput { status: 'completed' }`,
       },
     ]);
 
-    if (work?.form !== 'WorkFlow') throw new Error('expected canonical WorkFlow spec');
+    if (work?.form !== 'WorkCtrlFlow') throw new Error('expected canonical WorkCtrlFlow spec');
     const branch = work.statements[0].sections.Branches.children[0];
     expect(branch).toMatchObject({ tag: 'Branch', id: 'approved' });
     expect(branch.children[0]).toMatchObject({ tag: 'Run', id: 'nested' });
@@ -169,7 +169,7 @@ export interface DemoBizOutput { status: 'completed' }`,
       )>`,
       '/flow/legacy.xnl': '<CtrlFlow #demo.flow.Legacy []>',
     }), 'vfs://@/flow/', { baseDir: '/', workspaceRoot: '/' })).toThrow(
-      /instant-flow\/work-flow\/biz-process\/eager-data-flow/,
+      /instant-ctrl-flow\/work-ctrl-flow\/bp-ctrl-flow\/eager-data-flow/,
     );
   });
 
@@ -177,7 +177,7 @@ export interface DemoBizOutput { status: 'completed' }`,
     const legacyRoots = loadHalfcodeUnitBundle(memoryResolver({
       '/flow/manifest.xnl': `<AppBundle #demo.flow.App (
         <Units [
-          <Unit kind="instant-flow" fqn="demo.flow.LegacyCtrl" src="vfs://./ctrl.xnl">
+          <Unit kind="instant-ctrl-flow" fqn="demo.flow.LegacyCtrl" src="vfs://./ctrl.xnl">
           <Unit kind="eager-data-flow" fqn="demo.flow.LegacyData" src="vfs://./data.xnl">
         ]>
       )>`,

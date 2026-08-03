@@ -1,0 +1,18 @@
+<decisions #fix-tiptap-list-item-dom-serialization [
+  <decision #serializer-authority {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = false
+    confidence = "1.0"
+    reversibility = "high"
+  } (
+    <question ?>Tiptap adapter 的 list item DOM serializer 是否违反无 HTML/DOM authority 边界？</?>
+    <answer { selected = "allow-view-serializer" } (
+      <raw-answer ?>允许 adapter owner 的受控 view serializer，继续禁止 reverse-authoring。</?>
+      <decision-text ?>Canonical listItem 在 adapter registry 提供 &lt;li&gt; output spec；它不读取 HTML/DOM，不解析领域数据，也不拥有 mutation writer。</?>
+      <rationale ?>ProseMirror 浏览器 view 必须具有 toDOM；禁止 serializer 会让合法 canonical list 无法渲染。</?>
+      <evidence ?>Workbench 真实 Editor 稳定报 listItem.spec.toDOM 缺失；fresh coding AttractorCheck 判定 owner 正确并要求收窄 boundary test。</?>
+    )>
+  )>
+]>
+

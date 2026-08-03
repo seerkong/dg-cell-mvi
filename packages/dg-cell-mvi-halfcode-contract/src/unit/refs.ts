@@ -13,7 +13,12 @@
  * are organizational names only and never leak into the URI protocol.
  */
 
-import { HalfcodeUnitContractError, type UnitKind, type UnitLayer } from './common';
+import {
+  FRONTEND_UNIT_KINDS,
+  HalfcodeUnitContractError,
+  type UnitKind,
+  type UnitLayer,
+} from './common';
 import { HALFCODE_REF_UNRESOLVED } from './diagnostics';
 
 declare const HalfcodeRefBrand: unique symbol;
@@ -162,6 +167,16 @@ export interface HalfcodeSchemeTableEntry {
 /** Pseudo-domain for the built-in unit registry (`<Units>` bundle manifest section). */
 export const HALFCODE_UNIT_REGISTRY_DOMAIN = 'halfcode-units';
 
+const FRONTEND_UNIT_SCHEME_ROWS: readonly HalfcodeSchemeTableEntry[] =
+  FRONTEND_UNIT_KINDS.map((kind) => ({
+    domain: HALFCODE_UNIT_REGISTRY_DOMAIN,
+    scheme: kind,
+    sectionTag: 'Units',
+    layers: ['app'],
+    builtin: true,
+    registryKind: kind,
+  }));
+
 /**
  * domain ↔ scheme ↔ single-file section, three-column table (spec §4, D7/D10).
  * Canonical rows follow docs/halfcode/dsl-bundle/spec/frontend/domains.md.
@@ -185,8 +200,7 @@ export const HALFCODE_SCHEME_TABLE: readonly HalfcodeSchemeTableEntry[] = [
   { domain: 'wiring', scheme: 'wiring', sectionTag: 'Wiring', layers: ['app'] },
   { domain: 'workspace', scheme: null, sectionTag: null, layers: ['app'], projection: true },
   { domain: 'fixtures', scheme: null, sectionTag: null, layers: ['app'], projection: true },
-  { domain: HALFCODE_UNIT_REGISTRY_DOMAIN, scheme: 'page', sectionTag: 'Units', layers: ['app'], builtin: true, registryKind: 'page' },
-  { domain: HALFCODE_UNIT_REGISTRY_DOMAIN, scheme: 'component', sectionTag: 'Units', layers: ['app'], builtin: true, registryKind: 'component' },
+  ...FRONTEND_UNIT_SCHEME_ROWS,
   { domain: HALFCODE_UNIT_REGISTRY_DOMAIN, scheme: 'eager-data-flow', sectionTag: 'Units', layers: ['app'], builtin: true, registryKind: 'eager-data-flow' },
   { domain: 'scope.runtime', scheme: 'scope-runtime', sectionTag: null, layers: ['page', 'component'], builtin: true, derived: true },
   { domain: 'scope.effects', scheme: 'scope-effect', sectionTag: null, layers: ['page', 'component'], builtin: true, derived: true },
@@ -195,7 +209,11 @@ export const HALFCODE_SCHEME_TABLE: readonly HalfcodeSchemeTableEntry[] = [
 ];
 
 /** Built-in schemes derived from app structure (D7): unit registry + route tree. */
-export const HALFCODE_BUILTIN_SCHEMES = ['page', 'component', 'eager-data-flow', 'route'] as const;
+export const HALFCODE_BUILTIN_SCHEMES = [
+  ...FRONTEND_UNIT_KINDS,
+  'eager-data-flow',
+  'route',
+] as const;
 export type HalfcodeBuiltinScheme = (typeof HALFCODE_BUILTIN_SCHEMES)[number];
 
 /** All scheme short names present in the table (logical addressing set, excludes vfs). */

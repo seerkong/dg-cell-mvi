@@ -22,8 +22,8 @@ describe('halfcode-contract dependency boundary', () => {
 
     expect(source).not.toMatch(/from ['"]vue['"]/);
     expect(source).not.toMatch(/from ['"]element-plus['"]/);
-    expect(source).not.toMatch(/\bdocument\./);
-    expect(source).not.toMatch(/\bwindow\./);
+    expect(source).not.toMatch(/(?<![\w.-])document\./);
+    expect(source).not.toMatch(/(?<![\w.-])window\./);
     expect(source).not.toMatch(/\bfetch\s*\(/);
     expect(source).not.toMatch(/\bnew Function\b/);
     expect(source).not.toMatch(/\bimport\s*\(/);

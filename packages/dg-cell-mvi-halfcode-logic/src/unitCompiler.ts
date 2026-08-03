@@ -45,6 +45,7 @@
 
 import {
   HALFCODE_CAPSULE_REQUIRES_UNMET,
+  HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_MESSAGE_UNWIRED,
   HALFCODE_PROPS_CONTRACT_MISMATCH,
   HALFCODE_REF_UNRESOLVED,
@@ -60,6 +61,10 @@ import {
   type DataGraphModulePlan,
   type DataGraphNodePlan,
   type DataGraphScopePlan,
+  type DocumentAddressDescriptor,
+  type DocumentContractSpec,
+  type DocumentEmbeddedUnitPlan,
+  type DocumentUnitPlan,
   type HalfcodeRef,
   type HalfcodeUnitDiagnosticCode,
   type PageContractSpec,
@@ -74,6 +79,7 @@ import {
   type SerializableValue,
   type SerializableRecord,
   type UnitCompileDiagnostic,
+  type UnitCompileDocumentSkeletonNode,
   type UnitCompileDomainDocument,
   type UnitCompileInput,
   type UnitCompileResult,
@@ -130,6 +136,10 @@ function pageContractOf(unit: UnitCompileUnit | undefined): PageContractSpec | u
 
 function componentContractOf(unit: UnitCompileUnit | undefined): ComponentContractSpec | undefined {
   return unit?.contract?.kind === 'component-contract' ? unit.contract : undefined;
+}
+
+function documentContractOf(unit: UnitCompileUnit | undefined): DocumentContractSpec | undefined {
+  return unit?.contract?.kind === 'document-contract' ? unit.contract : undefined;
 }
 
 /** Flatten a domain document's node tree into an id → node index (first wins). */
@@ -661,15 +671,13 @@ function scopeBindingFromUse(
   };
 }
 
-function scopePlanFromUse(
+function scopePlanFromBinding(
   unit: UnitCompileUnit,
-  scope: ScopeUseSpec,
-  scopeId: string,
+  binding: RuntimeScopeBindingSpec,
   ownerElementId: string,
   parentScopeId: string | undefined,
-): ScopeRuntimePlan | undefined {
-  const binding = scopeBindingFromUse(unit, scope);
-  if (!binding) return undefined;
+): ScopeRuntimePlan {
+  const scopeId = binding.scopeId;
   return {
     scopeId,
     ...(parentScopeId ? { parentScopeId } : {}),
@@ -685,6 +693,17 @@ function scopePlanFromUse(
       dataGraphs: compileDataGraphScopePlan(unit, scopeId, binding.dataGraphs),
     } : {}),
   };
+}
+
+function scopePlanFromUse(
+  unit: UnitCompileUnit,
+  scope: ScopeUseSpec,
+  scopeId: string,
+  ownerElementId: string,
+  parentScopeId: string | undefined,
+): ScopeRuntimePlan | undefined {
+  const binding = scopeBindingFromUse(unit, scope);
+  return binding ? scopePlanFromBinding(unit, { ...binding, scopeId }, ownerElementId, parentScopeId) : undefined;
 }
 
 function stringArray(value: unknown): string[] {
@@ -878,6 +897,184 @@ function compileUnitDispatchEntries(unit: UnitCompileUnit): MessageDispatchPlanE
 }
 
 // ---------------------------------------------------------------------------
+// Document Unit plan projection
+// ---------------------------------------------------------------------------
+
+const DEFAULT_DOCUMENT_PROJECTION_ROLE = 'main';
+
+interface DocumentPlanCompileState {
+  embeddedUnits: DocumentEmbeddedUnitPlan[];
+  addressableInstances: DocumentAddressDescriptor[];
+  scopeRuntimePlans: ScopeRuntimePlan[];
+  seenXIds: Map<string, string>;
+}
+
+function documentSkeletonNodeLabel(node: UnitCompileDocumentSkeletonNode): string {
+  return node.id ? `<${node.tag} #${node.id}>` : `<${node.tag}>`;
+}
+
+function isDocumentAddressableNode(node: UnitCompileDocumentSkeletonNode): boolean {
+  return node.kind !== 'domain-node' || node.xId !== undefined || node.projectionRole !== undefined;
+}
+
+type UnitCompileDocumentEmbeddedNode = UnitCompileDocumentSkeletonNode & {
+  readonly kind: 'component-embed' | 'document-embed';
+};
+
+function isDocumentEmbeddedUnitNode(
+  node: UnitCompileDocumentSkeletonNode,
+): node is UnitCompileDocumentEmbeddedNode {
+  return node.kind === 'component-embed' || node.kind === 'document-embed';
+}
+
+function compileDocumentSkeletonNode(
+  unit: UnitCompileUnit,
+  node: UnitCompileDocumentSkeletonNode,
+  inheritedScopeId: string,
+  state: DocumentPlanCompileState,
+  diagnostics: UnitCompileDiagnostic[],
+): void {
+  const label = documentSkeletonNodeLabel(node);
+  const projectionRole = node.projectionRole ?? DEFAULT_DOCUMENT_PROJECTION_ROLE;
+  const xId = node.xId ?? (
+    projectionRole === DEFAULT_DOCUMENT_PROJECTION_ROLE && node.kind !== 'domain-node'
+      ? node.id
+      : undefined
+  );
+  const scopeId = node.scope?.scopeId ?? node.scopeId ?? inheritedScopeId;
+  let skipEmbedAddress = false;
+
+  if (isDocumentEmbeddedUnitNode(node)) {
+    const embedId = node.id ?? node.xId;
+    if (!embedId) {
+      skipEmbedAddress = true;
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${label} must declare a stable #id or explicit x-id before it can enter the Document embedded unit plan.`,
+        unit.path,
+      );
+    } else {
+      state.embeddedUnits.push({
+        kind: node.kind,
+        id: embedId,
+        unitFqn: node.tag as UnitFqn,
+        scopeId,
+      });
+    }
+  }
+
+  if (isDocumentAddressableNode(node) && !skipEmbedAddress) {
+    if (!xId) {
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${label} uses projection role "${projectionRole}" and requires an explicit x-id.`,
+        unit.path,
+      );
+    } else {
+      const first = state.seenXIds.get(xId);
+      if (first) {
+        pushDiagnostic(
+          diagnostics,
+          HALFCODE_DOCUMENT_DSL_INVALID,
+          `Duplicate Document x-id "${xId}" on ${label}; first declared on ${first}.`,
+          unit.path,
+        );
+      } else {
+        state.seenXIds.set(xId, label);
+        state.addressableInstances.push({
+          projectionRole,
+          xId,
+          ...(node.id ? { documentNodeId: node.id } : {}),
+          ...(node.kind === 'component-embed' || node.kind === 'document-embed'
+            ? { unitFqn: node.tag as UnitFqn }
+            : {}),
+          scopeId,
+        });
+      }
+    }
+  }
+
+  const childScopeId = node.scope?.scopeId ?? inheritedScopeId;
+  if (node.kind === 'capsule' && node.scope) {
+    state.scopeRuntimePlans.push(scopePlanFromBinding(
+      unit,
+      node.scope,
+      node.id ?? node.scope.scopeId,
+      inheritedScopeId,
+    ));
+  }
+  for (const child of node.children) {
+    compileDocumentSkeletonNode(unit, child, childScopeId, state, diagnostics);
+  }
+}
+
+function compileDocumentUnit(
+  unit: UnitCompileUnit,
+  diagnostics: UnitCompileDiagnostic[],
+): { plan?: DocumentUnitPlan; scopeRuntimePlans: ScopeRuntimePlan[] } {
+  const docProjection = unit.document;
+  const contract = documentContractOf(unit);
+  if (unit.kind !== 'document' || !docProjection) return { scopeRuntimePlans: [] };
+  const missing: string[] = [];
+  if (!docProjection.sourceDescriptor) missing.push('source');
+  if (!contract) missing.push('DocumentContract');
+  if (!docProjection.rootScope) missing.push('root Scope');
+  if (!docProjection.presentation) missing.push('DocumentPresentation');
+  if (missing.length) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `Document "${unit.fqn}" cannot be compiled because it is missing ${missing.join(', ')}.`,
+      unit.path,
+    );
+    return { scopeRuntimePlans: [] };
+  }
+  const sourceDescriptor = docProjection.sourceDescriptor;
+  const rootScope = docProjection.rootScope;
+  const presentation = docProjection.presentation;
+  if (!sourceDescriptor || !contract || !rootScope || !presentation) {
+    return { scopeRuntimePlans: [] };
+  }
+
+  const state: DocumentPlanCompileState = {
+    embeddedUnits: [],
+    addressableInstances: [],
+    scopeRuntimePlans: [
+      scopePlanFromBinding(unit, rootScope, docProjection.rootNodeId, undefined),
+    ],
+    seenXIds: new Map(),
+  };
+
+  for (const node of docProjection.skeleton) {
+    compileDocumentSkeletonNode(
+      unit,
+      node,
+      rootScope.scopeId,
+      state,
+      diagnostics,
+    );
+  }
+
+  return {
+    plan: {
+      id: `${unit.fqn}.document-unit-plan`,
+      unitFqn: unit.fqn,
+      source: sourceDescriptor,
+      rootNodeId: docProjection.rootNodeId,
+      mode: contract.mode,
+      presentationId: presentation.id,
+      rootScopeId: rootScope.scopeId,
+      ...(contract.parameters ? { parameters: contract.parameters } : {}),
+      embeddedUnits: state.embeddedUnits,
+      addressableInstances: state.addressableInstances,
+    },
+    scopeRuntimePlans: state.scopeRuntimePlans,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -916,10 +1113,18 @@ export function compileHalfcodeUnitBundle(input: UnitCompileInput): UnitCompileR
   const renderPlans = Object.values(input.units)
     .filter((unit) => unit.elements)
     .map((unit) => projectUnitRenderPlan(unit, input));
+  const compiledDocuments = Object.values(input.units).map((unit) =>
+    compileDocumentUnit(unit, diagnostics));
+  const documentPlans = compiledDocuments
+    .map((compiled) => compiled.plan)
+    .filter((plan): plan is DocumentUnitPlan => plan !== undefined);
 
   // 5. Runtime-facing plans. This is the last layer allowed to inspect
   //    structured domain nodes; assemblers and renderers consume only plans.
-  const scopeRuntimePlans = Object.values(input.units).flatMap(compileUnitScopes);
+  const scopeRuntimePlans = [
+    ...Object.values(input.units).flatMap(compileUnitScopes),
+    ...compiledDocuments.flatMap((compiled) => compiled.scopeRuntimePlans),
+  ];
   const messageDispatchPlan = {
     id: `${input.manifest.id}.message-dispatch-plan`,
     entries: Object.values(input.units).flatMap(compileUnitDispatchEntries),
@@ -928,6 +1133,7 @@ export function compileHalfcodeUnitBundle(input: UnitCompileInput): UnitCompileR
   return {
     adminShellPlan,
     renderPlans,
+    documentPlans,
     wiringPlan,
     scopeRuntimePlans,
     messageDispatchPlan,

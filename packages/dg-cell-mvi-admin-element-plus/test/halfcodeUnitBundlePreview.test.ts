@@ -84,7 +84,7 @@ describe('halfcode-unit-bundles preview model', () => {
     expect(text).toContain('[atom] <h1> #users-title');
     expect(text).toContain('[capsule] #users-filter');
     expect(text).toContain('[atom] <elementPlus.ElInput> #keyword-input library=elementPlus');
-    expect(text).toContain('[component] <dg.materials.CrudTable> #users-table');
+    expect(text).toContain('[atom] <elementPlus.DataTable> #users-table library=elementPlus');
     expect(preview.renderTrees).toHaveLength(2);
   });
 });

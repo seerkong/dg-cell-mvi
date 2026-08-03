@@ -29,3 +29,8 @@ pages/users/
 ```
 
 `AppBundle` is the only canonical bundle root. Do not create `effect.types.xnl`, `data.graph.logic.types.xnl`, `effects.xnl`, `graph.impls.xnl`, `*.graph.json`, or `*.halfcode.json`.
+
+Document Units use the same AppBundle registration shape as Page and Component,
+but their root body is ordered Domain XNL source rather than an `elements`
+domain. They can be single-file inline Documents or directory entries with an
+external `DocumentSource.ref`; see [Document Unit](document.md).

@@ -4,7 +4,7 @@
 
 ## W-1 · 四种产品保持独立
 
-Halfcode 注册 `instant-flow`、`work-flow`、`biz-process` 与 `eager-data-flow`。它们分别投影上游 `InstantFlow`、`WorkFlow`、`BizProcess` 与 `EagerDataFlow` definition，不在 Halfcode 中复制 AST、节点规则、拓扑校验或生命周期算法。
+Halfcode 注册 `instant-ctrl-flow`、`work-ctrl-flow`、`bp-ctrl-flow` 与 `eager-data-flow`。它们分别投影上游 `InstantCtrlFlow`、`WorkCtrlFlow`、`BPCtrlFlow` 与 `EagerDataFlow` definition，不在 Halfcode 中复制 AST、节点规则、拓扑校验或生命周期算法。
 
 ## W-2 · 加载和物化委托上游
 
@@ -18,9 +18,9 @@ Flow handle 不进入 effect binding。`HalfcodeAppRuntime` 按 FQN 注册 handl
 
 | product | handle surface |
 |---|---|
-| InstantFlow | `invoke(input)` |
+| InstantCtrlFlow | `invoke(input)` |
 | EagerDataFlow | `invoke(input, options)` |
-| WorkFlow | `start`、`resume`、`fireDueDeadlines`、`getOutcome` |
-| BizProcess | `start`、`getOutcome`、`tasks`、`operateTask` |
+| WorkCtrlFlow | `start`、`resume`、`fireDueDeadlines`、`getOutcome` |
+| BPCtrlFlow | `start`、`getOutcome`、`tasks`、`operateTask` |
 
 动态代码统一由上游以 `output = fn(runtime, input, config)` 调用；这里的 `runtime` 是解析 handle 的 Scope runtime。

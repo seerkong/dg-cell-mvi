@@ -48,6 +48,7 @@ export function createMemoryStorage(): StorageBackend {
 
 /** Resolve the default backend lazily so importing under node (no `localStorage`) never throws. */
 function resolveDefaultBackend(): StorageBackend | undefined {
+  if (typeof window === 'undefined') return undefined;
   const g = globalThis as unknown as { localStorage?: StorageBackend };
   return g.localStorage;
 }

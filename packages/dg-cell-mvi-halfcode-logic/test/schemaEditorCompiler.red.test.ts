@@ -573,7 +573,7 @@ describe('schema-editor compiler dependency boundary', () => {
       .join('\n');
 
     expect(source).not.toMatch(/renderer|renderers|presenter component|element-plus|vue/i);
-    expect(source).not.toMatch(/\bFlow\b|BizProcess|WorkFlow|instant-flow|eager-data-flow/i);
+    expect(source).not.toMatch(/\bFlow\b|BPCtrlFlow|WorkCtrlFlow|instant-ctrl-flow|eager-data-flow/i);
     expect(source).not.toMatch(/\bValueHost\b|hostWriter|applyHost|writeValue|persist|mutation|vfs|xnl/i);
     expect(source).not.toMatch(/\bwindow\.|\bdocument\.|\bfetch\s*\(|\bimport\s*\(/);
   });

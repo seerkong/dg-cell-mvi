@@ -1,0 +1,6 @@
+<Routes #negative-routes [
+  <Route #document-route {
+    path = "/document"
+    page = "document://dg.docs.negative.DuplicateXId"
+  }>
+]>

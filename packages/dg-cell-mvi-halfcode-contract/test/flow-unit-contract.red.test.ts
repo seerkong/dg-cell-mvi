@@ -7,6 +7,7 @@ import {
   asUnitFqn,
   schemeToDomain,
   type FlowUnitKind,
+  type FrontendUnitKind,
   type HalfcodeFlowSpec,
   type HalfcodeUnitManifest,
   type UnitKind,
@@ -15,21 +16,21 @@ import {
 describe('Halfcode canonical Flow unit contract', () => {
   it('registers exactly the four upstream Flow product kinds and manifests', () => {
     expectTypeOf<FlowUnitKind>().toEqualTypeOf<
-      'instant-flow' | 'work-flow' | 'biz-process' | 'eager-data-flow'
+      'instant-ctrl-flow' | 'work-ctrl-flow' | 'bp-ctrl-flow' | 'eager-data-flow'
     >();
-    expectTypeOf<UnitKind>().toEqualTypeOf<'page' | 'component' | FlowUnitKind>();
+    expectTypeOf<UnitKind>().toEqualTypeOf<FrontendUnitKind | FlowUnitKind>();
 
     const manifests: HalfcodeUnitManifest[] = [
-      { kind: 'instant-flow', fqn: asUnitFqn('demo.flow.Instant'), version: '1' },
-      { kind: 'work-flow', fqn: asUnitFqn('demo.flow.Work'), version: '1' },
-      { kind: 'biz-process', fqn: asUnitFqn('demo.flow.Biz'), version: '1' },
+      { kind: 'instant-ctrl-flow', fqn: asUnitFqn('demo.flow.Instant'), version: '1' },
+      { kind: 'work-ctrl-flow', fqn: asUnitFqn('demo.flow.Work'), version: '1' },
+      { kind: 'bp-ctrl-flow', fqn: asUnitFqn('demo.flow.Biz'), version: '1' },
       { kind: 'eager-data-flow', fqn: asUnitFqn('demo.flow.Eager'), version: '1' },
     ];
 
     expect(manifests.map(({ kind }) => kind)).toEqual([
-      'instant-flow',
-      'work-flow',
-      'biz-process',
+      'instant-ctrl-flow',
+      'work-ctrl-flow',
+      'bp-ctrl-flow',
       'eager-data-flow',
     ]);
   });
@@ -38,6 +39,7 @@ describe('Halfcode canonical Flow unit contract', () => {
     expect(HALFCODE_BUILTIN_SCHEMES).toEqual([
       'page',
       'component',
+      'document',
       'eager-data-flow',
       'route',
     ]);
@@ -52,7 +54,7 @@ describe('Halfcode canonical Flow unit contract', () => {
     expectTypeOf<HalfcodeFlowSpec>().toBeObject();
     const source = readFileSync(resolve(__dirname, '../src/unit/flow.ts'), 'utf8');
 
-    expect(source).toContain("from 'instant-flow-contract'");
+    expect(source).toContain("from 'instant-ctrl-flow-contract'");
     expect(source).toContain("from 'eager-data-flow-contract'");
     expect(source).not.toMatch(
       /\b(CtrlFlowAuthoringPlan|DataFlowAuthoringPlan|FlowCodeNodePlan|DataFlowEdgePlan|CtrlFlowStatementPlan)\b/,

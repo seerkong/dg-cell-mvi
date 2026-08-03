@@ -68,7 +68,7 @@ describe('localStorageStoragePort', () => {
 
   it('degrades to safe no-ops when no backend is available', () => {
     // no backend injected AND no globalThis.localStorage in the node test env → no-op port.
-    const hadLocalStorage = 'localStorage' in globalThis;
+    const hadLocalStorage = typeof window !== 'undefined' && 'localStorage' in globalThis;
     const port = createLocalStorageStoragePort();
     if (!hadLocalStorage) {
       expect(() => port.set('k', 'v')).not.toThrow();

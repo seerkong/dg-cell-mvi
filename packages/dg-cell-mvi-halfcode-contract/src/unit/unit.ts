@@ -1,5 +1,5 @@
 /**
- * v3 unit types: App composition root + Page/Component manifests (D1/D9/D15).
+ * v3 unit types: App composition root + named Unit manifests (D1/D9/D15).
  *
  * Manifests are thin (D9): identity (FQN), version, default title, domain
  * registration only. Public boundaries live in contracts (./contracts), the
@@ -59,17 +59,22 @@ export interface ComponentUnitManifest extends HalfcodeUnitManifestBase {
   kind: 'component';
 }
 
+/** Document manifest. Its source/revision boundary lives in DocumentContractSpec. */
+export interface DocumentUnitManifest extends HalfcodeUnitManifestBase {
+  kind: 'document';
+}
+
 /** Flow manifests retain Halfcode identity while depa-flows owns their semantic bodies. */
-export interface HalfcodeInstantFlowManifest extends HalfcodeUnitManifestBase {
-  kind: 'instant-flow';
+export interface HalfcodeInstantCtrlFlowManifest extends HalfcodeUnitManifestBase {
+  kind: 'instant-ctrl-flow';
 }
 
-export interface HalfcodeWorkFlowManifest extends HalfcodeUnitManifestBase {
-  kind: 'work-flow';
+export interface HalfcodeWorkCtrlFlowManifest extends HalfcodeUnitManifestBase {
+  kind: 'work-ctrl-flow';
 }
 
-export interface HalfcodeBizProcessManifest extends HalfcodeUnitManifestBase {
-  kind: 'biz-process';
+export interface HalfcodeBPCtrlFlowManifest extends HalfcodeUnitManifestBase {
+  kind: 'bp-ctrl-flow';
 }
 
 export interface HalfcodeEagerDataFlowManifest extends HalfcodeUnitManifestBase {
@@ -79,9 +84,10 @@ export interface HalfcodeEagerDataFlowManifest extends HalfcodeUnitManifestBase 
 export type HalfcodeUnitManifest =
   | PageUnitManifest
   | ComponentUnitManifest
-  | HalfcodeInstantFlowManifest
-  | HalfcodeWorkFlowManifest
-  | HalfcodeBizProcessManifest
+  | DocumentUnitManifest
+  | HalfcodeInstantCtrlFlowManifest
+  | HalfcodeWorkCtrlFlowManifest
+  | HalfcodeBPCtrlFlowManifest
   | HalfcodeEagerDataFlowManifest;
 
 /** Product identity (app.product domain root). */

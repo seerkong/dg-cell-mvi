@@ -1,0 +1,39 @@
+<behavior-patch capability="halfcode-scope-runtime-assembly" version="1">
+  <upsert selector="behavior://halfcode-scope-runtime-assembly/requirements/document-instance-registry">
+    <requirement id="document-instance-registry">
+      <statement>系统 SHALL 根据 DocumentOpenContext.unitInstanceId 为每个 Document occurrence 装配独立的 root Scope Runtime 与 addressable instance registry capability，并向后代 Capsule/Component occurrence Scope 提供；Unit FQN MUST NOT 代替 occurrence identity。definition lookup、registry creation 与 occurrence assembly SHALL 由 openDocument 首参 runtime 的显式 capability 提供，DocumentRuntimeConfig SHALL 保持 data-only 且 MUST NOT 包含 definitions、registry 或 function object。registry SHALL 使用 owner token 管理 register/unregister 生命周期，拒绝重复 x-id，且 MUST NOT 通过 global/WeakMap/DOM/querySelector 解析目标。</statement>
+      <suite id="document-registry" name="Document 实例 registry">
+        <case id="open-close-lifecycle">
+          <given>runtime-first openDocument 以唯一 unitInstanceId、definition FQN、DocumentOpenContext 和可选 hostOccurrenceRef 打开文档</given>
+          <when>异步返回 tokenized data handle 后通过唯一 closeDocument 入口关闭</when>
+          <then>open SHALL 拒绝重复 active id并在部分失败时完全回滚；host ref SHALL 由首参 runtime 解析；close SHALL 校验 lease 并级联清理 child occurrences、Scope runtime 与 registry namespace</then>
+        </case>
+        <case id="namespace-isolation">
+          <given>两个 Document Unit instances 都注册 x-id=review-panel</given>
+          <when>分别通过完整 unit-instance URI 解析</when>
+          <then>两个目标 SHALL 在不同 namespace 正确解析且互不覆盖</then>
+        </case>
+        <case id="stale-unmount">
+          <given>同一地址先卸载后重挂，旧挂载随后再次发出 unregister</given>
+          <when>registry 校验 owner token</when>
+          <then>旧 unregister MUST NOT 删除新挂载实例</then>
+        </case>
+        <case id="runtime-inheritance">
+          <given>Document root Scope 持有 registry capability，后代 Capsule 未覆盖它</given>
+          <when>后代 runtime 发送实例调用</when>
+          <then>调用 SHALL 通过 Scope Runtime 可见性解析到 root registry，不直接读取全局 mutable map</then>
+        </case>
+        <case id="runtime-authority">
+          <given>调用方以 runtime-first openDocument(runtime, input, config) 打开 Document occurrence</given>
+          <when>系统解析 definition、创建 instance registry 并执行 occurrence assembly</when>
+          <then>三项稳定能力 SHALL 全部取自 runtime 显式 port；input 不携带依赖，config 仅为 data-only 单次静态配置</then>
+        </case>
+        <case id="same-fqn-runtime-isolation">
+          <given>同一 Document FQN 被打开两次且 host runtime 相同</given>
+          <when>runtime assembly 使用两个 unitInstanceId</when>
+          <then>系统 SHALL 产生两个独立 Scope runtime/registry namespace，嵌入 Component 的 parent SHALL 是各自 Document occurrence runtime</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

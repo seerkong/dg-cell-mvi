@@ -113,6 +113,7 @@ export const CollectionListPresenter = defineComponent({
     let activeDragItem: HTMLElement | undefined;
     let nativeDragActive = false;
     let fallbackCommitScheduled = false;
+    let nativeEndFallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
     const recordDragPointer = (event: Event) => {
       if (event.type !== 'dragend') {
@@ -141,6 +142,10 @@ export const CollectionListPresenter = defineComponent({
     };
     const clearActiveDrag = () => {
       stopDragPointerTracking();
+      if (nativeEndFallbackTimer !== undefined) {
+        clearTimeout(nativeEndFallbackTimer);
+        nativeEndFallbackTimer = undefined;
+      }
       intendedMove = undefined;
       lastDropClientY = undefined;
       activeDragFromIndex = undefined;
@@ -186,6 +191,19 @@ export const CollectionListPresenter = defineComponent({
       if (fallbackCommitScheduled) return;
       fallbackCommitScheduled = true;
       queueMicrotask(commitUnendedDrag);
+    };
+    const scheduleNativeEndFallback = (input: Readonly<{
+      reportedFromIndex?: number;
+      reportedToIndex?: number;
+      dropClientY?: number;
+    }>) => {
+      if (nativeEndFallbackTimer !== undefined) {
+        clearTimeout(nativeEndFallbackTimer);
+      }
+      nativeEndFallbackTimer = setTimeout(() => {
+        nativeEndFallbackTimer = undefined;
+        commitActiveDrag(input);
+      }, 0);
     };
     const trackDragEvent = (event: Event) => {
       if (
@@ -282,16 +300,20 @@ export const CollectionListPresenter = defineComponent({
             if (endPointerEvent) recordDragPointer(endPointerEvent);
             else recordDragPointer(event as unknown as Event);
             // Native Sortable can call onEnd for pointerup before dragend.
-            // Keep that session intact so dragend is its sole commit gate.
-            if (nativeDragActive) return;
-            commitActiveDrag({
+            // Prefer dragend, but retain Sortable's canonical indices when a browser omits it.
+            const input = {
               reportedFromIndex,
               reportedToIndex,
               dropClientY:
                 readPointerClientY(endPointerEvent)
                 ?? readPointerClientY(event as unknown as Event)
                 ?? lastDropClientY,
-            });
+            };
+            if (nativeDragActive) {
+              scheduleNativeEndFallback(input);
+              return;
+            }
+            commitActiveDrag(input);
           },
         });
       },

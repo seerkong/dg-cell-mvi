@@ -6,6 +6,8 @@
  *                        `props` field does not exist at the type level and is
  *                        additionally rejected by validatePageContract.
  * ComponentContractSpec: props/slots/accepts/sends/exposes.
+ * DocumentContractSpec:  source/revision descriptors + mode/parameters and
+ *                        message traffic. No URL, props, slots or exposes.
  * UnitElementContractSpec: per-element (esp. inline Capsule) boundary with
  *                        Requires — expectations on the host scope chain (D14).
  */
@@ -93,4 +95,31 @@ export interface ComponentContractSpec {
   metadata?: SerializableRecord;
 }
 
-export type UnitContractSpec = PageContractSpec | ComponentContractSpec;
+export type DocumentMode = 'view' | 'edit';
+
+/** Public boundary of a Document Unit, independent from Page and Component channels. */
+export interface DocumentContractSpec {
+  kind: 'document-contract';
+  fqn: UnitFqn;
+  mode: DocumentMode;
+  /** Type descriptor for the source accepted when a document occurrence opens. */
+  source?: string;
+  /** Type descriptor for the revision value, not live revision state. */
+  revision?: string;
+  /** Parameter name to type descriptor. */
+  parameters?: Record<string, string>;
+  accepts?: MessageRefSpec[];
+  sends?: MessageRefSpec[];
+  elementContracts?: UnitElementContractSpec[];
+  metadata?: SerializableRecord;
+}
+
+/** Stable presentation data key. Presenter implementations remain runtime-owned. */
+export interface DocumentPresentationSpec {
+  id: string;
+}
+
+export type UnitContractSpec =
+  | PageContractSpec
+  | ComponentContractSpec
+  | DocumentContractSpec;

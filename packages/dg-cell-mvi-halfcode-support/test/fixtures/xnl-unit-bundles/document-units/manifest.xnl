@@ -1,0 +1,29 @@
+<AppBundle #dg.docs.demo apiVersion="halfcode.dg-cell-mvi/v1" version="1.0.0" (
+  <Units [
+    <Unit {
+      kind = "document"
+      fqn = "dg.docs.demo.SystemDesign"
+      src = "vfs://./documents/system-design.xnl"
+    }>
+    <Unit {
+      kind = "document"
+      fqn = "dg.docs.demo.SystemDesignView"
+      src = "vfs://./documents/system-design-view.xnl"
+    }>
+    <Unit {
+      kind = "document"
+      fqn = "dg.docs.demo.SystemDesignFolder"
+      src = "vfs://./documents/system-design-folder/manifest.xnl"
+    }>
+    <Unit {
+      kind = "document"
+      fqn = "dg.docs.demo.RelatedDesign"
+      src = "vfs://./documents/related-design.xnl"
+    }>
+    <Unit {
+      kind = "component"
+      fqn = "dg.docs.ReviewPanel"
+      src = "vfs://./components/review-panel.xnl"
+    }>
+  ]>
+)>

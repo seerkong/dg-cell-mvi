@@ -1,0 +1,53 @@
+<Track id="harden-schema-editor-drag-completion" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>保证 Schema Editor collection 原生拖拽在浏览器漏发 dragend 时仍 exactly-once 提交。</Goal>
+    <Description>保留原生完成路径，以 Sortable canonical indices 提供可取消延迟兜底，并验证单向 mutation 边界。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-03T09:06:24Z</CreatedAt>
+    <UpdatedAt>2026-08-03T12:08:11+03:00</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="collection-presenter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/src/schema-editor/collection/collectionListPresenter.ts"/>
+    <MaterialBundle role="output" name="presenter-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/src/schema-editor/collection/"/>
+    <MaterialBundle role="output" name="presenter-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-element-plus/test/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_harden-schema-editor-drag-completion" name="harden-schema-editor-drag-completion" version="1" cdt:child-mode="dag">
+    <Description>先冻结漏发 dragend 的失败语义，再修复 owner 并跨包、浏览器验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Owner correction" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="增加漏发 dragend 的 exactly-once 回归" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">测试覆盖正常 dragend、漏发 dragend 与重复 terminal event</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="实现可取消 native onEnd fallback" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">两条完成路径只发一个 serializable item.move</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">Presenter 不直接修改 accepted data</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Verification" status="DONE" order="1">
+        <SubNodes>
+          <Task id="T2.1" name="运行组件、构建与 Flow 浏览器验证" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Element Plus full tests 与 dg build 通过</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">目标拖拽 repeat 10 次与 Flow 25 项全绿</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_harden-schema-editor-drag-completion"><Node id="P2"><After ref="P1"/></Node></Dag>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

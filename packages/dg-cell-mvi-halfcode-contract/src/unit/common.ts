@@ -13,15 +13,22 @@ export type {
   HalfcodeVersion,
 } from '../common';
 
-/** Flow products owned by depa-flows and registered by Halfcode. */
-export type FlowUnitKind =
-  | 'instant-flow'
-  | 'work-flow'
-  | 'biz-process'
-  | 'eager-data-flow';
+/** Named frontend units. Capsule is intentionally absent because it is inline-only. */
+export const FRONTEND_UNIT_KINDS = ['page', 'component', 'document'] as const;
+export type FrontendUnitKind = (typeof FRONTEND_UNIT_KINDS)[number];
 
-/** Registrable unit kinds. Capsule is intentionally absent: it is the inline-only encapsulation primitive (D1). */
-export type UnitKind = 'page' | 'component' | FlowUnitKind;
+/** Flow products owned by depa-flows and registered by Halfcode. */
+export const FLOW_UNIT_KINDS = [
+  'instant-ctrl-flow',
+  'work-ctrl-flow',
+  'bp-ctrl-flow',
+  'eager-data-flow',
+] as const;
+export type FlowUnitKind = (typeof FLOW_UNIT_KINDS)[number];
+
+/** Registrable unit kinds, derived from the two canonical kind collections. */
+export const UNIT_KINDS = [...FRONTEND_UNIT_KINDS, ...FLOW_UNIT_KINDS] as const;
+export type UnitKind = (typeof UNIT_KINDS)[number];
 
 /** Layers a domain can belong to in the scheme table (§4). */
 export type UnitLayer = UnitKind | 'app';
@@ -55,6 +62,31 @@ export class HalfcodeUnitContractError extends TypeError {
     this.name = 'HalfcodeUnitContractError';
     this.code = code;
   }
+}
+
+function includesKind<const TKinds extends readonly string[]>(
+  kinds: TKinds,
+  value: string,
+): value is TKinds[number] {
+  return (kinds as readonly string[]).includes(value);
+}
+
+/** Canonical kind predicates for loaders and other runtime dispatchers. */
+export function isFrontendUnitKind(value: string): value is FrontendUnitKind {
+  return includesKind(FRONTEND_UNIT_KINDS, value);
+}
+
+export function isFlowUnitKind(value: string): value is FlowUnitKind {
+  return includesKind(FLOW_UNIT_KINDS, value);
+}
+
+export function isUnitKind(value: string): value is UnitKind {
+  return includesKind(UNIT_KINDS, value);
+}
+
+/** Compile-time exhaustiveness guard that also fails closed for unexpected runtime data. */
+export function assertNever(value: never, context = 'unit kind dispatch'): never {
+  throw new Error(`Unexpected value in ${context}: ${String(value)}`);
 }
 
 /**

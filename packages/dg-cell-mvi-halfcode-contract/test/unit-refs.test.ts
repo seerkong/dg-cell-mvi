@@ -213,6 +213,7 @@ describe('HALFCODE_SCHEME_TABLE', () => {
     // The built-in unit registry exposes frontend refs plus the real eager subflow ref.
     expect(schemesForDomain(HALFCODE_UNIT_REGISTRY_DOMAIN).sort()).toEqual([
       'component',
+      'document',
       'eager-data-flow',
       'page',
     ]);

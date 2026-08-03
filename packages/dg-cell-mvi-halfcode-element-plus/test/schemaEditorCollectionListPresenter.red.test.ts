@@ -409,6 +409,52 @@ describe('Element Plus Schema Editor collection.list T3.1', () => {
     expect(rendered.events).toHaveLength(1);
   });
 
+  it('falls back to Sortable indices when a native drag omits dragend', async () => {
+    const rendered = mountCollection(
+      presenterProps(
+        collectionNode({ itemDefault: { id: '' } }),
+        freezeContract([{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
+      ),
+      () => [h('div', 'Alpha'), h('div', 'Beta'), h('div', 'Gamma')],
+    );
+    await nextTick();
+
+    const container = rendered.target.querySelector<HTMLElement>(
+      '[data-schema-editor-role="collection-items"]',
+    );
+    expect(container).not.toBeNull();
+    const sortable = sortableFor(container!);
+    const first = container!.querySelector<HTMLElement>(
+      '[data-schema-editor-index="0"]',
+    );
+    expect(first).not.toBeNull();
+
+    sortable.onChoose!({ item: first!, from: container! });
+    first!.dispatchEvent(new Event('dragstart', { bubbles: true }));
+    container!.append(first!);
+    const pointerup = new MouseEvent('pointerup', {
+      bubbles: true,
+      clientY: 80,
+    });
+    first!.dispatchEvent(pointerup);
+    sortable.onEnd!({
+      from: container!,
+      item: first!,
+      oldIndex: 0,
+      newIndex: 2,
+      originalEvent: pointerup,
+    });
+
+    expect(rendered.events).toEqual([]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rendered.events).toEqual([
+      { event: 'item.move', payload: { fromIndex: 0, toIndex: 2 } },
+    ]);
+    expect([...container!.children].map(
+      (item) => (item as HTMLElement).dataset.schemaEditorIndex,
+    )).toEqual(['0', '1', '2']);
+  });
+
   it('keeps fallback Sortable onEnd as a single immediate commit', async () => {
     const rendered = mountCollection(
       presenterProps(

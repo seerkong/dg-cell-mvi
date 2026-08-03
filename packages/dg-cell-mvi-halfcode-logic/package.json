@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-halfcode-logic",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Canonical Halfcode document and unit-bundle compilation plus artifact authoring logic.",
   "main": "./src/index.ts",
@@ -10,12 +14,17 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify:xnl-rich-document-fixture": "vitest run test/xnlRichDocumentCanonicalFixture.red.test.ts && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "dg-cell-mvi-halfcode-contract": "^0.1.0"
+    "dg-cell-mvi-halfcode-contract": "^0.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

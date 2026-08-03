@@ -1,33 +1,52 @@
 {
   "name": "dg-cell-mvi-halfcode-support",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Canonical Halfcode artifact, XNL bundle, runtime assembly, effect, and data-graph support.",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema-editor": "./src/schema-editor/index.ts",
+    "./xnl-authoring": "./src/xnl-authoring/index.ts",
+    "./xnl-projection": "./src/xnl-projection/index.ts",
+    "./xnl-projection-presenter": "./src/xnlProjectionPresenter.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck:document-runtime": "tsc --noEmit -p typecheck/tsconfig.json",
+    "typecheck:xnl-projection-presenter": "tsc --noEmit -p typecheck/xnl-projection-presenter/tsconfig.json",
+    "verify:xnl-projection-presenter": "vitest run test/xnlProjectionPresenterArchitecture.test.ts test/xnlProjectionPresenterPublicSurface.test.ts test/xnlProjectionPresenterCapabilities.test.ts test/xnlProjectionPresenterRunner.test.ts test/xnlProjectionPresenterScopeRuntime.test.ts && tsc --noEmit -p typecheck/xnl-projection-presenter/tsconfig.json",
+    "typecheck:xnl-authoring": "tsc --noEmit -p typecheck/xnl-authoring/tsconfig.json",
+    "typecheck:xnl-rich-document": "tsc --noEmit -p typecheck/xnl-rich-document/tsconfig.json",
+    "verify:xnl-rich-document": "vitest run test/xnlRichDocumentSupportBridge.red.test.ts test/xnlRichDocumentCanonicalFixture.red.test.ts && tsc --noEmit -p typecheck/xnl-rich-document/tsconfig.json",
+    "typecheck:xnl-vfs-workspace": "tsc --noEmit -p typecheck/xnl-vfs-workspace/tsconfig.json"
   },
   "dependencies": {
-    "biz-process-contract": "workspace:*",
-    "biz-process-logic": "workspace:*",
-    "dg-cell-mvi-core": "^0.1.0",
-    "dg-cell-mvi-halfcode-contract": "^0.1.0",
-    "dg-cell-mvi-halfcode-logic": "^0.1.0",
+    "bp-ctrl-flow-contract": "workspace:*",
+    "bp-ctrl-flow-logic": "workspace:*",
+    "dg-cell-mvi-core": "^0.1.1",
+    "dg-cell-mvi-halfcode-contract": "^0.1.1",
+    "dg-cell-mvi-halfcode-logic": "^0.1.1",
     "depa-data-graph-core": "^1.0.1",
     "eager-data-flow-logic": "workspace:*",
-    "instant-flow-logic": "workspace:*",
+    "instant-ctrl-flow-logic": "workspace:*",
     "task-manager-contract": "workspace:*",
     "task-manager-logic": "workspace:*",
-    "work-flow-contract": "workspace:*",
-    "work-flow-logic": "workspace:*",
-    "xnl-core": "^0.1.9"
+    "work-ctrl-flow-contract": "workspace:*",
+    "work-ctrl-flow-logic": "workspace:*",
+    "xnl-core": "workspace:*",
+    "xnl-vfs": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

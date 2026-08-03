@@ -34,6 +34,12 @@ export interface DefaultHalfcodeRuntimeObject extends HalfcodeRuntimeObject {
   readonly dataGraphs: MountedHalfcodeDataGraphRegistry;
   readonly flowFactories: HalfcodeFlowHandleFactoryRegistry;
   readonly flows: HalfcodeFlowHandleRegistry;
+  bindScope(
+    input: RuntimeScopeAssembly<DefaultHalfcodeRuntimeObject>,
+  ): DefaultHalfcodeRuntimeObject;
+  deriveScope(
+    input: RuntimeScopeAssembly<DefaultHalfcodeRuntimeObject>,
+  ): DefaultHalfcodeRuntimeObject;
   effect<TInput = unknown, TOutput = unknown>(
     name: string,
   ): ((input: TInput, config?: unknown) => Promise<TOutput> | TOutput) | undefined;

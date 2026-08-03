@@ -368,9 +368,10 @@ describe('schema-editor public contract surface', () => {
     };
     const exportKeys = Object.keys(packageJson.exports ?? {});
 
-    expect(exportKeys).toEqual(['.']);
+    expect(exportKeys).toEqual(['.', './test-fixtures/xnl-rich-document']);
     expect(exportKeys).not.toContain('./schema-editor');
-    expect(exportKeys.some((key) => /internal|schema-editor/.test(key))).toBe(false);
+    expect(exportKeys.filter((key) => key !== './test-fixtures/xnl-rich-document')
+      .some((key) => /internal|schema-editor|test-fixtures/.test(key))).toBe(false);
   });
 
   it('keeps schema-editor as a pure contract capsule with one public index and no renderer, VFS, XNL, or mutation dependency', () => {

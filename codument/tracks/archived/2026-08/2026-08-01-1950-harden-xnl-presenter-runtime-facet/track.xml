@@ -1,0 +1,205 @@
+<Track id="harden-xnl-presenter-runtime-facet" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>以 support-owned positive grants 构造 exact frozen Presenter facade，使合法 source 的任意额外 ungranted capabilities 被排除且 projection 成功，并对非法 facet/grant 与 method 返回 object graph fail closed。</Goal>
+    <Description>加固通用 Presenter protocol/facet/runner，保持正常 render 的 surface data，并将编辑意图限定为无 translator/session/submit authority 的 serializable proposal data；本 Track diff 不新增 occurrence、NodeView 或 submit bridge wiring。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-08-01T12:52:46Z</CreatedAt>
+    <UpdatedAt>2026-08-01T16:50:21Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="projection-contract-baseline" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-projection/"/>
+    <MaterialBundle role="input" name="projection-support-baseline" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-projection/"/>
+    <MaterialBundle role="input" name="scope-runtime-baseline" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/runtimeAssembly.ts"/>
+    <MaterialBundle role="output" name="presenter-capability-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="presenter-capability-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="presenter-runtime-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/"/>
+    <MaterialBundle role="output" name="presenter-runtime-typecheck" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-support/typecheck/"/>
+    <MaterialBundle role="output" name="projection-authoring-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_harden-xnl-presenter-runtime-facet" name="harden-xnl-presenter-runtime-facet" version="1">
+    <Description>按红测与 contract、support protocol/facet/runner、现有调用迁移与 Scope 多态、文档与全量独立验证的顺序收敛 Presenter runtime authority GAP。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="红测与 Contract" status="DONE" order="0">
+        <Description>先冻结可执行 possession guarantee、合法 source 正向 projection、非法 facet/grant 边界、method return containment、trusted method effect policy，以及 surface output/编辑意图 proposal separation。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>红测证明当前 raw branded view 成功路径违反新 requirement</cdt:Criterion>
+          <cdt:Criterion>测试与 contract 不宣称 runtime 可识别任意 method semantic authority 或 closure purity</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T1.1" name="编写 facade boundary 红测试" status="DONE" order="0" priority="P0">
+            <Description>成对覆盖合法 source 的任意额外 ungranted capabilities，以及 raw host 直接当 view、forged protocol/facet、unknown/forged grant、identity projection、accessor target、facet extra own key 与 owner mismatch。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">当前实现至少因 branded authority-bearing raw view 仍可进入 Presenter 而红</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">合法 source 含任意额外 ungranted fields/capabilities 时 projection 成功，facade 只含 grants，且无关 accessor 不被读取</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">Raw host 直接当 view、forged protocol/facet、unknown/forged grant、identity projection、accessor target、facet extra own key 与 owner mismatch 均在 Presenter 前 fail closed；测试不编码字段名 denylist</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="编写 method return 与 policy 红测试" status="DONE" order="1" priority="P0">
+            <Description>覆盖 granted method 返回 serializable snapshot、同协议 owned facade、raw source、host authority、foreign facade、循环或不可序列化 object graph，以及 sync/async result。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">Wrapper 只允许 immutable serializable snapshot 或同协议 owned facade result，其余 object graph fail closed</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">测试明确承认 granted method 内部 effect 可能发生，return guard 不被断言为 rollback 或 purity proof</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC3" checked="true">被 trusted protocol 显式授予的 renamed/effectful method 被视为 policy grant，不要求 runtime 自动识别 semantic authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="定义 Presenter capability contract" status="DONE" order="2" priority="P0">
+            <Description>定义 protocol/grant/facet/result/diagnostic 与 runtime-first construction 类型，保留通用 adapter 的 surface data render output，并仅把编辑意图通道限定为 serializable Interaction/Command proposal data。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">Contract 表达 snapshot/method grants、exact readonly view 与 closed method result，不提供 raw-object/identity/spread-source grant</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">正常 render contract 继续输出 validated surface data；编辑意图 proposal data 与 Presenter facet 不含 translator、authoring session、submit callback 或 submit authority</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC3" checked="true">Contract/logic 不新增 support、xnl-core、xnl-vfs、Tiptap、DOM 或 renderer 依赖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Support Protocol Facet 与 Runner" status="DONE" order="1">
+        <Description>实现 support-owned protocol/grants、exact facade、method return guard、facet provenance 与 runner authoritative lookup。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>合法 source 的 ungranted host graph 被排除且构造成功，Presenter 不 possession raw source identity</cdt:Criterion>
+          <cdt:Criterion>Method return containment 与 method internal effect policy 被准确区分</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 owned protocol 与 positive grants" status="DONE" order="0" priority="P0">
+            <Description>实现 protocol/grant owner registry、descriptor-safe snapshot/method capture、prototype lookup、owner binding 与 forgery/accessor/Proxy failure handling。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Protocol/grant 伪造、复制、重复 id、unknown owner、grant accessor target 与相关 reflection failure 返回 closed failure；未授予 source 字段不参与检查</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Method 只从显式 data-function descriptor 捕获并稳定绑定 owner，getter 不执行</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">授权选择仅来自 owned positive grants，不扫描 writer/valueHost/vfs 或任何改名字段</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="构造 exact facade 与 method wrapper" status="DONE" order="1" priority="P0">
+            <Description>构造无 host prototype/identity/facet extra own key 的 frozen facade，并在 method wrapper 对 sync/async return 执行 serializable snapshot 或 same-protocol owned-facade validation。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">Facade own keys 与 grants 完全一致，snapshot 深冻结；source 可含任意额外 ungranted capabilities 且构造成功，source/prototype 后续变更不扩大 facade</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Raw source、host authority、foreign facade 与 unowned object graph 返回时 fail closed，不交给 Presenter</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">实现与 diagnostic 不声称阻止 granted method 内部 effect 或证明 arbitrary closure purity</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="加固 facet owner record 与 runner" status="DONE" order="2" priority="P0">
+            <Description>移除 raw-view 成功路径；facet 私有记录 protocol/facade provenance，runner 从 owner record 解析 facade，不信任公开结构字段。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">Raw host 直接当 view、forged/unknown grant、identity projection、facet extra own key、mutable/malformed facet 或 owner-record 错配在 adapter 前失败</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">Recursive post-order、surface/options/output validation 与 unknown Presenter no-fallback 行为保持</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC3" checked="true">Empty protocol 与 typed snapshot/method protocol 均通过 package root API 使用</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="调用迁移与 Scope 多态" status="DONE" order="2">
+        <Description>迁移仓库内现有 facet 调用，并从一个按既有 bindScope/deriveScope 得到的 Scope runtime 验证独立 Presenter projection。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>不存在 legacy raw-view 成功入口</cdt:Criterion>
+          <cdt:Criterion>本 Track diff 不修改 Document occurrence/public contract，不预生成 consumer facet，也不新增 NodeView/submit bridge wiring</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="迁移公共入口与现有调用方" status="DONE" order="0" priority="P0">
+            <Description>迁移 neutral Presenter、class fixtures、package root exports 与全部现有 facet 创建调用到显式 owned protocol。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">仓库内所有成功创建 facet 的调用均使用 support-owned protocol/grants</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">旧 raw arbitrary object 动态调用只有明确 failure，不存在成功 overload、compatibility wrapper 或 escape hatch</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="true">Package root ESM/CJS/type import smoke 使用公开 API，无 deep subpath 依赖</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="验证 Scope runtime polymorphism" status="DONE" order="1" priority="P0">
+            <Description>以现有 bindScope/deriveScope 输出为 source，覆盖 object/class/prototype/mixin、private state、inherit/override 与 accessor negative cases。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">Explicitly granted methods 保持 this/private state 与既有 prototype/mixin inherit/override 语义</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Presenter 收到独立 exact facade 而非 Scope runtime identity；任意额外 ungranted capability 被静态与运行时排除，且不使合法 source 构造失败</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">本 Track diff 未修改 Document occurrence/public contract，未预生成 root/Capsule/Component Presenter facet，未新增 NodeView/submit bridge wiring</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="验证类型依赖与残留" status="DONE" order="2" priority="P0">
+            <Description>运行 exact view typecheck、dependency scan、全仓 raw facet 调用与 authority decision residue scan。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">Projected interface exact readonly，host-only access 为编译错误，合法消费不使用 any、开放 index signature 或 raw cast</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">Contract/logic 无反向依赖，support 无 Tiptap/Vue/DOM/HTML/xnl-vcs 新依赖</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC3" checked="true">安全选择只依据 owned protocol/grants；renamed authority probe 与文档均不形成 denylist 或 purity overclaim</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="文档与全量独立验证" status="DONE" order="3">
+        <Description>同步准确边界，完成全量测试与类型验证，由 fresh verifier 独立复现并通过 GapLoop 收敛。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>实现者自述不能替代 fresh independent verification</cdt:Criterion>
+          <cdt:Criterion>报告不修改 Mission，不宣称 TIPTAP NodeView 或真实 consumer integration 已完成</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="更新 Projection 与 Authoring 文档" status="DONE" order="0" priority="P1">
+            <Description>说明 positive grants、possession guarantee、trusted method effect policy、return containment、raw-view migration、surface output、编辑意图 proposal data 与 TIPTAP future boundary。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">文档不把品牌当 attenuation，也不声称 runtime 可证明 arbitrary closure purity 或阻止 granted method 内部 effect</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">文档说明 wrapper 只允许 serializable snapshot 或 same-protocol owned facade return，并给出 Scope typed projection 示例</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC3" checked="true">文档明确正常 render 返回 surface data，只有编辑意图通道返回 serializable proposal data 且不含 submit authority；本 Track diff 不新增 NodeView/Document/submit bridge wiring</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="运行 focused 与全量验证" status="DONE" order="1" priority="P0">
+            <Description>运行 Presenter focused suites、contract/logic/support 全量测试、package/dedicated typecheck、dependency scan、public import smoke 与 git diff check。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">合法 source projection、非法 facet adversarial、method return、Scope polymorphism、surface/proposal separation 与 runner regression suites 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Contract、logic、support 全量测试及 package/dedicated typecheck 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">Dependency/residue/public import checks 与 git diff --check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="执行 fresh independent verifier" status="DONE" order="2" priority="P0">
+            <Description>Fresh verifier 从 behavior/proposal/design 独立构造 probe，只判定不修复，逐项验证 possession、method return/policy、Scope polymorphism 与非目标范围。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">Fresh probe 证明合法 source 可有任意额外 ungranted/renamed capabilities 且 projection 成功并排除它们；raw host 直接当 view、forged/unknown grant、identity projection、accessor target、facet extra own key 与 owner mismatch 均失败</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">Fresh probe 证明 raw host/object graph return fail closed，并明确不把 granted method internal effect 判成 runtime purity failure</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">Verifier 确认本 Track diff 未修改 Document occurrence/public contract，未预生成 root/Capsule/Component Presenter facet，未新增 NodeView/submit bridge wiring；不以仓库既存 occurrence 或 proposal.submit API 作为失败条件</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.4" name="收敛报告与 Track 校验" status="DONE" order="3" priority="P0">
+            <Description>记录 issues-first verdict 与可复现证据，运行 strict Codument validate、XML/XNL parse 和最终范围/diff 检查。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.4-AC1" checked="true">Fresh report 对 behavior 全 cases 逐项给出 PASS/GAP 与命令证据</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC2" checked="true">codument validate harden-xnl-presenter-runtime-facet --strict、XML/XNL parse 与 git diff --check 通过</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC3" checked="true">最终本 Track diff 只含所需实现/docs/evidence，未修改 Mission、Document occurrence/public contract，未预生成 root/Capsule/Component Presenter facet，未新增 NodeView/submit bridge wiring</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.5" name="修正 method contract 与 Runner 正向输入边界" status="DONE" order="4" priority="P0">
+            <Description>根据 phase AttractorCheck GAP，统一 method grant 的公开 direct-contained-return 类型与 runtime throw 语义，使 protocol factory 在类型上关联 host/view/grants，并移除 RunnerInput authority 字段名 denylist，改为 descriptor-safe 的正向允许字段解析。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.5-AC1" checked="true">公开 method type 与 runtime 一致：成功直接返回 immutable serializable snapshot 或 same-protocol owned facade，非法结果抛 closed diagnostic，不再声明未实际返回的 result envelope</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC2" checked="true">Protocol/grant public generics 将 THost、TView、source/facade key 与 method shape 关联，任意不匹配 TView 的强制类型路径由 dedicated negative typecheck 拒绝</cdt:Criterion>
+              <cdt:Criterion id="T4.5-AC3" checked="true">RunnerInput 不列举 xnlAst/vfs/valueHost/mutationWriter 等禁止字段名；runtime 仅以 plan/surfaceState 正向 allowlist 和 data descriptor 读取输入，额外 own key/accessor/reflection failure 均 fail closed</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.6" name="复验 AttractorCheck 修正" status="DONE" order="5" priority="P0">
+            <Description>由 fresh worker 对 direct-return contract、typed protocol/grants 与 Runner positive-input boundary 编写回归/负例并运行 focused、package typecheck、全量与范围检查。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.6-AC1" checked="true">Typecheck 证明合法 method view 直接返回类型可消费，result-envelope 或 host/view/grant 错配不能通过公共 API；运行时 sync/async containment 回归全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.6-AC2" checked="true">Runner 对合法 plan/surfaceState 保持行为，对任意命名 extra own key、accessor input 与 reflection failure 在 Presenter 前 fail closed，且测试不依赖 authority 名称</cdt:Criterion>
+              <cdt:Criterion id="T4.6-AC3" checked="true">Presenter focused、contract/logic/support typecheck 与相关全量测试、strict validate、dependency/range scan、git diff --check 全部通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.7" name="封闭 host result union 类型收窄" status="DONE" order="6" priority="P0">
+            <Description>修正 AttractorCheck 发现的 distributive conditional 漏洞：先验证 Awaited host result 的整个 union 都属于 serializable snapshot 或 same-view facade 闭包，再映射 contained return，禁止把 unsafe union member 通过 never 消除后窄化。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.7-AC1" checked="true">Host result 的整个 union 必须全成员可 containment；safe snapshot 与 authority object 混合 union、foreign view union 均不能创建窄化 facade grant</cdt:Criterion>
+              <cdt:Criterion id="T4.7-AC2" checked="true">全安全的 snapshot union 以及合法 snapshot/same-view-facade union 保持可表达，direct-return public type 与 runtime containment 一致</cdt:Criterion>
+              <cdt:Criterion id="T4.7-AC3" checked="true">Dedicated typecheck、Presenter focused、contract/support package typecheck、strict validate 与 git diff --check 通过，未改 production runtime、Mission 或后续 consumer wiring</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+</Track>

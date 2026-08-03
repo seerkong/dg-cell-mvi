@@ -1,0 +1,13 @@
+<BPCtrlFlow #dg.demo.flow.WelcomeBiz apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.WelcomeBiz {
+    input = "vfs://./flow-code/welcome.contracts.ts#WelcomeBizInput"
+    output = "vfs://./flow-code/welcome.contracts.ts#WelcomeBizOutput"
+  }>
+  <FlowAuthoring #dg.demo.flow.WelcomeBiz { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #prepare { x = 80 y = 100 }>
+    <NodeLayout #done { x = 360 y = 100 }>
+  ]>
+) [
+  <Run #prepare { src = "vfs://./flow-code/welcome.biz.ts#prepare" }>
+  <Return #done>
+]>

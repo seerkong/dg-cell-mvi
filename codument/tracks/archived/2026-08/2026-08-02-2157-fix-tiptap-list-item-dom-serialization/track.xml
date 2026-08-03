@@ -1,0 +1,81 @@
+<Track id="fix-tiptap-list-item-dom-serialization" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 canonical RichDocument listItem 可在真实 Tiptap/ProseMirror 浏览器 Editor 中渲染，同时保持 block+ grammar 与无 reverse-authoring authority 边界。</Goal>
+    <Description>为 adapter-owned listItem 补受控 DOM serializer，收窄 boundary scan，并以 package-root real Editor 和 Workbench 红测验收。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-02T20:21:59+03:00</CreatedAt>
+    <UpdatedAt>2026-08-02T21:57:10+03:00</UpdatedAt>
+    <GapRound>5</GapRound>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="canonical-registry" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/internalTiptapExtensionRegistry.ts"/>
+    <MaterialBundle role="input" name="adapter-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/test/"/>
+    <MaterialBundle role="output" name="adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_fix-tiptap-list-item-dom-serialization" name="fix-tiptap-list-item-dom-serialization" version="1" cdt:child-mode="dag">
+    <Description>先冻结真实 Editor 红证据，再做 owner-local serializer 修复和跨仓库验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Real Editor red baseline" status="DONE" order="0">
+        <Description>固定缺失 toDOM、block+ grammar 和 boundary authority 的可复现证据。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="建立 package-root list browser red test" status="DONE" order="0" priority="P0">
+            <Description>从 package root 创建真实 Editor，覆盖 bullet、ordered 与 blockquote-first listItem，并固定当前 toDOM failure。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测准确因 canonical listItem 缺失 DOM serializer 而失败</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">测试断言 content 仍为 block+，不以官方较窄 grammar 替代</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="修正 serializer 与 reverse-authority 边界测试" status="DONE" order="1" priority="P0">
+            <Description>将现有过宽 renderHTML 禁令改为定点允许 canonical view serializer，继续扫描所有 HTML/DOM reverse-authoring 路径。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">Boundary test 允许 adapter-owned serializer，仍拒绝 generateHTML/getHTML/DOMParser/querySelector/innerHTML 与 writer authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Canonical serializer and verification" status="DONE" order="1">
+        <Description>补最小 serializer，并以 adapter 与 Workbench 真实消费链验收。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>P1 红测与 boundary distinction 已固定且失败原因只指向 adapter owner</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 listItem DOM serializer" status="DONE" order="0" priority="P0">
+            <Description>在 canonical registry 为 custom listItem 增加受控 li output spec，不改变 schema id、block+、identity 或 transaction semantics。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Package-root schema 提供 toDOM，真实 Editor 渲染 ul/ol/li 与 blockquote-first listItem</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">列表语义、顺序、nodeId 和 revision-free transaction 规律不漂移</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">实现不引入 HTML parser、DOM lookup、raw NodeView、writer 或新公共 API</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="运行 adapter 与 Workbench 下游验证" status="DONE" order="1" priority="P0">
+            <Description>运行 adapter full tests/typecheck/public-root smoke，并从 Workbench 重跑 T2.2 editor/entry 测试。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">Adapter full tests、typecheck、public-root real Editor tests 全绿</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Workbench list schema 红测与真实 programmable-document entry 挂载转绿</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">Strict Codument validate 与 fresh independent verify 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Dag for="space_fix-tiptap-list-item-dom-serialization">
+      <Node id="P2"><After ref="P1"/></Node>
+    </Dag>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

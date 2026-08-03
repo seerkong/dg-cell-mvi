@@ -15,4 +15,8 @@
 
 Effect and DataGraph bindings are Scope `()` subdomains, not type catalog domains. `workspace` and `fixtures` are app projection domains and do not participate in compilation.
 
-AppBundle `Units` derives page/component registries and registers the four canonical Flow products. Page/Component refs stay in this family; Flow loading and runtime handle assembly are specified under [`spec/flow/`](../flow/domains.md).
+Document has no `elements` domain. A Document root `[]` is ordered Domain XNL
+source, and a unique `DocumentSource.ref` points at external UI-free Domain XNL;
+the two forms are mutually exclusive. See [Document Unit](document.md).
+
+AppBundle `Units` derives page/component/document registries and registers the four canonical Flow products. Page/Component/Document refs stay in this family; Flow loading and runtime handle assembly are specified under [`spec/flow/`](../flow/domains.md).

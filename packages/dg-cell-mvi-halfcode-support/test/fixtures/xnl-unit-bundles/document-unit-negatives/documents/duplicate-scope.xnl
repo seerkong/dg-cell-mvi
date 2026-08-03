@@ -1,0 +1,8 @@
+<Document #dg.docs.negative.DuplicateScope (
+  <DocumentContract { mode = "view" }>
+  <Scope #first-root>
+  <Scope #second-root>
+  <DocumentPresentation { id = "duplicate-scope" }>
+) [
+  <Paragraph #body ["body"]>
+]>

@@ -1,0 +1,48 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/browser-authoring-primitives">
+    <requirement id="browser-authoring-primitives">
+      <statement>The dedicated Tiptap adapter SHALL expose composable table authoring commands and a Mermaid NodeView through its package root; every document change SHALL remain a Tiptap transaction normalized into a revision-free Interaction, while Domain XNL, authoring revision, mutation acceptance and persistence remain owned by the trusted host.</statement>
+      <suite id="table-authoring" name="Canonical table browser authoring">
+        <case id="real-editor-commands">
+          <given>A real Tiptap Editor is created only from the package public extensions.</given>
+          <when>A consumer inserts or structurally edits a table.</when>
+          <then>Official Tiptap table commands SHALL be callable for table, row, column, merge, split and header operations, and the adapter SHALL preserve supported RichDocument identity and span attributes.</then>
+        </case>
+        <case id="transaction-only-write-path">
+          <given>A table command changes document structure or cell content.</given>
+          <when>The adapter observes the transaction.</when>
+          <then>The change SHALL leave the adapter only as a revision-free Interaction and SHALL NOT directly write Domain XNL, authoring state or persistence.</then>
+        </case>
+        <case id="table-round-trip">
+          <given>A supported RichDocument table is projected, edited and parsed.</given>
+          <when>Canonical normalization is applied.</when>
+          <then>Table semantics, ordering, stable moved identities and supported cell spans SHALL be preserved without HTML or DOM reverse authoring.</then>
+        </case>
+      </suite>
+      <suite id="mermaid-nodeview" name="Runtime-bound Mermaid NodeView">
+        <case id="effect-injection">
+          <given>A product binds a safe Mermaid render Effect at its composition root.</given>
+          <when>The Mermaid NodeView mounts or its source changes.</when>
+          <then>The composition root SHALL provide one exact runtime whose effects contain render and diagnostic contracts; the NodeView SHALL invoke each as output = fn(runtime, input, config), while its private DOM commit remains host-owned, and SHALL NOT accept loose callbacks or construct a concrete renderer implementation.</then>
+        </case>
+        <case id="safe-lifecycle">
+          <given>Mermaid rendering is asynchronous, rejects, throws or completes after a newer source or destroy.</given>
+          <when>A render result attempts to commit.</when>
+          <then>Only the latest live request SHALL reach the host-owned private DOM commit with structured safe output; stale or destroyed results SHALL be discarded and failures SHALL reach the separate diagnostic Effect without changing Domain truth.</then>
+        </case>
+        <case id="source-transaction">
+          <given>A user edits Mermaid source through the NodeView.</given>
+          <when>The source is updated.</when>
+          <then>The NodeView SHALL update its node through a Tiptap transaction normalized as an explicit Mermaid source Interaction and SHALL NOT directly mutate RichDocument, XNL, VFS or the authoring session.</then>
+        </case>
+      </suite>
+      <suite id="public-capsule" name="Public capsule boundary">
+        <case id="public-root-consumption">
+          <given>A product consumes only the package root.</given>
+          <when>It assembles table, Mermaid and Halfcode embed browser capabilities.</when>
+          <then>One public browser host SHALL own one canonical extension registry and compose table, Mermaid, Component and Capsule NodeViews without duplicate extensions, deep imports, raw NodeViewRenderer exposure or product-specific deduplication; existing Component/Capsule authority containment SHALL remain intact.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

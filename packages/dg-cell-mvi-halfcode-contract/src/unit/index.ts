@@ -13,6 +13,7 @@ export * from './unit';
 export * from './element';
 export * from './routes';
 export * from './contracts';
+export * from './document';
 export * from './messages';
 export * from './plans';
 export * from './runtime';

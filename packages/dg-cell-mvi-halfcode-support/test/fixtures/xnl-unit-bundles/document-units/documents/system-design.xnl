@@ -1,0 +1,52 @@
+<Document #dg.docs.demo.SystemDesign version="1.0.0" (
+  <DocumentContract {
+    mode = "edit"
+    source = "xnl-source-ref"
+    revision = "string?"
+    parameters = {
+      locale = "string?"
+      audience = "string?"
+    }
+  }>
+  <Scope #document-root {
+    runtime = "runtime-instance://#document-runtime"
+  }>
+  <DocumentPresentation {
+    id = "system-design"
+  }>
+) [
+  <!-- inline:heading-before-overview -->
+  <Heading #title {
+    level = 1
+  } [
+    "System design"
+  ]>
+  <ArchitectureDecision #overview {
+    status = "accepted"
+  } [
+    "The runtime owns occurrence identity."
+  ]>
+  <!-- inline:embeds-after-domain-content -->
+  <dg.docs.ReviewPanel #review-panel {
+    "x-id" = "review-panel"
+    tone = "review"
+  }>
+  <dg.docs.ReviewPanel #summary-panel {
+    tone = "summary"
+  }>
+  <Capsule #architecture {
+    "x-id" = "architecture"
+  } (
+    <Scope #architecture-scope {
+      runtime = "runtime-instance://#architecture-runtime"
+    }>
+  ) [
+    <ArchitectureCanvas #architecture-canvas>
+    <dg.docs.ReviewPanel #architecture-panel {
+      "x-id" = "architecture-panel"
+    }>
+  ]>
+  <dg.docs.demo.RelatedDesign #related-design {
+    "x-id" = "related-design"
+  }>
+]>

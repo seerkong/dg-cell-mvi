@@ -1,0 +1,266 @@
+<behaviors capability="xnl-document-tiptap-presenter" version="1">
+  <requirement id="rich-document-model">
+    <statement>The system SHALL define a serializable renderer-neutral RichDocument model and pure lower/parse logic over neutral Projection/Authoring data for supported blocks, marks, tables, code, Mermaid and Halfcode embeds; only support SHALL adapt concrete xnl-core XnlNode to or from neutral data and materialize final candidates, and normal authoring SHALL transform Domain XNL to RichDocument to Tiptap JSON without HTML or DOM as an intermediate fact.</statement>
+    <suite id="rich-document" name="RichDocument lowering">
+      <case id="supported-structure">
+        <given>A valid RichDocument XNL source with stable block #id values.</given>
+        <when>The pure dialect lowers and parses it.</when>
+        <then>Supported semantic structure, order, marks and block identity SHALL be preserved under canonical normalization.</then>
+      </case>
+      <case id="unsupported-fail-closed">
+        <given>The source contains an unsupported or lossy construct.</given>
+        <when>The dialect lowers or parses it.</when>
+        <then>The result SHALL contain actionable diagnostics and SHALL NOT silently fall back to HTML, raw JSON or plain text.</then>
+      </case>
+      <case id="identity-not-payload">
+        <given>A stable block moves while retaining #id.</given>
+        <when>The accepted candidate is diffed.</when>
+        <then>#id SHALL align the tree and identify the move and SHALL NOT be emitted as an ordinary field update.</then>
+      </case>
+      <case id="concrete-xnl-adapter-owner">
+        <given>Concrete xnl-core XnlNode input is lowered or a final candidate is materialized.</given>
+        <when>The package boundary is inspected.</when>
+        <then>Only support SHALL import xnl-core or xnl-vfs and SHALL reuse the existing parser and mutation engine; contract and logic SHALL operate on neutral data and SHALL introduce no parallel AST, parser or mutation engine.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="tiptap-adapter">
+    <statement>The dedicated dg-cell-mvi-halfcode-tiptap-vue capsule SHALL project RichDocument to Tiptap/ProseMirror and normalize editor transactions into revision-free serializable XnlProjectionPresenterEditIntent data; a trusted host SHALL translate the Interaction and construct XnlAuthoringProposal with the current live revision, while ProseMirror state, selection, composition and history SHALL remain local projection state and SHALL NOT write Domain XNL or persistence directly.</statement>
+    <suite id="adapter" name="Tiptap adapter">
+      <case id="transaction-proposal">
+        <given>A Tiptap transaction changes supported document content.</given>
+        <when>The adapter normalizes the transaction.</when>
+        <then>It SHALL emit only the revision-free kind=&amp;amp;amp;amp;amp;quot;interaction&amp;amp;amp;amp;amp;quot; variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then>
+      </case>
+      <case id="trusted-host-proposal">
+        <given>A trusted host receives a valid Interaction edit intent.</given>
+        <when>It translates the Interaction for the current projection and prepares authoring.</when>
+        <then>The host SHALL call translateXnlProjectionInteraction exactly once, then read the submission-time live revision and construct XnlAuthoringProposal; the adapter and NodeView SHALL neither receive nor call authoring submit.</then>
+      </case>
+      <case id="ime-history">
+        <given>Composition, selection and undo/redo transactions occur.</given>
+        <when>The adapter groups and publishes edits.</when>
+        <then>IME SHALL publish only after the configured semantic boundary and undo/redo SHALL create proposals rather than mutate accepted XNL directly.</then>
+      </case>
+      <case id="non-document-transaction-silent">
+        <given>A transaction changes only selection or metadata, or is an intermediate composition transaction without a document change.</given>
+        <when>The adapter observes it.</when>
+        <then>It SHALL emit no edit intent and SHALL NOT invoke the trusted bridge; selection or history metadata MAY accompany a genuine document-changing Interaction only as serializable provenance.</then>
+      </case>
+      <case id="dependency-isolation">
+        <given>The Halfcode Document Presenter dependency slice is inspected.</given>
+        <when>Contract, logic, support, the existing Halfcode Vue renderer and the new adapter are scanned.</when>
+        <then>Within that slice, Tiptap, ProseMirror and NodeView dependencies SHALL exist only in the dedicated adapter; Vue MAY exist in the existing Vue renderer and new adapter, while contract, logic and support SHALL remain free of Vue, Tiptap, ProseMirror and DOM. The existing admin-element-plus HTML-first editor is a legacy baseline outside this slice, and this track SHALL add no Tiptap dependency to any other package.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="halfcode-nodeview-host">
+    <statement>A Halfcode Component or Capsule NodeView SHALL receive only the exact readonly view proven by XnlProjectionPresenterRuntimeFacet, immutable occurrence snapshot, DocumentInstanceRef and an emitEditIntent grant restricted to XnlProjectionPresenterEditIntent; the host adapter SHALL retain registry owner tokens and cleanup authority, and embedded code SHALL NOT possess raw Scope runtime, Domain AST, ValueHost, translator, authoring session, VFS/VCS or mutation writer authority.</statement>
+    <suite id="nodeview" name="Restricted NodeView host">
+      <case id="mount-update-unmount">
+        <given>An embedded Halfcode occurrence has a stable namespaced x-id.</given>
+        <when>The NodeView host mounts, updates and unmounts it.</when>
+        <then>The runtime registry SHALL use a host-private owner-token lifecycle, preserve occurrence address and prevent stale cleanup from removing a replacement mount; embedded code SHALL never receive the token or unregister capability.</then>
+      </case>
+      <case id="authority-containment">
+        <given>A NodeView adapter is constructed from a Scope containing extra capabilities.</given>
+        <when>The embedded component renders or requests an edit.</when>
+        <then>Only explicitly granted facade data/functions SHALL be visible and every edit SHALL leave as serializable proposal data.</then>
+      </case>
+      <case id="duplicate-address">
+        <given>Two active embedded occurrences claim the same x-id in one Document occurrence.</given>
+        <when>They register.</when>
+        <then>The second registration SHALL fail with a structured diagnostic and SHALL NOT use last-wins or DOM lookup.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="persistent-identity-allocation">
+    <statement>Persistent Domain #id allocation for new or copied RichDocument nodes SHALL be owned by a host/authoring identity allocator during candidate construction; move SHALL preserve #id, replacement SHALL be delete-and-add, and occurrence x-id SHALL be derived only after persistent identity exists.</statement>
+    <suite id="identity-allocation" name="Persistent and occurrence identity">
+      <case id="insert-fresh-id">
+        <given>A Tiptap transaction inserts a new persistent document node.</given>
+        <when>The trusted host materializes the authoring candidate.</when>
+        <then>The host-owned allocator SHALL assign a fresh #id before occurrence x-id is derived.</then>
+      </case>
+      <case id="copy-and-move">
+        <given>An existing subtree is copied or moved across parents.</given>
+        <when>The candidate is materialized and diffed.</when>
+        <then>Every copied persistent node SHALL receive a fresh #id, while every moved node SHALL retain its original #id and be recognized as a move.</then>
+      </case>
+      <case id="replacement-and-roles">
+        <given>A node identity is replaced or one persistent node is projected in multiple roles.</given>
+        <when>The accepted candidate is projected.</when>
+        <then>Identity replacement SHALL be delete-and-add, and each role SHALL derive a distinct namespaced x-id from the same persistent #id.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="bidirectional-laws">
+    <statement>Supported RichDocument fixtures SHALL satisfy canonical GetPut, and an accepted Tiptap Interaction SHALL satisfy PutGet through the existing accepted-first authoring session; stale, rejected or lossy pre-acceptance edits SHALL advance neither truth, while post-acceptance persistence failure SHALL retain advanced live truth, leave persisted truth unchanged and enter dirty-failed.</statement>
+    <suite id="laws" name="Projection laws">
+      <case id="getput">
+        <given>A supported canonical Domain XNL document.</given>
+        <when>It is lowered, projected, parsed and normalized without an edit.</when>
+        <then>The result SHALL equal the normalized input and SHALL preserve stable block identity.</then>
+      </case>
+      <case id="putget">
+        <given>A supported Tiptap edit proposal is accepted by the authoring owner.</given>
+        <when>The persisted XNL is reloaded and reprojected.</when>
+        <then>The visible semantic edit SHALL match the proposal and the adapter local draft SHALL not become a second truth.</then>
+      </case>
+      <case id="failure-no-promotion">
+        <given>An edit is stale, invalid or lossy before acceptance, or persistence fails after acceptance.</given>
+        <when>The pipeline evaluates it.</when>
+        <then>Pre-acceptance failure SHALL advance neither live nor persisted revision; post-acceptance persistence failure SHALL keep the advanced accepted live revision and reproject it, keep persisted revision unchanged, enter dirty-failed, and reject further edits until retry or explicit reload.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="browser-authoring-primitives">
+    <statement>The dedicated Tiptap adapter SHALL expose composable table authoring commands and a Mermaid NodeView through its package root; every document change SHALL remain a Tiptap transaction normalized into a revision-free Interaction, while Domain XNL, authoring revision, mutation acceptance and persistence remain owned by the trusted host.</statement>
+    <suite id="table-authoring" name="Canonical table browser authoring">
+      <case id="real-editor-commands">
+        <given>A real Tiptap Editor is created only from the package public extensions.</given>
+        <when>A consumer inserts or structurally edits a table.</when>
+        <then>Official Tiptap table commands SHALL be callable for table, row, column, merge, split and header operations, and the adapter SHALL preserve supported RichDocument identity and span attributes.</then>
+      </case>
+      <case id="transaction-only-write-path">
+        <given>A table command changes document structure or cell content.</given>
+        <when>The adapter observes the transaction.</when>
+        <then>The change SHALL leave the adapter only as a revision-free Interaction and SHALL NOT directly write Domain XNL, authoring state or persistence.</then>
+      </case>
+      <case id="table-round-trip">
+        <given>A supported RichDocument table is projected, edited and parsed.</given>
+        <when>Canonical normalization is applied.</when>
+        <then>Table semantics, ordering, stable moved identities and supported cell spans SHALL be preserved without HTML or DOM reverse authoring.</then>
+      </case>
+    </suite>
+    <suite id="mermaid-nodeview" name="Runtime-bound Mermaid NodeView">
+      <case id="effect-injection">
+        <given>A product binds a safe Mermaid render Effect at its composition root.</given>
+        <when>The Mermaid NodeView mounts or its source changes.</when>
+        <then>The composition root SHALL provide one exact runtime whose effects contain render and diagnostic contracts; the NodeView SHALL invoke each as output = fn(runtime, input, config), while its private DOM commit remains host-owned, and SHALL NOT accept loose callbacks or construct a concrete renderer implementation.</then>
+      </case>
+      <case id="safe-lifecycle">
+        <given>Mermaid rendering is asynchronous, rejects, throws or completes after a newer source or destroy.</given>
+        <when>A render result attempts to commit.</when>
+        <then>Only the latest live request SHALL reach the host-owned private DOM commit with structured safe output; stale or destroyed results SHALL be discarded and failures SHALL reach the separate diagnostic Effect without changing Domain truth.</then>
+      </case>
+      <case id="source-transaction">
+        <given>A user edits Mermaid source through the NodeView.</given>
+        <when>The source is updated.</when>
+        <then>The NodeView SHALL update its node through a Tiptap transaction normalized as an explicit Mermaid source Interaction and SHALL NOT directly mutate RichDocument, XNL, VFS or the authoring session.</then>
+      </case>
+    </suite>
+    <suite id="public-capsule" name="Public capsule boundary">
+      <case id="public-root-consumption">
+        <given>A product consumes only the package root.</given>
+        <when>It assembles table, Mermaid and Halfcode embed browser capabilities.</when>
+        <then>One public browser host SHALL own one canonical extension registry and compose table, Mermaid, Component and Capsule NodeViews without duplicate extensions, deep imports, raw NodeViewRenderer exposure or product-specific deduplication; existing Component/Capsule authority containment SHALL remain intact.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="canonical-semantic-edit-command">
+    <statement>The foundation SHALL define renderer-neutral, serializable canonical RichDocument semantic edit and Domain Command contracts and SHALL expose a public canonical translator or dialect for xnl.rich-document.edit; the Tiptap normalizer SHALL emit that canonical vocabulary without Tiptap JSON, HTML, DOM, revision or writer authority, and consumers SHALL NOT need to reimplement the translator.</statement>
+    <suite id="canonical-command" name="Canonical semantic edit command">
+      <case id="normalizer-command-coverage">
+        <given>A supported Tiptap transaction normalizes insert, delete, move, text, mark, table, code or Mermaid source changes.</given>
+        <when>The public canonical translator validates and translates the revision-free Interaction.</when>
+        <then>It SHALL return one canonical RichDocument edit command with an exact Domain target and lossless serializable semantic data for every emitted edit kind.</then>
+      </case>
+      <case id="lossless-inline-and-copy-provenance">
+        <given>A transaction changes text and marks together or copies a persistent subtree.</given>
+        <when>The normalizer creates canonical semantic edit data.</when>
+        <then>Text and mark edits SHALL carry exact final inline runs, and each copied persistent node SHALL carry source provenance only when it uniquely aligns to an accepted stable #id; arbitrary inserted nodeId claims SHALL NOT become copy provenance.</then>
+      </case>
+      <case id="translator-fail-closed">
+        <given>An Interaction has an unknown kind, unresolved plan target, extra or accessor-backed fields, conflicting identities, lossy payload or malformed before and after facts.</given>
+        <when>The canonical translator evaluates it.</when>
+        <then>It SHALL return structured rejected or unsupported diagnostics and SHALL NOT emit a partial command or consult authoring, VFS, session, writer or persistence authority.</then>
+      </case>
+      <case id="public-neutral-owner">
+        <given>A non-Tiptap consumer imports the canonical semantic contract and translator from package roots.</given>
+        <when>The dependency slice is inspected.</when>
+        <then>Contract, logic and support SHALL remain free of Tiptap, ProseMirror, Vue, DOM and HTML dependencies, while the adapter public semantic types SHALL be aliases or strict specializations of the canonical contract rather than a second vocabulary.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="semantic-candidate-materializer">
+    <statement>The foundation owner SHALL expose a package-root runtime-first semantic candidate materializer that applies an accepted XnlRichDocument and canonical translated RichDocument edit command atomically to XnlRichDocumentCandidateMaterializationResult, preserving stable #id structure and copy-origin handoff while owning no writer, VFS, session, revision, submit, persistence, Tiptap JSON or HTML authority.</statement>
+    <suite id="materialization" name="RichDocument semantic materialization">
+      <case id="all-normalizer-edit-kinds">
+        <given>A canonical command contains any valid combination of insert, delete, move, text, mark, table, code and mermaid-source edits emitted by the public normalizer.</given>
+        <when>The public semantic candidate materializer applies the command to the accepted RichDocument.</when>
+        <then>It SHALL return a normalized deeply immutable candidate whose semantic structure equals the requested final document, including exact inline marks, table topology and spans, code language/text and Mermaid source.</then>
+      </case>
+      <case id="sequential-accepted-baselines">
+        <given>A first canonical semantic edit is accepted and a second valid edit is projected and normalized from that latest accepted RichDocument.</given>
+        <when>The same package-root translator, materializer, identity allocator and trusted host process the second Interaction.</when>
+        <then>The second edit SHALL be evaluated only against the latest accepted baseline, SHALL be accepted without stale hidden materializer or identity facts, and SHALL preserve exact-once translation, materialization, allocation and submission.</then>
+      </case>
+      <case id="atomic-baseline-validation">
+        <given>A command contains stale before facts, invalid parent/index, unknown references, duplicate or overlapping operations, a cyclic move, conflicting text and mark results, or an unsupported semantic node.</given>
+        <when>The materializer validates and plans the command.</when>
+        <then>It SHALL reject the whole command against one accepted baseline with actionable diagnostics, SHALL NOT partially apply edits, and SHALL leave accepted input and all external authority unchanged.</then>
+      </case>
+      <case id="stable-move-new-copy-replacement">
+        <given>A command moves an accepted subtree, inserts a new subtree, copies an accepted subtree or replaces identity.</given>
+        <when>The candidate and copy origins are classified before trusted-host allocation.</when>
+        <then>Moved nodes SHALL retain every stable #id, new and replacement nodes SHALL have collision-safe temporary candidate ids, every copied persistent node SHALL produce an exact copyOrigin, and replacement SHALL remain delete-and-add rather than an ordinary id update.</then>
+      </case>
+      <case id="trusted-host-composition">
+        <given>A trusted authoring host composes the public canonical translator, materializer and an existing host-owned identity allocator.</given>
+        <when>A revision-free Interaction is submitted while accepted revision is stable or changes during materialization.</when>
+        <then>The host SHALL translate and materialize exactly once, allocate fresh ids only for new/copy/replacement identities, use the submission-time live revision when stable, and reject concurrent change without submitting when the revision changed.</then>
+      </case>
+      <case id="putget-and-authority">
+        <given>A supported canonical Interaction is accepted or a stale, malformed, lossy or persistence-failing proposal is evaluated.</given>
+        <when>The existing accepted-first authoring pipeline completes and reprojects the result.</when>
+        <then>Accepted edits SHALL satisfy PutGet, pre-acceptance failures SHALL advance neither live nor persisted truth, existing post-acceptance dirty-failed semantics SHALL remain intact, and no adapter or materializer surface SHALL expose writer, VFS, VCS, session, revision, submit or persistence authority.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="canonical-list-browser-serialization">
+    <statement>The dedicated Tiptap adapter SHALL provide a canonical browser DOM serializer for listItem while preserving the RichDocument block+ content contract, stable node identity and revision-free transaction authoring; this view serializer SHALL NOT become HTML or DOM reverse-authoring authority.</statement>
+    <suite id="list-browser-view" name="Canonical list browser view">
+      <case id="real-editor-list-rendering">
+        <given>A package-root real Tiptap Editor receives canonical bullet and ordered lists.</given>
+        <when>The browser view mounts their listItem nodes.</when>
+        <then>The adapter SHALL render ul, ol and li elements without a missing toDOM failure and SHALL preserve list order and stable nodeId attributes.</then>
+      </case>
+      <case id="block-plus-grammar">
+        <given>A canonical listItem begins with a supported block such as blockquote rather than paragraph.</given>
+        <when>The schema validates and the real browser Editor renders it.</when>
+        <then>The listItem SHALL remain valid under content block+ and SHALL render through the same canonical serializer.</then>
+      </case>
+      <case id="no-reverse-authority">
+        <given>The adapter source and boundary tests are inspected.</given>
+        <when>The list serializer is distinguished from authoring inputs.</when>
+        <then>The serializer SHALL only lower a ProseMirror node to a browser output spec and SHALL NOT parse HTML or DOM, inspect page state, write Domain XNL or acquire mutation, VFS, session or persistence authority.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="editor-state-bound-local-draft">
+    <statement>The dedicated Tiptap adapter SHALL allow its local-draft lifecycle to bind to a real canonical EditorState so that the Editor, draft document and transactions share one ProseMirror schema lineage; the binding SHALL remain adapter-local projection state and SHALL expose no Domain writer or authoring authority.</statement>
+    <suite id="bound-draft" name="EditorState-bound local draft">
+      <case id="real-editor-transaction">
+        <given>A real package-root Editor is initialized with canonical extensions and its initial EditorState is bound as a local draft.</given>
+        <when>A supported document-changing transaction is applied.</when>
+        <then>The existing draft lifecycle SHALL apply it without schema-identity rejection and SHALL publish exactly one revision-free Interaction through the injected Effect.</then>
+      </case>
+      <case id="silent-composition-and-history">
+        <given>The bound Editor emits selection-only, composition, undo or redo transactions.</given>
+        <when>The existing local lifecycle processes them.</when>
+        <then>Selection-only changes SHALL remain silent, composition SHALL buffer and settle once, and history SHALL remain local proposal-producing state rather than direct Domain mutation.</then>
+      </case>
+      <case id="accepted-reproject">
+        <given>A bound local draft receives matching or replacing accepted projection feedback.</given>
+        <when>The adapter reprojects it.</when>
+        <then>Matching acceptance SHALL preserve current state, selection and plugin lineage while clearing pending; replacement SHALL reuse the bound schema and plugin configuration, reset stale history and apply the existing stale-draft policy.</then>
+      </case>
+      <case id="fail-closed-authority">
+        <given>The binding receives malformed, accessor-backed or noncanonical EditorState data.</given>
+        <when>It validates the boundary.</when>
+        <then>It SHALL reject before invoking emitInteraction and SHALL NOT accept Editor, DOM, raw NodeView, authoring session, revision, VFS/VCS, mutation writer or persistence authority.</then>
+      </case>
+    </suite>
+  </requirement>
+</behaviors>

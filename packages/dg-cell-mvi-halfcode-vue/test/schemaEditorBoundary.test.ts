@@ -154,7 +154,7 @@ describe('Schema Editor Vue dependency and ownership boundary', () => {
 
     for (const forbidden of [
       /from\s+['"]element-plus(?:\/[^'"]*)?['"]/,
-      /from\s+['"][^'"]*(?:flow|biz-process|work-flow)[^'"]*['"]/i,
+      /from\s+['"][^'"]*(?:flow|bp-ctrl-flow|work-ctrl-flow)[^'"]*['"]/i,
       /from\s+['"]xnl(?:-core)?(?:\/[^'"]*)?['"]/i,
       /from\s+['"][^'"]*(?:vfs|database|indexeddb)[^'"]*['"]/i,
       /\bdocument\.|\bwindow\.|\blocalStorage\b|\bindexedDB\b/,

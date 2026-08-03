@@ -1,0 +1,260 @@
+<Track id="add-halfcode-document-unit" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>增加独立的 Halfcode Document Unit、双身份实例寻址与 Scope Runtime registry 基座。</Goal>
+    <Description>扩展 v3 Unit contract/loader/compiler/runtime，支持 Document source、root Scope、Component/Capsule embed 与 unit-instance URI，同时保持 #id tree identity 和 x-id runtime identity 正交。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-07-31T10:20:16Z</CreatedAt>
+    <UpdatedAt>2026-07-31T17:59:45Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="unit-contract-baseline" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/unit/"/>
+    <MaterialBundle role="input" name="projection-foundation" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-projection/"/>
+    <MaterialBundle role="output" name="document-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/unit/"/>
+    <MaterialBundle role="output" name="document-compiler" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/"/>
+    <MaterialBundle role="output" name="document-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/"/>
+    <MaterialBundle role="output" name="document-fixtures-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-support/test/"/>
+    <MaterialBundle role="output" name="document-dsl-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-halfcode-document-unit" name="add-halfcode-document-unit" version="1">
+    <Description>先用红测试冻结独立 Document boundary 与双身份，再实现 contract、loader/compiler、Runtime registry，最后做全量回归和 authority residue 验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Document contract 与 DSL 红测试" status="DONE" order="0">
+        <Description>先固定 Unit kind、DocumentContract、URI、loader 与 compile plan 的外部行为。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="编写 contract 与实例地址红测试" status="DONE" order="0" priority="P0">
+            <Description>覆盖 DocumentUnitManifest/Contract、无 urlInputs/props、inline/external source union、document definition 与 unit-instance runtime target owner、URI round-trip、非法 segment、#id/x-id 分工和旧 HalfcodeDocument 命名隔离。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">红测试证明 Document 是独立 Unit kind，且类型层拒绝 Page/Component 专属 channel</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">unit-instance URI 固定三段，parser/formatter 与非法输入行为被锁定</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">测试明确 #id 是 tree identity，x-id 是 runtime instance address</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="编写 loader/compiler/runtime 红测试与 fixtures" status="DONE" order="1" priority="P0">
+            <Description>增加内联/外部 source 的最小 Document AppBundle、重复子域/x-id/route-to-document 负例，覆盖完整 XNL、x-id 非 prop、root/Capsule Scope、Component embed、同 FQN 多 occurrence、namespace 与 stale unmount。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">fixture 只使用 XNL，覆盖根 [] 内联正文与 DocumentSource.ref 外部领域 XNL；保留文本/注释/顺序</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">红测试证明当前 loader/compiler/runtime 尚不支持目标行为</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="收敛 runtime authority 与 XNL identity 红线" status="DONE" order="2" priority="P0">
+            <Description>补 runtime-owned occurrence registry、open-time descriptor binding、external-only source override 行为测试，并用真实 xnl-core diff characterization 固定 #id move identity 与 x-id runtime-only 语义。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">不同 runtime owners 可复用 unitInstanceId，hostOccurrenceRef 不跨 owner；禁止 module-level singleton authority</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">open 绑定静态 descriptors 但不修改 plan/制造 Presenter target；inline override 拒绝，external override 不改变 Scope/address plan</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC3" checked="true">真实 xnl-core diff 证明 #id 用于 move 对齐且非普通 payload update，x-id 不成为 tree identity</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.4" name="固定 occurrence port 与 Scope cleanup" status="DONE" order="3" priority="P0">
+            <Description>将 DocumentOccurrenceRegistry 从 opaque object 收成可观测 runtime port，补 root/Capsule/Component Scope capability visibility 与正常 close 清理实例 namespace 的红测试。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.4-AC1" checked="true">open/close 必须调用 runtime.documentOccurrences port，模块级 singleton/WeakMap 无法通过测试</cdt:Criterion>
+              <cdt:Criterion id="T1.4-AC2" checked="true">root、Capsule、Component Scope runtime 可见同一 owner-local occurrence capability，mismatch 失败并回滚</cdt:Criterion>
+              <cdt:Criterion id="T1.4-AC3" checked="true">正常 close 与失败 rollback 都清空 occurrence instance registry namespace，不泄漏 target entries</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.5" name="固定 production occurrence registry 行为" status="DONE" order="4" priority="P0">
+            <Description>直接验收 createDocumentOccurrenceRegistry 返回的 production port，防止空方法实现绕过 lifecycle 的 test port。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.5-AC1" checked="true">production port reserve/commit/get/list/release 形成完整状态机，重复 reservation 与 stale lease 失败关闭</cdt:Criterion>
+              <cdt:Criterion id="T1.5-AC2" checked="true">两个 production ports 可复用同名 unitInstanceId 且 record/host target 不跨 owner</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.6" name="固定 remount lease 与 immutable resolve" status="DONE" order="5" priority="P0">
+            <Description>补 production occurrence registry 的真实 remount stale lease，以及 instance registry resolve immutable snapshot 行为。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.6-AC1" checked="true">release 后同 ID 重挂产生新 lease，旧 lease release 不得删除新 occurrence</cdt:Criterion>
+              <cdt:Criterion id="T1.6-AC2" checked="true">instance registry resolve 返回不可变 entry/ref/descriptor snapshot，调用方不能改写后续解析结果</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.7" name="封闭 runtime 类型、快照与 identity replacement 红线" status="DONE" order="6" priority="P0">
+            <Description>补不可写且 alias-safe 的 registry snapshot、公共 runtime 类型契约、host capability mismatch 失败关闭，以及真实 xnl-core 的 #id replacement delete+add characterization。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.7-AC1" checked="true">resolve entry/ref/descriptor 本身不可写，注册入参外部别名不能污染后续 resolve；opaque target 保持同一引用且不被冻结</cdt:Criterion>
+              <cdt:Criterion id="T1.7-AC2" checked="true">focused typecheck 从公共入口锁定 DocumentUnitPlan/OpenContext、registry/runtime/handle 与 runtime-first open/close 三参数签名</cdt:Criterion>
+              <cdt:Criterion id="T1.7-AC3" checked="true">hostOccurrenceRef 解析到无 DocumentOccurrenceRuntime capability 的 target 时，在 assembly 前失败并释放 reservation</cdt:Criterion>
+              <cdt:Criterion id="T1.7-AC4" checked="true">真实 xnl-core diff 证明更换 #id 产生 TREE_DELETE + TREE_ADD，且不存在普通 id payload update</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.8" name="封闭 any、深层快照与 multi-role 正例" status="DONE" order="7" priority="P0">
+            <Description>消除公共类型 any 绕过，锁定 descriptor metadata 深层 alias/freeze，并补不同显式 x-id 的 multi-role 保留与非 main role 显式地址要求。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.8-AC1" checked="true">每个公共 Document runtime 类型和 open/close 都被直接断言为非 any，关键 port/plan/context/handle 字段与方法不可被空壳类型绕过</cdt:Criterion>
+              <cdt:Criterion id="T1.8-AC2" checked="true">descriptor 嵌套 metadata 与其后代都隔离注册入参别名并冻结，opaque target 仍保持同一可变引用</cdt:Criterion>
+              <cdt:Criterion id="T1.8-AC3" checked="true">不同显式 x-id 的多 role address 被原样保留，非 main role 缺少显式 x-id 时失败关闭</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.9" name="最终冻结字段级类型与递归 metadata" status="DONE" order="8" priority="P0">
+            <Description>将公共 runtime typecheck 收到字段与方法输入输出精确类型并接入确定性脚本，同时覆盖 Serializable metadata 的数组与数组内对象递归隔离/冻结。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.9-AC1" checked="true">plan/context/handle/registry/runtime/open/close 的字段、数组元素、方法输入输出与 config 均拒绝字段级 any、unknown 空壳和缺失 definitionFqn</cdt:Criterion>
+              <cdt:Criterion id="T1.9-AC2" checked="true">package script 可确定性运行专用 Document runtime public-surface typecheck，并纳入 P5 验证清单</cdt:Criterion>
+              <cdt:Criterion id="T1.9-AC3" checked="true">metadata 嵌套数组、数组内对象及深层后代均隔离注册入参 alias 且被冻结，opaque target 语义不变</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.10" name="冻结 registry mutation 与 occurrence assembly 输出" status="DONE" order="9" priority="P0">
+            <Description>阻断 registry mutation 返回 any 与 assembleOccurrence 空壳输出，显式冻结 occurrence assembly 生命周期公共类型。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.10-AC1" checked="true">unregister/disposeNamespace 返回值精确、非 any，并携带可观察 ok/diagnostics 契约</cdt:Criterion>
+              <cdt:Criterion id="T1.10-AC2" checked="true">DocumentOccurrenceAssembly 是显式公共类型，至少冻结 rootScopeId、rootRuntime、dispose 与可选后代/diagnostics，assembleOccurrence 精确返回该类型或 Promise</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Document contracts 与 URI" status="DONE" order="1">
+        <Description>在 contract 层增加纯数据 Unit/Contract/Plan/InstanceRef，保持 legacy 和依赖边界。</Description>
+        <SubNodes>
+          <Task id="T2.1" name="实现 Document Unit 与 contract" status="DONE" order="0" priority="P0">
+            <Description>扩展 canonical FRONTEND_UNIT_KINDS/FLOW_UNIT_KINDS/UNIT_KINDS、UnitKind/Layer、manifest、DocumentContract/Presentation、UnitContract union、document definition scheme 与 diagnostics；不修改旧 HalfcodeDocument。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">DocumentContract 只有 source/revision type、mode、parameters、messages 与 element contracts</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Capsule 仍无 manifest；Route target 类型仍是 Page；root-tag/manifest/scheme/loader dispatch 对 UnitKind exhaustive</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现实例地址与 compile plan contracts" status="DONE" order="1" priority="P0">
+            <Description>实现 DocumentSourceDescriptor、external-only DocumentOpenContext override、静态 DocumentAddressDescriptor、运行时 DocumentInstanceRef、专用 target URI parser/formatter、renderer-neutral registry port、DocumentUnitPlan/document-embed plan 与 root exports。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">URI parser/formatter 互逆并拒绝空白、分隔符与非规范 role；runtime target 不进入静态 domain resolver</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">definition plan 不含 unitInstanceId/opaque target；contract/logic 不依赖 xnl-core、DOM、Vue、Tiptap、writer 或 persistence</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Document loader、compiler 与 DSL" status="DONE" order="2">
+        <Description>接入真实 XNL source，产生装配计划而不复制 accepted document。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="实现 Document XNL loader" status="DONE" order="0" priority="P0">
+            <Description>加载 Document 根、互斥的内联/外部 source、唯一 Contract/Source/Scope/Presentation、完整 XNL 与显式 embed/address skeleton，校验 kind/FQN/重复子域，并把 x-id 解析为结构字段而非 prop。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">raw XNL 的节点家族/文本/注释/顺序被保留，未知领域 tag 不成为 UI atom，x-id 不进入 inline props；inline unitSourceRef 规范化为 workspace-root vfs ref</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">document:// FQN 注册、privacy 与 mismatch diagnostics 遵循既有 Unit 规则</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 Document compile 与 Scope 计划" status="DONE" order="1" priority="P0">
+            <Description>产生 DocumentUnitPlan、DocumentOpenContext input、root/Capsule Scope、Component/Document embed 与 address plan；规范化 main x-id 并拒绝 duplicate。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">Document plan 只引用 source，不包含 accepted snapshot/writer；compiler 输入投影视图不暴露 rawSource/xnlDocument</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">root/Capsule/嵌入 Component lexical Scope parent 正确，Route 不接受 Document</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">显式/默认 x-id、multi-role 和 duplicate 行为有测试</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="更新 DSL 文档与 fixture 说明" status="DONE" order="2" priority="P1">
+            <Description>记录 Document、双身份、三种 URI、Scope 可见性、可编程/纯领域两种模式和后续 authoring 非目标。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">文档准确说明 #id 参与 diff/move 对齐但不是普通 payload 更新字段</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">示例不包含代码实现、DOM 寻址或已实现 Tiptap/authoring 的声明</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Runtime instance registry" status="DONE" order="3">
+        <Description>以 Runtime capability 形式实现 per-unit-instance address registry 与安全生命周期。</Description>
+        <SubNodes>
+          <Task id="T4.1" name="实现 tokenized instance registry" status="DONE" order="0" priority="P0">
+            <Description>实现 register/resolve/unregister/list，拒绝 duplicate active x-id，返回 immutable snapshot，并以 owner token 防 stale unmount。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">两个 unit instance namespace 可复用局部 x-id 且互不影响</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">重复注册不覆盖，旧 token 无法删除新挂载</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="接入 Scope Runtime assembly" status="DONE" order="1" priority="P0">
+            <Description>实现异步 runtime-first tokenized openDocument/closeDocument，将静态 address descriptor 在 open 时绑定 unitInstanceId；可选 hostOccurrenceRef 只经 runtime registry 解析，部分 open 失败逆序回滚；后代 Capsule/Component Scope 按既有继承/覆盖规则可见。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">同一 FQN 两个 unitInstanceId 产生独立 Scope/runtime/registry；后代 Capsule/Component 继承各自 occurrence runtime，不读取全局 map</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">重复/并发 active id 原子失败关闭且无残留；host not-found 回滚；lease close 级联 dispose、stale close 无效；无 handle callback 或 DOM registry</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="封闭 canonical address 与并发 close 边界" status="DONE" order="2" priority="P0">
+            <Description>修正 P4 AttractorCheck 暴露的 runtime state-machine 缺口：open 前校验 canonical instance refs，registry 拒绝 ref/descriptor identity mismatch，并通过 owner port 的原子 close claim 防止同 lease 并发重复 dispose。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">非法 unitInstanceId/projectionRole/x-id 在 reserve 与 assembly 前失败关闭，不能产出不可序列化的 DocumentInstanceRef</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">registry 拒绝 ref/descriptor role 或 x-id 不一致且不污染 resolve/list</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">同 lease 并发 close 只有一个调用执行 child/root dispose，关闭期间 remount 被拒绝，旧 close 不影响后续 occurrence</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.4" name="封闭 assembly root Scope authority" status="DONE" order="3" priority="P1">
+            <Description>拒绝 occurrence assembly 返回与静态 DocumentUnitPlan.rootScopeId 不一致的根 Scope，并在 commit 前完整回滚部分装配。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.4-AC1" checked="true">mismatched assembly rootScopeId 在 commit 前产生 error，并清理 assembly、instance registry namespace 与 occurrence reservation</cdt:Criterion>
+              <cdt:Criterion id="T4.4-AC2" checked="true">成功 handle 与 occurrence record 的 rootScopeId 始终来自并等于静态 plan authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P5" name="回归、文档与 authority 收口" status="DONE" order="4">
+        <Description>验证公共 API、三层依赖、旧 Unit 行为与 Mission authority 边界。</Description>
+        <SubNodes>
+          <Task id="T5.1" name="执行全量验证矩阵" status="DONE" order="0" priority="P0">
+            <Description>运行 focused/full tests、三个 package typecheck（含 `bun run typecheck:document-runtime` 专用 Document runtime public-surface typecheck）、strict Codument validate、canonical UnitKind constants/typed dispatch tests 与依赖/residue scan。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.1-AC1" checked="true">Page/Component/四类 Flow/v2 compiler 与既有 runtime tests 全绿；在 support package 运行 `bun run typecheck:document-runtime` 通过</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC2" checked="true">contract &lt;- logic &lt;- support 依赖保持；UnitKind dispatch exhaustive；contract/logic 无 xnl-core/UI/Tiptap/DOM/VFS writer 泄漏</cdt:Criterion>
+              <cdt:Criterion id="T5.1-AC3" checked="true">strict Track validate 通过，行为 delta 与 DSL 文档一致</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.2" name="形成 Mission DOCUMENT-T2 验证证据" status="DONE" order="1" priority="P0">
+            <Description>记录 Capsule inline-only、Document root Scope、runtime visibility、双身份、registry lifecycle 与后续 authoring 前置证据。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.2-AC1" checked="true">报告证明 Document 未成为 Page/Component 别名且 Capsule 公理未破坏</cdt:Criterion>
+              <cdt:Criterion id="T5.2-AC2" checked="true">报告明确尚未实现 Presenter、mutation acceptance、revision owner 与 persistence</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.3" name="收紧 Document runtime authority 并校正文档边界" status="DONE" order="2" priority="P0">
+            <Description>修正 P5 AttractorCheck 暴露的 DEPA 边界：将 definition lookup、registry factory 与 occurrence assembly capability 从 config 移入显式 runtime port，使 config 保持 data-only；同步校正 DSL 文档对已实现 occurrence runtime 的描述。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.3-AC1" checked="true">Document runtime 通过 runtime 首参提供 definition lookup、registry creation 与 occurrence assembly capability，DocumentRuntimeConfig 不含稳定依赖或函数对象</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC2" checked="true">owner-local registry、canonical refs、rollback、concurrent close、root Scope authority 与公共 API 类型测试保持通过</cdt:Criterion>
+              <cdt:Criterion id="T5.3-AC3" checked="true">Document/runtime DSL 文档准确区分已实现的 occurrence runtime 与尚未实现的 Presenter、authoring、revision owner、writer、persistence</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.4" name="封闭跨 projection role 的 x-id 重复注册" status="DONE" order="3" priority="P0">
+            <Description>修正 P5 第二轮 AttractorCheck 暴露的 runtime registry 唯一性缺口：同一 unitInstanceId 内以 x-id 作为跨 projection role 的唯一地址，role 只保留在 canonical ref 中而不扩大重复注册命名空间。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.4-AC1" checked="true">同一 unitInstanceId 下，不同 projectionRole 使用相同 x-id 的第二次 active registration 被拒绝，且首次注册保持可解析</cdt:Criterion>
+              <cdt:Criterion id="T5.4-AC2" checked="true">不同 unitInstanceId 仍可复用相同 x-id；stale unregister、namespace dispose 与 canonical ref 行为不回归</cdt:Criterion>
+              <cdt:Criterion id="T5.4-AC3" checked="true">focused/full support tests、typecheck、strict Track validate 与 git diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T5.5" name="封闭 Document 目录形态加载证据" status="DONE" order="4" priority="P0">
+            <Description>修正 gap-loop 第 1 轮暴露的 DSL/loader 偏差：Document 目录 entry 使用 manifest.xnl 与外部 DocumentSource.ref 时，loader 公开 folder form 与目录 path，并用 fixture 防止被误标为 single-file。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T5.5-AC1" checked="true">Document Unit src 指向目录内 manifest.xnl 且使用 external DocumentSource.ref 时，loaded unit form 为 folder、path 为目录、raw source 仍来自 external UI-free XNL</cdt:Criterion>
+              <cdt:Criterion id="T5.5-AC2" checked="true">Document 目录形态仍不产生 elements domain、不发现 Page/Component domain 文件，inline/external source 与 XNL 顺序语义不回归</cdt:Criterion>
+              <cdt:Criterion id="T5.5-AC3" checked="true">focused support loader/runtime/XNL identity tests、support typecheck、strict Track validate 与 git diff check 通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>

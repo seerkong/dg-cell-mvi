@@ -11,6 +11,7 @@
     "ignoreDeprecations": "5.0",
     "types": ["node"],
     "paths": {
+      "dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document": ["../dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document.ts"],
       "dg-cell-mvi-halfcode-contract": ["../dg-cell-mvi-halfcode-contract/src/index.ts"]
     }
   },

@@ -1,0 +1,92 @@
+<decisions #add-rich-document-semantic-materializer [
+  <decision #semantic-owner {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = true
+    confidence = "0.99"
+    reversibility = "moderate"
+  } (
+    <question ?>Canonical semantic edit vocabulary、translator 与 materializer 分别由哪层拥有？</?>
+    <answer {
+      selected = "contract-logic-support"
+    } (
+      <raw-answer ?>由 foundation owner 提供 package-root runtime-first 能力。</?>
+      <decision-text ?>Contract 唯一定义 renderer-neutral edit/command/result；logic 唯一实现 canonical translator/dialect 与 pure materializer core；support 从 package root 提供 trusted-host composition values；Tiptap 只做 outer adapter。</?>
+      <rationale ?>保持 contract &lt;- logic &lt;- support &lt;- adapter 的单向 capsule 依赖，并避免 consumer 或 support 复制算法。</?>
+      <evidence ?>当前 semantic edit types 位于 Tiptap adapter，而 support bridge 只有注入契约；Workbench T2.2 已证明 consumer 无 public implementation 可用。</?>
+    )>
+  )>
+
+  <decision #canonical-translator {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = true
+    confidence = "0.98"
+    reversibility = "moderate"
+  } (
+    <question ?>是否只交付 materializer，让 consumer 继续自定义 translator/dialect？</?>
+    <answer {
+      selected = "include-canonical-translator"
+    } (
+      <raw-answer ?>若 canonical translator/dialect 缺 public 实现，track 一并提供。</?>
+      <decision-text ?>本 track 必须交付 xnl.rich-document.edit 的 public canonical translator/dialect，并提供 trusted host 可直接注入的 runtime-first processor。</?>
+      <rationale ?>generic projection compiler hook 不等于 RichDocument canonical implementation；保留缺口会让每个 consumer 重写 payload validation、target resolution 与 command type。</?>
+      <evidence ?>现有 bidirectional-law tests 定义 test-local dialect，support public API 要求 consumer 注入 translateInteraction。</?>
+    )>
+  )>
+
+  <decision #atomic-application {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = true
+    confidence = "0.97"
+    reversibility = "low"
+  } (
+    <question ?>多 edit command 如何避免 index 漂移、部分应用和 text/mark 冲突？</?>
+    <answer {
+      selected = "accepted-baseline-two-phase"
+    } (
+      <raw-answer ?>先基于 accepted baseline 完整校验和规划，再一次性组装 candidate。</?>
+      <decision-text ?>Materializer 使用 descriptor-safe snapshot + accepted-baseline validation/planning，再用 identity-keyed final placement assembly 生成 candidate；不得按 edit 数组顺序直接 mutate/splice。</?>
+      <rationale ?>Normalizers 的 delete/from facts 属于 before tree，insert/to facts属于 final placement；顺序应用会因 index 位移产生非确定结果，同节点 text+mark 也需要 coalesce。</?>
+      <evidence ?>当前 normalizer 分别收集 insert/delete/move/content/table edits，且 text 只有字符串时不足以恢复 exact mark boundaries。</?>
+    )>
+  )>
+
+  <decision #identity-handoff {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = true
+    confidence = "1.0"
+    reversibility = "low"
+  } (
+    <question ?>New/copy/move/replacement identity 在 materializer 与 trusted host 间如何分工？</?>
+    <answer {
+      selected = "temporary-plus-existing-allocator"
+    } (
+      <raw-answer ?>保留 #id structural identity 与 copy-origin/identity allocator 语义。</?>
+      <decision-text ?>Move 原样保留 stable #id；materializer 为 new/copy/replacement 产生 collision-safe temporary ids 并输出逐 persistent-node copyOrigins；existing trusted host classifier/allocator 负责最终 fresh #id。</?>
+      <rationale ?>Materializer 没有 identity authority，allocator 已由 trusted authoring host 正确拥有；copy provenance 与最终 identity 分离可阻止 adapter 自行签发 persistent id。</?>
+      <evidence ?>Existing authoringBridge 已分类 new/copy/replacement 并调用 identityAllocator；normalizer 当前能识别 duplicate claim，但尚未公开 copy source provenance。</?>
+    )>
+  )>
+
+  <decision #authority-boundary {
+    priority = "P0"
+    status = "resolved"
+    durable_candidate = true
+    confidence = "1.0"
+    reversibility = "low"
+  } (
+    <question ?>Canonical translator/materializer 是否可以读取 session、revision、VFS 或 Tiptap document？</?>
+    <answer {
+      selected = "neutral-data-only"
+    } (
+      <raw-answer ?>不暴露 writer/VFS/session，不用 Tiptap JSON/HTML authority。</?>
+      <decision-text ?>Translator 只读 projection target data，materializer 只读 accepted RichDocument 与 canonical command；revision、submit、allocator、concrete XNL/VFS 和 persistence 继续由 trusted support/authoring owner 持有。</?>
+      <rationale ?>保持 Domain XNL/accepted state 单一写入者与衍生投影不反写，且符合 output = fn(runtime,input,config)。</?>
+      <evidence ?>现有 behavior、DEPA coding attractor 与 Workbench T2.2 gap 都明确排除 adapter/private materializer 绕过 trusted authoring chain。</?>
+    )>
+  )>
+]>
+

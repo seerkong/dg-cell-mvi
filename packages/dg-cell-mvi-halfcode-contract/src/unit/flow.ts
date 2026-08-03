@@ -4,7 +4,7 @@
  */
 
 import type { EagerDataFlowAuthoringPlan } from 'eager-data-flow-contract';
-import type { FlowBundleSpec } from 'instant-flow-contract';
+import type { FlowBundleSpec } from 'instant-ctrl-flow-contract';
 
 export type {
   FlowBundleSpec,
@@ -14,7 +14,7 @@ export type {
   FlowSourceCollection,
   FlowXnlSource,
   LoadFlowSourcesOptions,
-} from 'instant-flow-contract';
+} from 'instant-ctrl-flow-contract';
 
 export type {
   EagerDataFlowAuthoringPlan,

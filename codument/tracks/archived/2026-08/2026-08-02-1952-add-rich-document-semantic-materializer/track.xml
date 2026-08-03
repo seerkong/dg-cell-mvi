@@ -1,0 +1,182 @@
+<Track id="add-rich-document-semantic-materializer" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>在 foundation owner 提供 canonical RichDocument semantic translator 与 package-root runtime-first candidate materializer。</Goal>
+    <Description>把 revision-free RichDocument Interaction 的八类 semantic edits 原子应用为 candidate/copyOrigins，并与 existing trusted host、identity allocator 和 submission-time revision 链组合。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-02T12:22:22Z</CreatedAt>
+    <UpdatedAt>2026-08-02T19:52:00+03:00</UpdatedAt>
+    <GapRound>2</GapRound>
+  </Metadata>
+
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="rich-document-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-rich-document/"/>
+    <MaterialBundle role="input" name="rich-document-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/xnl-rich-document/"/>
+    <MaterialBundle role="input" name="trusted-authoring-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/xnl-rich-document/"/>
+    <MaterialBundle role="input" name="tiptap-normalizer" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="contract-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="logic-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="support-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+    <MaterialBundle role="output" name="adapter-code" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="tiptap-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/tiptap-document/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+
+  <TaskSpace id="space_add-rich-document-semantic-materializer" name="add-rich-document-semantic-materializer" version="1">
+    <Description>按 public contract/red、materializer semantics、trusted-host integration/public exports/docs、strict verify 四个 TDD phase 实施。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Public contract 与 red baseline" status="DONE" order="0">
+        <Description>先冻结 renderer-neutral canonical command/result、lossless normalizer handoff 与缺失 production values 的可复现红证据。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="冻结 canonical semantic contract" status="DONE" order="0" priority="P0">
+            <Description>在 contract owner 设计 exact semantic node/edit/payload/command、copy provenance、materialization result/processor 与 validators；保留 Tiptap public type compatibility。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">Contract typecheck 证明八种 edit 是封闭 renderer-neutral union，全部深只读且可序列化</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">Stable/local identity 互斥，copy provenance 只能引用 accepted stable #id，result type 只有 contract 一个 owner</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC3" checked="true">Contract public surface 不出现 Tiptap/ProseMirror/Vue/DOM/HTML/xnl-core/VFS 类型</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="编写 translator/materializer package-root 红测试" status="DONE" order="1" priority="P0">
+            <Description>从 public roots 导入预期 canonical dialect/translator/materializer，建立当前 collection/export failure 和八类行为红测，禁止 deep import 或 test-local production substitute。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">红测准确因 public canonical translator/materializer values 缺失或行为未实现而失败</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">红测覆盖 malformed target/payload、stale before facts、atomic rejection 与 alias-safe immutable output</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="补齐 normalizer lossless characterization/red" status="DONE" order="2" priority="P0">
+            <Description>用真实 Editor transactions 锁定 text+mark final inline runs、new id claim stripping、单节点与嵌套 subtree copy source provenance、table descendant identity 和全部八种 edit。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">现状 characterizations 与新增红断言明确区分已有 edit coverage 和缺失 lossless/copy facts</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">测试不使用 editor.getJSON/HTML 作为 expected Domain candidate，也不伪造 allocator output</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P2" name="Materializer semantics" status="DONE" order="1">
+        <Description>实现 canonical translator 与 accepted-baseline 两阶段 semantic candidate application，使 P1 红测按领域切片转绿。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>P1 contracts、characterizations 和预期红测试完成，失败原因只指向缺失 production behavior</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 canonical translator 与 dialect" status="DONE" order="0" priority="P0">
+            <Description>复用 generic projection compiler/dialect protocol，验证 xnl.rich-document.edit、解析 plan target 并产生 fixed canonical Domain Command；同步 normalizer 输出到 canonical lossless payload。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Public dialect 与 runtime-first translator 对全部八种 edit 产生同一 canonical command shape</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Unknown/unresolved/malformed/lossy input 返回 structured diagnostics，无 partial command 或 authority access</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">Tiptap semantic public types 成为 canonical alias/strict specialization，不保留第二 vocabulary owner</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现结构编辑与 identity/copy 规划" status="DONE" order="1" priority="P0">
+            <Description>以 accepted baseline 和 identity-keyed final placement plan 实现 insert/delete/move、local parent、nested subtree、replacement、temporary ids 与逐节点 copyOrigins。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">Insert/delete/move 的混合顺序与 index permutation 得到确定 candidate，不逐条 splice accepted tree</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Move 保留所有 stable #id；new/copy/replacement 临时 ids 无碰撞，copyOrigins 精确覆盖 copied persistent nodes</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC3" checked="true">Unknown ref、invalid index、ancestor conflict、cyclic/self move、duplicate placement 与 forged identity 原子拒绝</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="实现 text mark code 与 Mermaid 语义" status="DONE" order="2" priority="P0">
+            <Description>基于 exact before/final inline runs coalesce text+mark，应用 code language/text 与 Mermaid source，并验证 stale/conflicting preconditions。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">Text-only、mark-only 与同 transaction text+mark 保留 exact final run boundaries/link attrs</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">Code 与 Mermaid 更新保留 block #id 并 exact-match before facts</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC3" checked="true">Content edit 与 deleted/replaced/table-owned descendant 冲突时 whole command rejected</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.4" name="实现 table 原子语义与 final normalization" status="DONE" order="3" priority="P0">
+            <Description>应用 table root before/after subtree，保留可对齐 identities/spans，处理 local/copy descendants，最后复用 parse/normalize/identity classifier 验证 candidate。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.4-AC1" checked="true">Table row/column/merge/split/header/content 结果保持 topology、colspan/rowspan、order 与 identity laws</cdt:Criterion>
+              <cdt:Criterion id="T2.4-AC2" checked="true">实现不复制 ProseMirror table command 算法，也不读取 Tiptap JSON/HTML/DOM</cdt:Criterion>
+              <cdt:Criterion id="T2.4-AC3" checked="true">Success result/copyOrigins 深冻结且 alias-safe；failure 不改变 accepted/command 或任何 authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P3" name="Trusted host integration、public exports 与 docs" status="DONE" order="2">
+        <Description>把 production translator/materializer 接入 existing exact-once host，完成 package roots、兼容 aliases、边界 scans 和文档。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>P2 的八类 semantic unit/property tests 全绿，candidate identity classification 与 copyOrigins 可被 existing allocator chain 消费</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T3.1" name="编写并通过 trusted-host public-root integration" status="DONE" order="0" priority="P0">
+            <Description>先建立 production-values integration red，再连接 real normalizer、canonical translator/materializer、existing allocator、trusted host 与 accepted-first authoring session。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Translator/materializer 各 exactly once；stable revision 用 submission-time token，mid-flight revision change 不 submit</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Allocator 只处理 new/copy/replacement 且收到准确 source provenance/reserved ids，move 不分配</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC3" checked="true">Accepted PutGet、pre-accept failure 与 existing post-accept dirty-failed semantics 通过真实 public chain</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="收敛 package-root exports 与兼容 surface" status="DONE" order="1" priority="P0">
+            <Description>将 result contract 收敛到 contract owner，logic/support roots 暴露 production values，adapter root 保留 canonical aliases；更新 ESM/CJS/typecheck smoke 与 package boundary tests。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">Consumer 仅经 package roots 可装配完整 chain，无 src deep import 或 test-local implementation</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Contract/logic/support 无 Tiptap/Vue/DOM/HTML dependency，support 无第二 semantic algorithm</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC3" checked="true">Public runtime/input/config/result 不泄漏 writer、VFS/VCS、session、revision、submit、persistence 或 adapter object</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.3" name="同步 Tiptap Document public docs" status="DONE" order="2" priority="P1">
+            <Description>更新 public API、projection/authoring、identity、usage tiers 与 current/future boundaries，给出 package-root composition 示例并移除 consumer-owned canonical translator/materializer 的过时说明。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.3-AC1" checked="true">文档准确区分 canonical command、pre-authority candidate、allocator 与 accepted Domain truth</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC2" checked="true">示例保持 revision-free Interaction 和 runtime-first capabilities，不出现 HTML/Tiptap JSON reverse authoring</cdt:Criterion>
+              <cdt:Criterion id="T3.3-AC3" checked="true">当前/未来列表与 package-root tests 一致，不夸大 Workbench 产品集成状态</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+
+      <TaskGroup id="P4" name="Strict verify 与收口" status="DONE" order="3">
+        <Description>从 live repository 独立复现行为、类型、public roots、authority/identity laws 和 Codument 一致性，并以 fresh review loop 收敛。</Description>
+        <cdt:Gate>
+          <cdt:Criterion>P3 public-root integration、package boundary scans 与文档全部完成</cdt:Criterion>
+        </cdt:Gate>
+        <SubNodes>
+          <Task id="T4.1" name="运行 package suites、typechecks 与 import smoke" status="DONE" order="0" priority="P0">
+            <Description>运行 contract/logic/support/Tiptap targeted 与 full suites、各 package typecheck、ESM/CJS public import smoke、dependency/residue scan 和 workspace regression。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">四 package targeted/full tests 与 typechecks 全绿，无 skipped canonical edit kind</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">ESM/CJS/public-root smoke 与 dependency scans 证明无 deep import、第二 vocabulary/materializer 或 forbidden dependency</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="运行 semantic laws 与 adversarial verification" status="DONE" order="1" priority="P0">
+            <Description>用 canonical fixtures、mixed edit permutations、copy subtree、table topology、stale/conflict/malformed/proxy/accessor inputs 和 concurrent revision probes 验证存在性、实质性、连通性。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">GetPut/PutGet、identity classification、copy allocator handoff 与 atomic rejection properties 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Adversarial inputs 不执行 untrusted getters、不 mutate aliases、不泄漏 authority、不产生 partial candidate</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC3" checked="true">Real normalizer -> translator -> materializer -> trusted host -> reproject chain 覆盖全部八种 edit</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.3" name="运行 strict Codument 与 fresh independent verify" status="DONE" order="2" priority="P0">
+            <Description>运行 codument validate add-rich-document-semantic-materializer --strict、codument modeling validate，并由 fresh codument-verify 逐项复现 behavior/proposal/design acceptance；修复后重跑直到无 issue。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.3-AC1" checked="true">Strict track validation 与 modeling validation 0 error</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC2" checked="true">Fresh verifier 独立报告全部 acceptance 达成且无遗漏测试/authority/identity gap</cdt:Criterion>
+              <cdt:Criterion id="T4.3-AC3" checked="true">Terminal AttractorCheck 与 verify-round GapLoop 收敛为 NO_GAP</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule/>
+  <Hooks/>
+</Track>

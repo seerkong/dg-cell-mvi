@@ -12,6 +12,7 @@
     "types": ["node"],
     "paths": {
       "dg-cell-mvi-core": ["../dg-cell-mvi-core/src/index.ts"],
+      "dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document": ["../dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document.ts"],
       "dg-cell-mvi-halfcode-contract": ["../dg-cell-mvi-halfcode-contract/src/index.ts"],
       "dg-cell-mvi-halfcode-logic": ["../dg-cell-mvi-halfcode-logic/src/index.ts"],
       "depa-data-graph-core": ["../../../depa-data-graph/packages/core/src/index.ts"]

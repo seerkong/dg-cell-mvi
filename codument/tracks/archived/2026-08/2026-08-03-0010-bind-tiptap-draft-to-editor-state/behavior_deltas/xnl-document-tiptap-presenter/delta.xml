@@ -1,0 +1,30 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/editor-state-bound-local-draft">
+    <requirement id="editor-state-bound-local-draft">
+      <statement>The dedicated Tiptap adapter SHALL allow its local-draft lifecycle to bind to a real canonical EditorState so that the Editor, draft document and transactions share one ProseMirror schema lineage; the binding SHALL remain adapter-local projection state and SHALL expose no Domain writer or authoring authority.</statement>
+      <suite id="bound-draft" name="EditorState-bound local draft">
+        <case id="real-editor-transaction">
+          <given>A real package-root Editor is initialized with canonical extensions and its initial EditorState is bound as a local draft.</given>
+          <when>A supported document-changing transaction is applied.</when>
+          <then>The existing draft lifecycle SHALL apply it without schema-identity rejection and SHALL publish exactly one revision-free Interaction through the injected Effect.</then>
+        </case>
+        <case id="silent-composition-and-history">
+          <given>The bound Editor emits selection-only, composition, undo or redo transactions.</given>
+          <when>The existing local lifecycle processes them.</when>
+          <then>Selection-only changes SHALL remain silent, composition SHALL buffer and settle once, and history SHALL remain local proposal-producing state rather than direct Domain mutation.</then>
+        </case>
+        <case id="accepted-reproject">
+          <given>A bound local draft receives matching or replacing accepted projection feedback.</given>
+          <when>The adapter reprojects it.</when>
+          <then>Matching acceptance SHALL preserve current state, selection and plugin lineage while clearing pending; replacement SHALL reuse the bound schema and plugin configuration, reset stale history and apply the existing stale-draft policy.</then>
+        </case>
+        <case id="fail-closed-authority">
+          <given>The binding receives malformed, accessor-backed or noncanonical EditorState data.</given>
+          <when>It validates the boundary.</when>
+          <then>It SHALL reject before invoking emitInteraction and SHALL NOT accept Editor, DOM, raw NodeView, authoring session, revision, VFS/VCS, mutation writer or persistence authority.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

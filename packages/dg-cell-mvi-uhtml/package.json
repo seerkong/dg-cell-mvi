@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-uhtml",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "uhtml view layer + composer assembly for dg-cell-mvi-core.",
   "main": "./src/index.ts",
@@ -10,8 +14,11 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
-    "dg-cell-mvi-core": "^0.1.0",
+    "dg-cell-mvi-core": "^0.1.1",
     "uhtml": "^5.0.9"
   },
   "devDependencies": {

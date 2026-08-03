@@ -3,7 +3,7 @@ import {
   createDefaultHalfcodeRuntime,
   type DefaultHalfcodeRuntimeObject,
   type HalfcodeFlowHandleFactory,
-  type InstantFlowHandle,
+  type InstantCtrlFlowHandle,
   type MaterializedCallableEffect,
   type RuntimeScopeAssembly,
 } from '../src';
@@ -18,10 +18,10 @@ function callableEffect(id: string): MaterializedCallableEffect {
 
 function flowFactory(fqn: string, label: string): HalfcodeFlowHandleFactory {
   return {
-    kind: 'instant-flow',
+    kind: 'instant-ctrl-flow',
     fqn: fqn as never,
     bind: (runtime) => ({
-      kind: 'instant-flow',
+      kind: 'instant-ctrl-flow',
       fqn: fqn as never,
       spec: {} as never,
       invoke: async <TOutput>(input?: unknown) => ({
@@ -63,17 +63,17 @@ describe('createDefaultHalfcodeRuntime', () => {
     });
     const sibling = bindScope(host, { scopeId: 'sibling', runtime: host, bindings: {} });
 
-    await expect((child.flow('demo.flow.Inherited') as InstantFlowHandle).invoke({ value: 1 })).resolves.toEqual({
+    await expect((child.flow('demo.flow.Inherited') as InstantCtrlFlowHandle).invoke({ value: 1 })).resolves.toEqual({
       input: { value: 1 },
       label: 'host-inherited',
       scopeId: 'child',
     });
-    await expect((child.flow('demo.flow.Shared') as InstantFlowHandle).invoke()).resolves.toEqual({
+    await expect((child.flow('demo.flow.Shared') as InstantCtrlFlowHandle).invoke()).resolves.toEqual({
       input: undefined,
       label: 'child-shared',
       scopeId: 'child',
     });
-    await expect((sibling.flow('demo.flow.Shared') as InstantFlowHandle).invoke()).resolves.toEqual({
+    await expect((sibling.flow('demo.flow.Shared') as InstantCtrlFlowHandle).invoke()).resolves.toEqual({
       input: undefined,
       label: 'host-shared',
       scopeId: 'sibling',

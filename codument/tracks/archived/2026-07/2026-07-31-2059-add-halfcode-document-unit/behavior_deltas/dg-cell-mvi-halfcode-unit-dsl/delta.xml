@@ -1,0 +1,87 @@
+<behavior-patch capability="dg-cell-mvi-halfcode-unit-dsl" version="1">
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-dsl/requirements/unit-hierarchy">
+    <requirement id="unit-hierarchy">
+      <statement>系统 SHALL 提供 App/Page/Component/Document 分层单元契约：Capsule 是唯一内联封装原语（仅存在于元素/文档树），Page/Component/Document 是其带 FQN 的有名可复用发行形态，App 是组合根（路由树 + 单元注册 + 跨页接线）；Flow Unit 继续由 depa-flows 拥有语义并在 AppBundle 注册。</statement>
+      <suite id="hierarchy" name="单元层级">
+        <case id="capsule-inline-only">
+          <given>v3 契约类型集合</given>
+          <when>检查 Capsule 的类型定义位置</when>
+          <then>Capsule SHALL 只作为树内节点类型存在，不存在 Capsule 单元 manifest 类型</then>
+        </case>
+        <case id="unit-fqn-identity">
+          <given>Page/Component/Document 单元 manifest 或单文件根节点</given>
+          <when>解析其身份</when>
+          <then>身份 SHALL 是点分 FQN，FQN 冲突 SHALL 对应 HALFCODE_UNIT_FQN_CONFLICT 诊断码</then>
+        </case>
+        <case id="document-independent-boundary">
+          <given>DocumentContract</given>
+          <when>检查其公共输入边界</when>
+          <then>Document SHALL 表达 source/revision 类型、mode 与 parameters，且 MUST NOT 拥有 Page urlInputs 或 Component props/slots/exposes</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-dsl/requirements/document-identity-addressing">
+    <requirement id="document-identity-addressing">
+      <statement>Document DSL SHALL 分离 XNL #id 与运行时 x-id：#id 是 tree diff 对齐、move、mutation 和领域引用身份且不作为普通 payload 字段更新；x-id 是 Document Unit instance 内的运行实例地址。完整目标 SHALL 规范化为 unit-instance://&lt;unit-instance-id&gt;/&lt;projection-role&gt;/&lt;x-id&gt;。</statement>
+      <suite id="identity" name="文档双身份">
+        <case id="default-main-x-id">
+          <given>可寻址节点有稳定 #id、只有 main projection role 且未显式声明 x-id</given>
+          <when>compiler 建立实例地址计划</when>
+          <then>x-id SHALL 默认为该 #id，序列化 URI SHALL 显式包含 main 段</then>
+        </case>
+        <case id="duplicate-x-id">
+          <given>同一 Document Unit instance 内两个 active 实例使用相同 x-id</given>
+          <when>编译或注册实例</when>
+          <then>系统 SHALL 产生 error diagnostic 且 MUST NOT 使用 last-wins</then>
+        </case>
+        <case id="id-not-payload">
+          <given>领域节点只发生结构移动且 #id 保持不变</given>
+          <when>XNL diff 与 Document projection 观察该变化</when>
+          <then>#id SHALL 用于对齐并识别 move，系统 MUST NOT 把它解释成普通 id payload 更新或改用 x-id 对齐</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-dsl/requirements/document-source-and-target-ownership">
+    <requirement id="document-source-and-target-ownership">
+      <statement>Document source SHALL 是 inline unit body 或 external vfs ref 的判别联合，两者互斥；inline body 是 Unit 结构且 MUST NOT 在 open 时替换，只有 external UI-free source MAY 由 DocumentOpenContext.externalSourceRef 覆盖，且 external source MUST NOT 贡献 Unit Scope/address plan。document:// SHALL 由静态 Unit registry 解析，unit-instance:// SHALL 由 runtime target registry 的专用 resolver 解析且 MUST NOT 进入静态 domain resolver；Presentation SHALL 使用 runtime-owned stable id，直到有独立 data registry owner。</statement>
+      <suite id="ownership" name="Source 与定位 owner">
+        <case id="inline-source-descriptor">
+          <given>Document 使用根 [] 作为内联正文</given>
+          <when>loader/compiler 产生 source descriptor</when>
+          <then>descriptor SHALL 明确包含 inline kind、unit source ref 与 body region，不伪造外部 source ref</then>
+        </case>
+        <case id="runtime-target-resolution">
+          <given>unit-instance URI 出现在一次运行时 Invocation target 中</given>
+          <when>系统解析目标</when>
+          <then>SHALL 只查询对应 Document occurrence registry，不查询 file-backed domain 或 DOM</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-dsl/requirements/static-runtime-address-separation">
+    <requirement id="static-runtime-address-separation">
+      <statement>Document definition compile plan SHALL 只保存 projectionRole/x-id/documentNodeId/scopeId 等局部 AddressDescriptor，不得包含 unitInstanceId 或 opaque runtime target；openDocument 成功后 SHALL 将 descriptor 与 unitInstanceId 绑定为完整 DocumentInstanceRef。</statement>
+      <suite id="address-stage" name="静态与运行地址阶段">
+        <case id="definition-has-no-instance-id">
+          <given>Document Unit 只被加载和编译，尚未 open</given>
+          <when>检查 DocumentUnitPlan</when>
+          <then>plan MUST NOT 包含 unitInstanceId，且同一 plan SHALL 可被多个 occurrence 复用</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://dg-cell-mvi-halfcode-unit-dsl/requirements/dual-form-units">
+    <requirement id="dual-form-units">
+      <statement>Page/Component/Document/App 三级 SHALL 支持单文件与目录组织形态：单文件区段节点与目录内注册 domain 文件使用同一 contract；UnitBundleRef.src SHALL 指向规范 XNL manifest/source；domain 显式注册且允许缺省。Document 的有序正文保持 Domain XNL，不得机械映射为 Page/Component elements domain。</statement>
+      <suite id="dual-form" name="双形态">
+        <case id="section-domain-parity">
+          <given>HALFCODE_SCHEME_TABLE 的 domain/scheme/section 对照</given>
+          <when>检查每个可归属单元的 domain</when>
+          <then>每个逻辑 domain SHALL 有唯一规范映射；Document 内容域 SHALL 与 UI elements 域保持不同语义</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

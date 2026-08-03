@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noErrorTruncation": true,
+    "paths": {
+      "dg-cell-mvi-halfcode-contract": ["../../../dg-cell-mvi-halfcode-contract/src/index.ts"],
+      "dg-cell-mvi-halfcode-support": ["../../../dg-cell-mvi-halfcode-support/src/index.ts"],
+      "dg-cell-mvi-halfcode-tiptap-vue": ["../../src/index.ts"],
+      "dg-cell-mvi-halfcode-vue": ["../../../dg-cell-mvi-halfcode-vue/src/index.ts"]
+    }
+  },
+  "include": [
+    "./public-surface.typecheck.ts"
+  ]
+}

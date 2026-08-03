@@ -32,8 +32,18 @@ export interface CanonicalRenderContext {
   plan: UnitRenderPlan;
   runtime: HalfcodeAppRuntime;
   registry?: CanonicalComponentRegistry;
+  hostPresenterIdentity?: string;
   compositionStack: readonly string[];
   updated(): void;
+}
+
+export class CanonicalHalfcodeHostPresenterResolutionError extends Error {
+  readonly code = 'HALFCODE_HOST_PRESENTER_RESOLUTION_FAILED' as const;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'CanonicalHalfcodeHostPresenterResolutionError';
+  }
 }
 
 interface GraphRefPath {
@@ -52,7 +62,11 @@ export function renderCanonicalHalfcodeNode(
   context: CanonicalRenderContext,
   hostProps?: Record<string, unknown>,
 ): VNodeChild {
-  const props = resolveNodeProps(node, context, hostProps);
+  const props = resolveNodeProps(
+    node,
+    context,
+    node.kind === 'capsule' ? undefined : hostProps,
+  );
   const text = typeof props.text === 'string' ? props.text : undefined;
   if (text !== undefined) delete props.text;
 
@@ -92,7 +106,7 @@ export function renderCanonicalHalfcodeNode(
       ...context,
       plan: targetPlan,
       compositionStack: [...context.compositionStack, String(targetPlan.unitFqn)],
-    }, props);
+    }, context.hostPresenterIdentity === undefined ? props : hostProps);
   }
 
   const registryIdentity = node.kind === 'capsule'
@@ -100,15 +114,49 @@ export function renderCanonicalHalfcodeNode(
     : node.library
       ? node.tag.slice(`${node.library}.`.length)
       : node.tag;
-  const component = node.kind === 'capsule'
-    ? 'div'
-    : context.registry?.resolve(registryIdentity, {
+  let registryComponent: unknown;
+  if (node.kind !== 'capsule') {
+    try {
+      registryComponent = context.registry?.resolve(registryIdentity, {
         plan: context.plan,
         runtime: context.runtime,
         node,
-      }) ??
+      });
+    } catch (error) {
+      if (hostProps !== undefined && context.hostPresenterIdentity !== undefined) {
+        throw new CanonicalHalfcodeHostPresenterResolutionError(
+          `Strict host Presenter "${context.hostPresenterIdentity}" resolution failed: ${errorMessage(error)}.`,
+        );
+      }
+      throw error;
+    }
+  }
+  if (
+    hostProps !== undefined
+    && context.hostPresenterIdentity !== undefined
+    && node.kind !== 'capsule'
+  ) {
+    if (registryIdentity !== context.hostPresenterIdentity) {
+      throw new CanonicalHalfcodeHostPresenterResolutionError(
+        `Strict host Presenter expected "${context.hostPresenterIdentity}" but reached "${registryIdentity}".`,
+      );
+    }
+    if (!isCodeOwnedComponent(registryComponent)) {
+      throw new CanonicalHalfcodeHostPresenterResolutionError(
+        `Strict host Presenter "${context.hostPresenterIdentity}" is not registered as a code-owned component.`,
+      );
+    }
+  }
+  const component = node.kind === 'capsule'
+    ? 'div'
+    : registryComponent ??
       (node.kind === 'atom' && !node.tag.includes('.') ? node.tag : resolveDynamicComponent(node.tag));
-  const children = renderPlanChildren(node, context, text);
+  const children = renderPlanChildren(
+    node,
+    context,
+    text,
+    node.kind === 'capsule' ? hostProps : undefined,
+  );
   return h(component as any, props, children as any);
 }
 
@@ -117,6 +165,11 @@ export function renderCanonicalHalfcodeUnit(
   context: CanonicalRenderContext,
   hostProps?: Record<string, unknown>,
 ): VNodeChild[] {
+  if (hostProps !== undefined && context.hostPresenterIdentity !== undefined && plan.root.length === 0) {
+    throw new CanonicalHalfcodeHostPresenterResolutionError(
+      `Strict host Presenter "${context.hostPresenterIdentity}" has no root render node.`,
+    );
+  }
   return plan.root.map((node, index) =>
     renderCanonicalHalfcodeNode(node, context, index === 0 ? hostProps : undefined));
 }
@@ -125,17 +178,69 @@ function renderPlanChildren(
   node: RenderNodePlan,
   context: CanonicalRenderContext,
   text?: string,
+  hostProps?: Record<string, unknown>,
 ): VNodeChild | Record<string, () => VNodeChild> {
   if (node.slots?.length) {
-    return Object.fromEntries(node.slots.map((slot) => [
+    const hostSlotIndex = node.slots.findIndex((slot) => slot.children.length > 0);
+    if (node.kind === 'capsule') {
+      if (hostProps !== undefined && context.hostPresenterIdentity !== undefined && hostSlotIndex < 0) {
+        throw new CanonicalHalfcodeHostPresenterResolutionError(
+          `Strict host Presenter "${context.hostPresenterIdentity}" has no content below Capsule "${node.id}".`,
+        );
+      }
+      return node.slots.flatMap((slot, slotIndex) => slot.children.map((child, childIndex) => (
+        renderCanonicalHalfcodeNode(
+          child,
+          context,
+          slotIndex === hostSlotIndex && childIndex === 0 ? hostProps : undefined,
+        )
+      )));
+    }
+    return Object.fromEntries(node.slots.map((slot, slotIndex) => [
       slot.id,
-      () => slot.children.map((child) => renderCanonicalHalfcodeNode(child, context)),
+      () => slot.children.map((child, childIndex) => renderCanonicalHalfcodeNode(
+        child,
+        context,
+        slotIndex === hostSlotIndex && childIndex === 0 ? hostProps : undefined,
+      )),
     ]));
   }
   if (node.children?.length) {
-    return node.children.map((child) => renderCanonicalHalfcodeNode(child, context));
+    return node.children.map((child, index) => renderCanonicalHalfcodeNode(
+      child,
+      context,
+      index === 0 ? hostProps : undefined,
+    ));
+  }
+  if (
+    node.kind === 'capsule'
+    && hostProps !== undefined
+    && context.hostPresenterIdentity !== undefined
+  ) {
+    throw new CanonicalHalfcodeHostPresenterResolutionError(
+      `Strict host Presenter "${context.hostPresenterIdentity}" has no content below Capsule "${node.id}".`,
+    );
   }
   return text;
+}
+
+function isCodeOwnedComponent(value: unknown): boolean {
+  return value !== null && (typeof value === 'object' || typeof value === 'function');
+}
+
+function errorMessage(error: unknown): string {
+  if (error !== null && (typeof error === 'object' || typeof error === 'function')) {
+    try {
+      const descriptor = Object.getOwnPropertyDescriptor(error, 'message');
+      if (descriptor !== undefined && 'value' in descriptor && typeof descriptor.value === 'string') {
+        return descriptor.value;
+      }
+    } catch {
+      return 'uninspectable error';
+    }
+    return 'unknown error';
+  }
+  return String(error);
 }
 
 function resolveNodeProps(
@@ -149,10 +254,11 @@ function resolveNodeProps(
     : {};
   return {
     ...configProps,
-    ...(hostProps ?? {}),
     ...Object.fromEntries(
       Object.entries(inlineProps).map(([key, value]) => [key, resolvePlanValue(value, node, context)]),
     ),
+    // Host input is an authority overlay and cannot be shadowed by DSL-authored props.
+    ...(hostProps ?? {}),
   };
 }
 
@@ -294,6 +400,8 @@ export const CanonicalHalfcodeRenderer = defineComponent({
     plan: { type: Object as PropType<UnitRenderPlan>, required: true },
     runtime: { type: Object as PropType<HalfcodeAppRuntime>, required: true },
     registry: { type: Object as PropType<CanonicalComponentRegistry>, required: false },
+    hostProps: { type: Object as PropType<Record<string, unknown>>, required: false },
+    hostPresenterIdentity: { type: String, required: false },
     revision: { type: Number, required: false, default: 0 },
     onRuntimeUpdated: { type: Function as PropType<() => void>, required: false },
   },
@@ -328,10 +436,11 @@ export const CanonicalHalfcodeRenderer = defineComponent({
         plan: props.plan,
         runtime: props.runtime,
         registry: props.registry,
+        hostPresenterIdentity: props.hostPresenterIdentity,
         compositionStack: [String(props.plan.unitFqn)],
         updated: triggerRuntimeUpdated,
       };
-      return renderCanonicalHalfcodeUnit(props.plan, context);
+      return renderCanonicalHalfcodeUnit(props.plan, context, props.hostProps);
     };
   },
 });

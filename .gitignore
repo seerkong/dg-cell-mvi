@@ -14,7 +14,6 @@ bunfig.toml
 .envrc
 .codument-local/
 data.sqlite
-bun.lock
 testdata/
 tui-debug.log
 .tmp/

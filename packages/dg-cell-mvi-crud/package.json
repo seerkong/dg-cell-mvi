@@ -1,7 +1,11 @@
 {
   "name": "dg-cell-mvi-crud",
-  "private": true,
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
   "type": "module",
   "description": "Framework-agnostic CRUD model + behavior on dg-cell-mvi-core / depa-data-graph.",
   "main": "./src/index.ts",
@@ -10,12 +14,15 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "dg-cell-mvi-core": "^0.1.0",
+    "dg-cell-mvi-core": "^0.1.1",
     "depa-data-graph-core": "^1.0.1",
     "lodash-es": "^4.17.21"
   },

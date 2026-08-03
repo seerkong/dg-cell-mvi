@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noErrorTruncation": true
+  },
+  "include": ["../xnl-vfs-workspace-imports.typecheck.ts"]
+}

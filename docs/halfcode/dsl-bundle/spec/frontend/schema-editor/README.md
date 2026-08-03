@@ -65,7 +65,7 @@ runtime / mounted demo 入口在 `runtime.ts`：
   在 sibling Scope 中渲染成不同的真实控件；accepted-only outcome/replay 仍保持
   同一套 canonical lifecycle，不引入隐式 raw/JSON fallback。
 - 当前 compiler 的终点是 `EditorPlan`。未知结构、显式 unsupported 或非法 classification 进入 diagnostics；绝无隐式 raw JSON/code fallback。
-- Schema Editor 基座只使用 neutral XNL source API 生成 canonical shell，不拥有 XNL mutation。它不包含 Flow/BizProcess/WorkFlow 特例；Workbench consumer 已在 G4 中拥有自己的 Flow schema/presentation/dialect 与 XNL mutation adapter。
+- Schema Editor 基座只使用 neutral XNL source API 生成 canonical shell，不拥有 XNL mutation。它不包含 Flow/BPCtrlFlow/WorkCtrlFlow 特例；Workbench consumer 已在 G4 中拥有自己的 Flow schema/presentation/dialect 与 XNL mutation adapter。
 
 ## T4.2 Verification Commands
 

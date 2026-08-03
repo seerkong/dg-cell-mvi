@@ -21,8 +21,9 @@ import {
   type XnlNode,
 } from 'xnl-core';
 import { loadEagerDataFlowSources } from 'eager-data-flow-logic/browser';
-import { loadFlowBundleFromSources } from 'instant-flow-logic/browser';
+import { loadFlowBundleFromSources } from 'instant-ctrl-flow-logic/browser';
 import {
+  HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_MESSAGE_DSL_INVALID,
   HALFCODE_REF_PRIVACY_VIOLATION,
   HALFCODE_RUNTIME_DSL_UNSUPPORTED,
@@ -34,9 +35,15 @@ import {
   HALFCODE_UNIT_KIND_MISMATCH,
   HALFCODE_UNIT_NOT_FOUND,
   HALFCODE_UNIT_REGISTRY_DOMAIN,
+  FRONTEND_UNIT_KINDS,
+  UNIT_KINDS,
   asHalfcodeRef,
   asUnitFqn,
+  assertNever,
   canonicalDomainForDomain,
+  isFlowUnitKind,
+  isFrontendUnitKind,
+  isUnitKind,
   parseHalfcodeRef,
   schemeTableEntry,
   type UnitLayer,
@@ -44,11 +51,15 @@ import {
   type CallableEffectBindingsSpec,
   type DataGraphBindingsSpec,
   type DataGraphLogicKind,
+  type DocumentContractSpec,
+  type DocumentPresentationSpec,
+  type DocumentSourceDescriptor,
   type EagerDataFlowDiagnostic,
   type EagerDataFlowRegistry,
   type ElementsSpec,
   type FlowDiagnostic,
   type FlowUnitKind,
+  type FrontendUnitKind,
   type HalfcodeFlowSpec,
   type MessagePolicySpec,
   type MessageRefSpec,
@@ -78,6 +89,7 @@ import {
   type UrlInputsSpec,
   type WireSpec,
   validateEventSpec,
+  validateDocumentContract,
   validateRuntimeInstanceSpec,
 } from 'dg-cell-mvi-halfcode-contract';
 
@@ -132,6 +144,41 @@ export interface HalfcodeUnitDomainDocument {
 
 export type HalfcodeUnitForm = 'folder' | 'single-file';
 
+/** Raw XNL source retained without an HTML, DOM, editor, or writer projection. */
+export interface HalfcodeDocumentRawSource {
+  readonly path: string;
+  readonly text: string;
+  readonly xnlDocument: XnlDocument;
+}
+
+/** Ordered renderer-neutral assembly view of one inline Document body node. */
+export interface HalfcodeDocumentSkeletonNode {
+  readonly kind: 'domain-node' | 'component-embed' | 'capsule' | 'document-embed';
+  readonly tag: string;
+  readonly id?: string;
+  readonly xId?: string;
+  readonly projectionRole?: string;
+  readonly scopeId?: string;
+  readonly scope?: RuntimeScopeBindingSpec;
+  readonly inlineProps?: Readonly<Record<string, unknown>>;
+  readonly children: readonly HalfcodeDocumentSkeletonNode[];
+}
+
+/**
+ * Document-specific loaded projection. Optional structural fields allow an
+ * invalid definition to remain inspectable alongside error diagnostics.
+ */
+export interface LoadedHalfcodeDocumentProjection {
+  readonly sourceDescriptor?: DocumentSourceDescriptor;
+  readonly definitionSource: HalfcodeDocumentRawSource;
+  readonly rawSource: HalfcodeDocumentRawSource;
+  readonly contract?: DocumentContractSpec;
+  readonly rootNodeId: string;
+  readonly rootScope?: RuntimeScopeBindingSpec;
+  readonly presentation?: DocumentPresentationSpec;
+  readonly skeleton: readonly HalfcodeDocumentSkeletonNode[];
+}
+
 /** Both unit forms load into this same shape (D10). */
 export interface LoadedHalfcodeUnit {
   fqn: UnitFqn;
@@ -143,6 +190,8 @@ export interface LoadedHalfcodeUnit {
   domains: Record<string, HalfcodeUnitDomainDocument>;
   elements?: ElementsSpec;
   contract?: UnitContractSpec;
+  /** Present only for Document units; never lowered into ElementsSpec. */
+  document?: LoadedHalfcodeDocumentProjection;
   runtime?: RuntimeSpec;
   scopeRuntimeBindings: RuntimeScopeBindingSpec[];
   /** Parse/validate/project-only Flow representation. Never contains executable code. */
@@ -291,6 +340,20 @@ function resolveVfs(src: string, options: ResolveImportsOptions): string {
   }
   if (src.startsWith('/')) return normalizeAbsolutePath(src);
   return joinPath(options.baseDir, src);
+}
+
+function toWorkspaceRootVfsRef(path: string, workspaceRoot: string): HalfcodeRef {
+  const normalizedPath = normalizeAbsolutePath(path);
+  const normalizedRoot = normalizeAbsolutePath(workspaceRoot);
+  const rootPrefix = normalizedRoot === '/' ? '/' : `${normalizedRoot}/`;
+
+  if (!normalizedPath.startsWith(rootPrefix)) {
+    throw new Error(
+      `Halfcode unit source is outside workspace root "${normalizedRoot}": ${normalizedPath}`,
+    );
+  }
+
+  return asHalfcodeRef(`vfs://@/${normalizedPath.slice(rootPrefix.length)}`);
 }
 
 function readRequiredFile(resolver: HalfcodeUnitBundleResolver, path: string): string {
@@ -640,7 +703,7 @@ function readAppBundleUnitRefs(host: DataElementNode | undefined): AppBundleUnit
       const kind = requiredStringAttr(node, 'kind', 'Halfcode <Unit>');
       if (!isUnitKind(kind)) {
         throw new Error(
-          `Halfcode <Unit> kind must be page/component/instant-flow/work-flow/biz-process/eager-data-flow: ${kind}`,
+          `Halfcode <Unit> kind must be one of ${UNIT_KINDS.join('/')}: ${kind}`,
         );
       }
       return {
@@ -1368,28 +1431,31 @@ interface UnitLoadContext {
   resolver: HalfcodeUnitBundleResolver;
   workspaceRoot: string;
   diagnostics: HalfcodeUnitBundleDiagnostic[];
+  unitKindsByFqn: Readonly<Record<string, UnitKind>>;
   domainFileInventory?: HalfcodeDomainFileInventory;
 }
 
-const SINGLE_FILE_ROOT_TAGS: Record<string, UnitKind> = {
-  Page: 'page',
-  Component: 'component',
-};
-
-function isUnitKind(value: string): value is UnitKind {
-  return value === 'page'
-    || value === 'component'
-    || value === 'instant-flow'
-    || value === 'work-flow'
-    || value === 'biz-process'
-    || value === 'eager-data-flow';
+function rootTagForFrontendUnitKind(kind: FrontendUnitKind) {
+  switch (kind) {
+    case 'page':
+      return 'Page' as const;
+    case 'component':
+      return 'Component' as const;
+    case 'document':
+      return 'Document' as const;
+    default:
+      return assertNever(kind, 'frontend Unit root-tag dispatch');
+  }
 }
 
-function isFlowUnitKind(value: UnitKind): value is FlowUnitKind {
-  return value === 'instant-flow'
-    || value === 'work-flow'
-    || value === 'biz-process'
-    || value === 'eager-data-flow';
+type FrontendUnitRootTag = ReturnType<typeof rootTagForFrontendUnitKind>;
+
+const SINGLE_FILE_ROOT_TAGS = Object.fromEntries(
+  FRONTEND_UNIT_KINDS.map((kind) => [rootTagForFrontendUnitKind(kind), kind]),
+) as Readonly<Record<FrontendUnitRootTag, FrontendUnitKind>>;
+
+function isFrontendUnitRootTag(value: string): value is FrontendUnitRootTag {
+  return Object.prototype.hasOwnProperty.call(SINGLE_FILE_ROOT_TAGS, value);
 }
 
 const UNIT_MANIFEST_FILE = 'manifest.xnl';
@@ -1406,11 +1472,19 @@ function readUnitManifestBase(
     description: stringAttr(node, 'description'),
     domains,
   };
-  if (kind === 'page') {
-    return { ...base, kind: 'page', title: stringAttr(node, 'title') };
+  switch (kind) {
+    case 'page':
+      return { ...base, kind, title: stringAttr(node, 'title') };
+    case 'component':
+    case 'document':
+    case 'instant-ctrl-flow':
+    case 'work-ctrl-flow':
+    case 'bp-ctrl-flow':
+    case 'eager-data-flow':
+      return { ...base, kind };
+    default:
+      return assertNever(kind, 'Unit manifest dispatch');
   }
-  if (kind === 'component') return { ...base, kind: 'component' };
-  return { ...base, kind };
 }
 
 /**
@@ -1470,9 +1544,9 @@ interface CanonicalFlowLoadAttempt {
 type UpstreamFlowDiagnostic = FlowDiagnostic | EagerDataFlowDiagnostic;
 
 const CONTROL_KIND_BY_FORM = {
-  InstantFlow: 'instant-flow',
-  WorkFlow: 'work-flow',
-  BizProcess: 'biz-process',
+  InstantCtrlFlow: 'instant-ctrl-flow',
+  WorkCtrlFlow: 'work-ctrl-flow',
+  BPCtrlFlow: 'bp-ctrl-flow',
 } as const satisfies Record<string, FlowUnitKind>;
 
 function collectFlowSources(
@@ -1586,7 +1660,7 @@ function loadCanonicalFlowUnit(
 
 /**
  * AppBundle unit registration target (`<Unit kind fqn src>`): `src` points
- * at the unit manifest file. Frontend root tag (<Page>/<Component>) is the source of
+ * at the unit manifest file. Frontend root tag (<Page>/<Component>/<Document>) is the source of
  * truth for kind; the root `#id` is the FQN. Both are cross-checked against
  * the registration (HALFCODE_UNIT_KIND_MISMATCH / HALFCODE_UNIT_FQN_CONFLICT).
  * Inline domain sections or an element tree = single-file unit; a bare thin
@@ -1601,22 +1675,31 @@ function loadAppBundleUnit(
   if (isFlowUnitKind(entry.kind)) {
     throw new Error(`Canonical Flow Unit ${entry.fqn} must load through the upstream source adapter`);
   }
+  if (!isFrontendUnitKind(entry.kind)) {
+    return assertNever(entry.kind, 'AppBundle frontend Unit loader dispatch');
+  }
   assertXnlConfigPath(filePath, `unit ${entry.kind}`);
+  const sourceText = readRequiredFile(context.resolver, filePath);
   const doc = parseCanonicalLoadedXnl(
     context.resolver,
-    readRequiredFile(context.resolver, filePath),
+    sourceText,
     filePath,
     context.workspaceRoot,
   );
   const root = firstDataElement(doc);
-  if (!root || !(root.tag in SINGLE_FILE_ROOT_TAGS)) {
-    throw new Error(`Halfcode frontend unit manifest must have a <Page>/<Component> root: ${filePath}`);
+  if (!root || !isFrontendUnitRootTag(root.tag)) {
+    throw new Error(
+      `Halfcode frontend unit manifest must have a <${FRONTEND_UNIT_KINDS.map(rootTagForFrontendUnitKind).join('>/<')}> root: ${filePath}`,
+    );
   }
   const actualKind = SINGLE_FILE_ROOT_TAGS[root.tag];
   if (actualKind !== entry.kind) {
     pushDiagnostic(context.diagnostics, HALFCODE_UNIT_KIND_MISMATCH,
       `Unit registered as kind "${entry.kind}" but manifest root <${root.tag}> declares a ${actualKind}: ${filePath}`,
       filePath);
+  }
+  if (actualKind === 'document') {
+    return loadDocumentUnit(context, entry, filePath, sourceText, doc, root);
   }
   const manifest = readUnitManifestBase(root, actualKind, []);
   if (manifest.fqn !== entry.fqn) {
@@ -1669,10 +1752,627 @@ function loadAppBundleUnit(
   });
 }
 
+const DOCUMENT_SECTION_TAGS = [
+  'DocumentContract',
+  'DocumentSource',
+  'Scope',
+  'DocumentPresentation',
+] as const;
+
+type DocumentSectionTag = (typeof DOCUMENT_SECTION_TAGS)[number];
+
+const DOCUMENT_SECTION_TAG_SET = new Set<string>(DOCUMENT_SECTION_TAGS);
+const DOCUMENT_SKELETON_STRUCTURAL_KEYS = new Set(['x-id', 'projectionRole']);
+const DOCUMENT_X_ID_PATTERN = /^[A-Za-z0-9._~-]+$/;
+const DOCUMENT_PROJECTION_ROLE_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+
+interface UniqueDocumentSection {
+  node?: DataElementNode;
+  duplicate: boolean;
+}
+
+function orderedExtendElements(node: DataElementNode): DataElementNode[] {
+  return (node.extend?.order ?? [])
+    .map((key) => node.extend?.children[key])
+    .filter(isDataElement);
+}
+
+function hasParserDuplicate(
+  source: XnlDocument,
+  parentTag: string,
+  childTag: string,
+): boolean {
+  return (source.warnings ?? []).some((warning) =>
+    warning.code === 'DUPLICATE_CHILD'
+    && warning.parentName === parentTag
+    && warning.childName === childTag,
+  );
+}
+
+function readUniqueDocumentSection(
+  host: DataElementNode,
+  tag: DocumentSectionTag | 'Scope',
+  source: XnlDocument,
+  diagnostics: HalfcodeUnitBundleDiagnostic[],
+  filePath: string,
+  required: boolean,
+  ownerLabel: string,
+): UniqueDocumentSection {
+  const matches = orderedExtendElements(host).filter((child) => child.tag === tag);
+  const duplicate = matches.length > 1 || hasParserDuplicate(source, host.tag, tag);
+  if (duplicate) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `${ownerLabel} ${tag} appears more than once; duplicate sections are invalid and the last value is not selected.`,
+      filePath,
+    );
+    return { duplicate: true };
+  }
+  if (matches.length === 0) {
+    if (required) {
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${ownerLabel} is missing its required ${tag} section.`,
+        filePath,
+      );
+    }
+    return { duplicate: false };
+  }
+  return { node: matches[0], duplicate: false };
+}
+
+function documentContractFromNode(
+  node: DataElementNode | undefined,
+  unitFqn: UnitFqn,
+  diagnostics: HalfcodeUnitBundleDiagnostic[],
+  filePath: string,
+): DocumentContractSpec | undefined {
+  if (!node) return undefined;
+  try {
+    const declaredFields = Object.fromEntries(
+      Object.entries({ ...(node.metadata ?? {}), ...(node.attributes ?? {}) })
+        .filter(([key]) => key !== 'name'),
+    );
+    const candidate: Record<string, unknown> = attrsToPlain(declaredFields);
+    candidate.kind ??= 'document-contract';
+    candidate.fqn ??= unitFqn;
+    const accepts = readMessageRefs(extendChild(node, 'Accepts'));
+    const sends = readMessageRefs(extendChild(node, 'Sends'));
+    const elementContracts = readElementContracts(node);
+    if (accepts) candidate.accepts = accepts;
+    if (sends) candidate.sends = sends;
+    if (elementContracts) candidate.elementContracts = elementContracts;
+
+    const validation = validateDocumentContract(candidate);
+    for (const issue of validation.issues) {
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `DocumentContract ${issue.path}: ${issue.message}`,
+        filePath,
+      );
+    }
+    if (candidate.fqn !== unitFqn) {
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_UNIT_FQN_CONFLICT,
+        `DocumentContract fqn "${String(candidate.fqn)}" does not match Document root "${unitFqn}".`,
+        filePath,
+      );
+      return undefined;
+    }
+    return validation.ok ? candidate as unknown as DocumentContractSpec : undefined;
+  } catch (error) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `Invalid DocumentContract shape: ${error instanceof Error ? error.message : String(error)}`,
+      filePath,
+    );
+    return undefined;
+  }
+}
+
+function documentSourceRefFromNode(
+  node: DataElementNode | undefined,
+  diagnostics: HalfcodeUnitBundleDiagnostic[],
+  filePath: string,
+): HalfcodeRef | undefined {
+  if (!node) return undefined;
+  const fields = { ...(node.metadata ?? {}), ...(node.attributes ?? {}) };
+  const extraFields = Object.keys(fields).filter((key) => key !== 'name' && key !== 'ref');
+  if (nodeId(node) || node.body !== undefined || node.extend !== undefined || extraFields.length > 0) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'DocumentSource must be a plain { ref = "vfs://..." } section with no #id, body, nested sections, or extra fields.',
+      filePath,
+    );
+  }
+  const rawRef = fields.ref;
+  if (typeof rawRef !== 'string' || rawRef.length === 0) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'DocumentSource.ref must be a non-empty vfs reference.',
+      filePath,
+    );
+    return undefined;
+  }
+  try {
+    const parsed = parseHalfcodeRef(rawRef);
+    if (parsed.scheme !== 'vfs') {
+      pushDiagnostic(
+        diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `DocumentSource.ref must use vfs://, received "${rawRef}".`,
+        filePath,
+      );
+      return undefined;
+    }
+    return asHalfcodeRef(rawRef);
+  } catch (error) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `Invalid DocumentSource.ref "${rawRef}": ${error instanceof Error ? error.message : String(error)}`,
+      filePath,
+    );
+    return undefined;
+  }
+}
+
+function documentPresentationFromNode(
+  node: DataElementNode | undefined,
+  diagnostics: HalfcodeUnitBundleDiagnostic[],
+  filePath: string,
+): DocumentPresentationSpec | undefined {
+  if (!node) return undefined;
+  const fields = { ...(node.metadata ?? {}), ...(node.attributes ?? {}) };
+  const extraFields = Object.keys(fields).filter((key) => key !== 'name' && key !== 'id');
+  if (nodeId(node) || node.body !== undefined || node.extend !== undefined || extraFields.length > 0) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'DocumentPresentation must contain only a plain string id field.',
+      filePath,
+    );
+  }
+  const id = fields.id;
+  if (typeof id !== 'string' || id.length === 0) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'DocumentPresentation.id must be a non-empty string.',
+      filePath,
+    );
+    return undefined;
+  }
+  return { id };
+}
+
+function documentScopeFromNode(
+  node: DataElementNode | undefined,
+  diagnostics: HalfcodeUnitBundleDiagnostic[],
+  filePath: string,
+  ownerLabel: string,
+): RuntimeScopeBindingSpec | undefined {
+  if (!node) return undefined;
+  try {
+    return readRuntimeScopeBinding(node);
+  } catch (error) {
+    pushDiagnostic(
+      diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `${ownerLabel} has an invalid Scope: ${error instanceof Error ? error.message : String(error)}`,
+      filePath,
+    );
+    return undefined;
+  }
+}
+
+interface DocumentSkeletonContext {
+  source: XnlDocument;
+  filePath: string;
+  unitKindsByFqn: Readonly<Record<string, UnitKind>>;
+  diagnostics: HalfcodeUnitBundleDiagnostic[];
+  xIds: Map<string, string>;
+  nodeIds: Map<string, string>;
+}
+
+function classifyDocumentSkeletonNode(
+  tag: string,
+  unitKindsByFqn: Readonly<Record<string, UnitKind>>,
+): HalfcodeDocumentSkeletonNode['kind'] {
+  if (tag === 'Capsule') return 'capsule';
+  const registeredKind = unitKindsByFqn[tag];
+  if (registeredKind === 'component') return 'component-embed';
+  if (registeredKind === 'document') return 'document-embed';
+  return 'domain-node';
+}
+
+function structuralString(
+  node: DataElementNode,
+  key: 'x-id' | 'projectionRole',
+): { declared: boolean; value?: string; valid: boolean } {
+  const raw = node.attributes?.[key] ?? node.metadata?.[key];
+  if (raw === undefined) return { declared: false, valid: true };
+  return {
+    declared: true,
+    ...(typeof raw === 'string' ? { value: raw } : {}),
+    valid: typeof raw === 'string' && raw.length > 0,
+  };
+}
+
+function componentInlineProps(node: DataElementNode): Readonly<Record<string, unknown>> | undefined {
+  const entries = Object.entries(node.attributes ?? {})
+    .filter(([key]) => !DOCUMENT_SKELETON_STRUCTURAL_KEYS.has(key));
+  return entries.length ? attrsToPlain(Object.fromEntries(entries)) : undefined;
+}
+
+function registerDocumentIdentity(
+  seen: Map<string, string>,
+  value: string,
+  label: '#id' | 'x-id',
+  nodeLabel: string,
+  context: DocumentSkeletonContext,
+): void {
+  const first = seen.get(value);
+  if (first) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `Duplicate Document ${label} "${value}" on ${nodeLabel}; first declared on ${first}.`,
+      context.filePath,
+    );
+    return;
+  }
+  seen.set(value, nodeLabel);
+}
+
+function readDocumentSkeletonNode(
+  node: DataElementNode,
+  lexicalScopeId: string | undefined,
+  context: DocumentSkeletonContext,
+): HalfcodeDocumentSkeletonNode {
+  const kind = classifyDocumentSkeletonNode(node.tag, context.unitKindsByFqn);
+  const id = nodeId(node);
+  const nodeLabel = id ? `<${node.tag} #${id}>` : `<${node.tag}>`;
+  if (id) registerDocumentIdentity(context.nodeIds, id, '#id', nodeLabel, context);
+
+  const rawXId = structuralString(node, 'x-id');
+  const rawRole = structuralString(node, 'projectionRole');
+  let xId = rawXId.valid ? rawXId.value : undefined;
+  let projectionRole = rawRole.valid ? rawRole.value : undefined;
+
+  if (rawXId.declared && (!rawXId.valid || !DOCUMENT_X_ID_PATTERN.test(rawXId.value ?? ''))) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `${nodeLabel} x-id must be a non-empty URI-safe string.`,
+      context.filePath,
+    );
+    xId = undefined;
+  }
+  if (rawRole.declared && (
+    !rawRole.valid || !DOCUMENT_PROJECTION_ROLE_PATTERN.test(rawRole.value ?? '')
+  )) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `${nodeLabel} projectionRole must be canonical lowercase kebab-case.`,
+      context.filePath,
+    );
+    projectionRole = undefined;
+  }
+
+  const embedOrCapsule = kind !== 'domain-node';
+  const addressable = embedOrCapsule || rawXId.declared || rawRole.declared;
+  if (addressable && projectionRole === undefined && !rawRole.declared) projectionRole = 'main';
+  if (addressable && !xId) {
+    if (projectionRole === 'main' && embedOrCapsule && id && !rawXId.declared) {
+      xId = id;
+    } else if (projectionRole && projectionRole !== 'main') {
+      pushDiagnostic(
+        context.diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${nodeLabel} uses non-main projection role "${projectionRole}" and requires an explicit x-id.`,
+        context.filePath,
+      );
+    } else if (embedOrCapsule) {
+      pushDiagnostic(
+        context.diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${nodeLabel} requires an explicit x-id when no #id is available for its main-role default.`,
+        context.filePath,
+      );
+    } else if (rawRole.declared) {
+      pushDiagnostic(
+        context.diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `${nodeLabel} declares projectionRole and requires an explicit x-id.`,
+        context.filePath,
+      );
+    }
+  }
+  if (xId) registerDocumentIdentity(context.xIds, xId, 'x-id', nodeLabel, context);
+
+  let scope: RuntimeScopeBindingSpec | undefined;
+  if (kind === 'capsule') {
+    const scopeSection = readUniqueDocumentSection(
+      node,
+      'Scope',
+      context.source,
+      context.diagnostics,
+      context.filePath,
+      false,
+      nodeLabel,
+    );
+    scope = documentScopeFromNode(
+      scopeSection.node,
+      context.diagnostics,
+      context.filePath,
+      nodeLabel,
+    );
+    for (const section of orderedExtendElements(node)) {
+      if (section.tag !== 'Scope') {
+        pushDiagnostic(
+          context.diagnostics,
+          HALFCODE_DOCUMENT_DSL_INVALID,
+          `${nodeLabel} only permits one Scope in its (...) section, received <${section.tag}>.`,
+          context.filePath,
+        );
+      }
+    }
+  }
+  const scopeId = scope?.scopeId ?? lexicalScopeId;
+  const children = bodyDataElements(node)
+    .map((child) => readDocumentSkeletonNode(child, scopeId, context));
+  const inlineProps = kind === 'component-embed' ? componentInlineProps(node) : undefined;
+
+  return {
+    kind,
+    tag: node.tag,
+    ...(id ? { id } : {}),
+    ...(xId ? { xId } : {}),
+    ...(projectionRole ? { projectionRole } : {}),
+    ...(scopeId ? { scopeId } : {}),
+    ...(scope ? { scope } : {}),
+    ...(inlineProps ? { inlineProps } : {}),
+    children,
+  };
+}
+
+function loadExternalDocumentRawSource(
+  context: UnitLoadContext,
+  ref: HalfcodeRef,
+  definitionPath: string,
+): HalfcodeDocumentRawSource | undefined {
+  try {
+    const path = resolveVfs(ref, {
+      baseDir: dirname(definitionPath),
+      workspaceRoot: context.workspaceRoot,
+    });
+    assertXnlConfigPath(path, 'DocumentSource.ref');
+    const text = readRequiredFile(context.resolver, path);
+    const xnlDocument = parseCanonicalLoadedXnl(
+      context.resolver,
+      text,
+      path,
+      context.workspaceRoot,
+    );
+    return { path, text, xnlDocument };
+  } catch (error) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      `DocumentSource.ref "${ref}" could not be loaded: ${error instanceof Error ? error.message : String(error)}`,
+      definitionPath,
+    );
+    return undefined;
+  }
+}
+
+/** Dedicated renderer-neutral Document definition/source loader. */
+function loadDocumentUnit(
+  context: UnitLoadContext,
+  entry: AppBundleUnitRef,
+  filePath: string,
+  sourceText: string,
+  sourceDocument: XnlDocument,
+  root: DataElementNode,
+): LoadedHalfcodeUnit {
+  const declaredFqn = nodeId(root);
+  let unitFqn = entry.fqn;
+  if (!declaredFqn) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'Document root requires a #FQN; the registration FQN is retained only for inspection.',
+      filePath,
+    );
+  } else {
+    try {
+      unitFqn = asUnitFqn(declaredFqn);
+    } catch (error) {
+      pushDiagnostic(
+        context.diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `Document root #${declaredFqn} is not a valid FQN: ${error instanceof Error ? error.message : String(error)}`,
+        filePath,
+      );
+    }
+  }
+  if (declaredFqn && unitFqn !== entry.fqn) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_UNIT_FQN_CONFLICT,
+      `Unit registered as fqn "${entry.fqn}" but Document root declares "#${unitFqn}": ${filePath}`,
+      filePath,
+    );
+  }
+
+  for (const section of orderedExtendElements(root)) {
+    if (!DOCUMENT_SECTION_TAG_SET.has(section.tag)) {
+      pushDiagnostic(
+        context.diagnostics,
+        HALFCODE_DOCUMENT_DSL_INVALID,
+        `Document root (...) only permits ${DOCUMENT_SECTION_TAGS.join('/')}; received <${section.tag}>.`,
+        filePath,
+      );
+    }
+  }
+
+  const contractSection = readUniqueDocumentSection(
+    root,
+    'DocumentContract',
+    sourceDocument,
+    context.diagnostics,
+    filePath,
+    true,
+    'Document root',
+  );
+  const sourceSection = readUniqueDocumentSection(
+    root,
+    'DocumentSource',
+    sourceDocument,
+    context.diagnostics,
+    filePath,
+    false,
+    'Document root',
+  );
+  const scopeSection = readUniqueDocumentSection(
+    root,
+    'Scope',
+    sourceDocument,
+    context.diagnostics,
+    filePath,
+    true,
+    'Document root',
+  );
+  const presentationSection = readUniqueDocumentSection(
+    root,
+    'DocumentPresentation',
+    sourceDocument,
+    context.diagnostics,
+    filePath,
+    true,
+    'Document root',
+  );
+
+  const contract = documentContractFromNode(
+    contractSection.node,
+    unitFqn,
+    context.diagnostics,
+    filePath,
+  );
+  const rootScope = documentScopeFromNode(
+    scopeSection.node,
+    context.diagnostics,
+    filePath,
+    'Document root',
+  );
+  const presentation = documentPresentationFromNode(
+    presentationSection.node,
+    context.diagnostics,
+    filePath,
+  );
+  const externalRef = documentSourceRefFromNode(
+    sourceSection.node,
+    context.diagnostics,
+    filePath,
+  );
+  const hasInlineBody = root.body !== undefined;
+  if (hasInlineBody && sourceSection.node) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'Document inline body and external DocumentSource are mutually exclusive.',
+      filePath,
+    );
+  }
+  if (!hasInlineBody && !sourceSection.node && !sourceSection.duplicate) {
+    pushDiagnostic(
+      context.diagnostics,
+      HALFCODE_DOCUMENT_DSL_INVALID,
+      'Document must declare either an inline body or one external DocumentSource.',
+      filePath,
+    );
+  }
+
+  const definitionSource: HalfcodeDocumentRawSource = {
+    path: filePath,
+    text: sourceText,
+    xnlDocument: sourceDocument,
+  };
+  let sourceDescriptor: DocumentSourceDescriptor | undefined;
+  let rawSource = definitionSource;
+  let skeleton: readonly HalfcodeDocumentSkeletonNode[] = [];
+  if (hasInlineBody) {
+    sourceDescriptor = {
+      kind: 'inline',
+      unitSourceRef: toWorkspaceRootVfsRef(filePath, context.workspaceRoot),
+      region: 'body',
+    };
+    const skeletonContext: DocumentSkeletonContext = {
+      source: sourceDocument,
+      filePath,
+      unitKindsByFqn: context.unitKindsByFqn,
+      diagnostics: context.diagnostics,
+      xIds: new Map(),
+      nodeIds: new Map(),
+    };
+    skeleton = bodyDataElements(root)
+      .map((node) => readDocumentSkeletonNode(node, rootScope?.scopeId, skeletonContext));
+  } else if (externalRef) {
+    sourceDescriptor = { kind: 'external', ref: externalRef };
+    rawSource = loadExternalDocumentRawSource(context, externalRef, filePath) ?? definitionSource;
+  }
+
+  const manifest: HalfcodeUnitManifest = {
+    kind: 'document',
+    fqn: unitFqn,
+    version: stringAttr(root, 'version') ?? '',
+    description: stringAttr(root, 'description'),
+    domains: [],
+  };
+  const document: LoadedHalfcodeDocumentProjection = {
+    ...(sourceDescriptor ? { sourceDescriptor } : {}),
+    definitionSource,
+    rawSource,
+    ...(contract ? { contract } : {}),
+    rootNodeId: declaredFqn ?? String(unitFqn),
+    ...(rootScope ? { rootScope } : {}),
+    ...(presentation ? { presentation } : {}),
+    skeleton,
+  };
+  const form: HalfcodeUnitForm = basename(filePath) === UNIT_MANIFEST_FILE
+    ? 'folder'
+    : 'single-file';
+  return {
+    fqn: unitFqn,
+    kind: 'document',
+    form,
+    path: form === 'folder' ? dirname(filePath) : filePath,
+    manifest,
+    domains: {},
+    ...(contract ? { contract } : {}),
+    document,
+    scopeRuntimeBindings: [],
+  };
+}
+
 function finalizeUnit(
   context: UnitLoadContext,
   unit: Omit<LoadedHalfcodeUnit, 'elements' | 'contract' | 'runtime' | 'scopeRuntimeBindings'>,
 ): LoadedHalfcodeUnit {
+  if (unit.kind === 'document') {
+    throw new Error(
+      `Halfcode Document Unit must use the dedicated Document loader boundary (T3.1): ${unit.path}`,
+    );
+  }
   const elementsDomain = domainByCanonical(unit.domains, 'elements');
   const contractsDomain = domainByCanonical(unit.domains, 'contracts');
   const runtimeDomain = domainByCanonical(unit.domains, 'runtime');
@@ -1811,6 +2511,15 @@ function collectContextRefs(
   }
   for (const ref of manifestNodeRefs) out.push({ ref, path: 'manifest' });
   return out;
+}
+
+function collectDocumentDefinitionRefs(
+  document: LoadedHalfcodeDocumentProjection | undefined,
+): { ref: string; path: string }[] {
+  if (!document) return [];
+  const refs: string[] = [];
+  for (const node of document.definitionSource.xnlDocument.nodes) collectRefStrings(node, refs);
+  return refs.map((ref) => ({ ref, path: document.definitionSource.path }));
 }
 
 interface RefCheckerDeps {
@@ -2024,11 +2733,22 @@ export function loadHalfcodeUnitBundle(
   const wiring = wiringDomain ? parseWiring(wiringDomain) : [];
   const product = productDomain ? parseProduct(productDomain) : appBundle.product;
 
-  // 3. Units + FQN registry. AppBundle registrations point `src` at unit manifests.
+  // 3. Unit registration classification is fixed before any source loads, so
+  // Document skeleton classification cannot depend on manifest load order.
+  const mutableUnitKindsByFqn: Record<string, UnitKind> = {};
+  for (const entry of appBundle.units) {
+    mutableUnitKindsByFqn[entry.fqn] ??= entry.kind;
+  }
+  const unitKindsByFqn: Readonly<Record<string, UnitKind>> = Object.freeze(
+    mutableUnitKindsByFqn,
+  );
+
+  // 4. Units + FQN registry. AppBundle registrations point `src` at unit manifests.
   const unitContext: UnitLoadContext = {
     resolver,
     workspaceRoot,
     diagnostics,
+    unitKindsByFqn,
     domainFileInventory: options.domainFileInventory,
   };
   const units: Record<string, LoadedHalfcodeUnit> = {};
@@ -2100,7 +2820,7 @@ export function loadHalfcodeUnitBundle(
     units[unit.fqn] = unit;
   }
 
-  // 4. Route instance tables (D13).
+  // 5. Route instance tables (D13).
   const routeIds = new Set<string>();
   const routePaths = new Set<string>();
   const indexRoute = (route: RouteSpec): void => {
@@ -2110,12 +2830,12 @@ export function loadHalfcodeUnitBundle(
   };
   for (const route of routes) indexRoute(route);
 
-  // 5. Element FQN tag existence against the registry (D4).
+  // 6. Element FQN tag existence against the registry (D4).
   for (const unit of Object.values(units)) {
     checkElementTags(unit, registry, uiLibraries, diagnostics);
   }
 
-  // 6. Unified ref index + unit privacy (D7).
+  // 7. Unified ref index + unit privacy (D7).
   const appContext: RefResolutionContext = {
     label: 'app',
     domainIds: buildDomainIdIndex(appDomains),
@@ -2138,7 +2858,10 @@ export function loadHalfcodeUnitBundle(
   checkContextRefs(appContext, collectContextRefs(appDomains, []), deps);
   for (const unit of Object.values(units)) {
     const context = unitContexts.get(unit.fqn) as RefResolutionContext;
-    checkContextRefs(context, collectContextRefs(unit.domains, []), deps);
+    checkContextRefs(context, [
+      ...collectContextRefs(unit.domains, []),
+      ...collectDocumentDefinitionRefs(unit.document),
+    ], deps);
   }
 
   return {

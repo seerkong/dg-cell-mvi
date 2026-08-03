@@ -1,0 +1,90 @@
+<behavior-patch capability="xnl-document-authoring-session" version="1">
+  <upsert selector="behavior://xnl-document-authoring-session/requirements/revisioned-single-writer">
+    <requirement id="revisioned-single-writer">
+      <statement>The system SHALL provide an owner-local revisioned XNL authoring session in which accepted Domain XNL is the only live authority and all human, Agent, Presenter and embedded-block edits enter as immutable proposals.</statement>
+      <suite id="revision-gate" name="Revision gate and writer authority">
+        <case id="stale-proposal-conflicts">
+          <given>A proposal carries a base live revision different from the session accepted revision.</given>
+          <when>The proposal is submitted.</when>
+          <then>The session SHALL return conflict before candidate materialization and SHALL NOT advance accepted or persisted state.</then>
+        </case>
+        <case id="single-runtime-writer">
+          <given>Multiple callers submit edits to one authoring session.</given>
+          <when>The owner processes the requests.</when>
+          <then>Requests SHALL be serialized through the runtime-first ValueHost owner and no caller SHALL receive AST, VFS writer or persistence authority.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-authoring-session/requirements/atomic-authoring-pipeline">
+    <requirement id="atomic-authoring-pipeline">
+      <statement>The system SHALL process each semantic edit through Command, Candidate, identity-aware diff, strict clone-based dry-run, validation and acceptance as one ordered mutation batch without mutating the accepted base during evaluation.</statement>
+      <suite id="pipeline" name="Authoring pipeline">
+        <case id="identity-safe-mutations">
+          <given>A candidate moves an identified node or replaces its identity.</given>
+          <when>The XNL adapter diffs and dry-runs the candidate.</when>
+          <then>#id SHALL act as tree alignment and move identity, SHALL NOT be emitted as an ordinary payload update, and identity replacement SHALL be delete plus add.</then>
+        </case>
+        <case id="reject-does-not-advance">
+          <given>Dry-run or domain validation rejects a mutation batch.</given>
+          <when>The session returns the result.</when>
+          <then>The accepted snapshot, live revision, persisted revision and persistence authority SHALL remain unchanged.</then>
+        </case>
+        <case id="accepted-edit-reprojects">
+          <given>An Interaction is translated to a valid Domain Command and accepted.</given>
+          <when>The accepted Domain XNL is compiled again.</when>
+          <then>The resulting ProjectionPlan SHALL reflect the semantic edit and no Presenter-local draft SHALL become a domain fact.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-authoring-session/requirements/persistence-feedback">
+    <requirement id="persistence-feedback">
+      <statement>The system SHALL distinguish live acceptance from VFS/VCS persistence, use expected persisted revision CAS, and expose applied, unchanged, failed and conflicted persistence outcomes without reporting an unpersisted edit as saved.</statement>
+      <suite id="persistence" name="Persistence and recovery">
+        <case id="failure-remains-dirty">
+          <given>A candidate is accepted live and the persistence effect fails.</given>
+          <when>The result is observed.</when>
+          <then>The accepted live revision SHALL remain advanced, persisted revision SHALL remain unchanged, the session SHALL be dirty-failed, and new edits SHALL fail closed until retry or recovery.</then>
+        </case>
+        <case id="accepted-fact-reprojects-before-persistence">
+          <given>A candidate passes dry-run and validation and is accepted live.</given>
+          <when>The following persistence effect is pending, fails, or conflicts.</when>
+          <then>The session SHALL publish the accepted live invalidation exactly once so projections reflect the live authority while save state remains explicitly unpersisted.</then>
+        </case>
+        <case id="cas-conflict-pauses-authoring">
+          <given>The persistence authority has advanced independently.</given>
+          <when>The session persists with a stale expected persisted revision.</when>
+          <then>The session SHALL expose persistence-conflicted with the actual revision and SHALL require reload or rebase before another edit.</then>
+        </case>
+        <case id="reload-reproduces-accepted-fact">
+          <given>An accepted snapshot was persisted successfully.</given>
+          <when>A new session reloads through the injected persistence port.</when>
+          <then>The reloaded Domain XNL SHALL structurally equal the persisted accepted snapshot and the persistence receipt SHALL remain separate from live revision.</then>
+        </case>
+        <case id="explicit-discard-reload">
+          <given>A dirty-failed or persistence-conflicted session and an expected current live revision.</given>
+          <when>The host explicitly reloads while discarding the accepted live divergence.</when>
+          <then>The session SHALL read the persisted snapshot, allocate a new live revision, publish invalidation, report the discarded revision, and SHALL conflict rather than discard when expected live revision is stale.</then>
+        </case>
+        <case id="unchanged-has-no-fabricated-receipt">
+          <given>The VFS authority reports an unchanged structurally equal snapshot.</given>
+          <when>The adapter maps the result.</when>
+          <then>The session SHALL become persisted at the returned revision and MUST NOT fabricate an applied persistence receipt.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+  <upsert selector="behavior://xnl-document-authoring-session/requirements/depa-runtime-boundary">
+    <requirement id="depa-runtime-boundary">
+      <statement>The system SHALL obtain materialization, diff, dry-run, validation, persistence, revision and invalidation capabilities from the runtime first argument; input and config MUST NOT carry function objects, registries, writers or persistence clients.</statement>
+      <suite id="boundary" name="DEPA and dependency boundary">
+        <case id="support-only-xnl-adapters">
+          <given>The contract, logic and support package graph.</given>
+          <when>Dependencies and public surfaces are scanned.</when>
+          <then>Only support SHALL import xnl-core or xnl-vfs, and no layer SHALL import Tiptap, ProseMirror, Vue, DOM or xnl-vcs implementation.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

@@ -7,8 +7,15 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
   },
   resolve: {
-    alias: {
-      'dg-cell-mvi-halfcode-contract': path.resolve(__dirname, './src/index.ts'),
-    },
+    alias: [
+      {
+        find: /^dg-cell-mvi-halfcode-contract\/test-fixtures\/xnl-rich-document$/,
+        replacement: path.resolve(__dirname, './test-fixtures/xnl-rich-document.ts'),
+      },
+      {
+        find: /^dg-cell-mvi-halfcode-contract$/,
+        replacement: path.resolve(__dirname, './src/index.ts'),
+      },
+    ],
   },
 });

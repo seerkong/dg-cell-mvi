@@ -1,0 +1,95 @@
+<Track id="bind-tiptap-draft-to-editor-state" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让真实 canonical Tiptap Editor 与 foundation local-draft lifecycle 共享同一 EditorState/schema lineage，并继续发布 revision-free Interaction。</Goal>
+    <Description>新增最小 EditorState binding factory、fail-closed boundary、package-root real Editor integration、public docs 与下游 Workbench gate。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-02T22:22:49+03:00</CreatedAt>
+    <UpdatedAt>2026-08-03T00:10:01+03:00</UpdatedAt>
+    <GapRound>2</GapRound>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="draft-lifecycle" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/localDraftLifecycle.ts"/>
+    <MaterialBundle role="input" name="browser-adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="tiptap-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/tiptap-document/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_bind-tiptap-draft-to-editor-state" name="bind-tiptap-draft-to-editor-state" version="1" cdt:child-mode="dag">
+    <Description>先冻结 public contract 与真实失败，再实现 binding/lifecycle/docs，最后跨仓库验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Binding contract and red baseline" status="DONE" order="0">
+        <Description>固定 exact input/output、authority 边界和真实 schema-lineage failure。</Description>
+        <SubNodes>
+          <Task id="T1.1" name="定义 EditorState binding public contract" status="DONE" order="0" priority="P0">
+            <Description>在 adapter types/root 定义 bind input/result processor，不把 adapter type上提到 neutral package。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">Input 只有 editorState 与可选 acceptedObservation，不含并列 document、Editor、DOM、NodeView 或 authority</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">Public root typecheck 固定 output=fn(runtime,input,config) 与既有 draft result/state</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="建立 package-root real Editor red tests" status="DONE" order="1" priority="P0">
+            <Description>真实 EditorState bind、document transaction、silent selection、composition 与 malformed/noncanonical gate 先红。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">红测准确复现 detached schema identity failure 并要求 binding 后 exactly-one Interaction</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">红测覆盖 table/Mermaid/Component/Capsule extensions 共存与 fail-closed authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Binding implementation and lifecycle" status="DONE" order="1">
+        <Description>实现真实 state lineage、reproject/history semantics 和 public docs。</Description>
+        <cdt:Gate><cdt:Criterion>P1 contract 与 red tests 完成且失败只指向 binding 缺失</cdt:Criterion></cdt:Gate>
+        <SubNodes>
+          <Task id="T2.1" name="实现 EditorState-bound draft factory" status="DONE" order="0" priority="P0">
+            <Description>验证 canonical EditorState，acceptedDocument 直接取 state.doc，复用 existing trusted draft state ownership。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">真实 Editor transaction applied/published exactly once，intent revision/writer authority scan 为 0</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Malformed/accessor/noncanonical state 原子拒绝且 Effect 0 次</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="验证 reproject composition history 与 NodeViews" status="DONE" order="1" priority="P0">
+            <Description>覆盖 matching/replacing acceptance、selection、composition、undo/redo 及现有 browser host extensions。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">Matching 保留 state/selection/plugins；replacement 复用 schema/plugins、重置 stale history</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Selection silent、composition settle once、history proposal-producing，table/Mermaid/Component/Capsule 共存</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.3" name="更新 public docs 与 package boundary" status="DONE" order="2" priority="P1">
+            <Description>记录 detached/bound 两种 local-draft 用法和 authority 边界，更新 ESM/CJS/typecheck smoke。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.3-AC1" checked="true">文档示例从 package root bind EditorState，不出现 replay/getJSON/HTML/DOM reverse-authoring</cdt:Criterion>
+              <cdt:Criterion id="T2.3-AC2" checked="true">Boundary tests 证明无 Editor/DOM/NodeView/authoring/VFS/writer leakage</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Cross-repository verification" status="DONE" order="2">
+        <Description>运行 adapter 全量、Workbench gate、strict verify 与 terminal review loops。</Description>
+        <SubNodes>
+          <Task id="T3.1" name="运行 full tests typecheck smoke 与 Workbench gate" status="DONE" order="0" priority="P0">
+            <Description>重跑 adapter full/typecheck/import smoke、Workbench capability/editor/entry 和 build。</Description>
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Foundation full suite/typecheck/import smoke 与 Workbench gate/typecheck/build 全绿</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Strict validate 与 fresh independent verify PASS</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="5" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_bind-tiptap-draft-to-editor-state">
+      <Node id="P2"><After ref="P1"/></Node>
+      <Node id="P3"><After ref="P2"/></Node>
+    </Dag>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+</Track>
