@@ -623,10 +623,10 @@ importers:
         specifier: workspace:*
         version: link:../../../depa-flows.ts/packages/work-ctrl-flow-logic
       xnl-core:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../../../lang/xnl.ts/packages/core
       xnl-vfs:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../../../lang/xnl.ts/packages/vfs
     devDependencies:
       '@types/node':

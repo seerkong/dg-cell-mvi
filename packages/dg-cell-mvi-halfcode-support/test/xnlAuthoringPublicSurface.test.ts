@@ -153,8 +153,8 @@ describe('xnl authoring public authority surface', () => {
     expect(logicPackage.dependencies ?? {}).not.toHaveProperty('xnl-vfs');
     expect(supportPackage.dependencies ?? {}).toHaveProperty('xnl-core');
     expect(supportPackage.dependencies).toMatchObject({
-      'xnl-core': 'workspace:*',
-      'xnl-vfs': 'workspace:*',
+      'xnl-core': 'workspace:^',
+      'xnl-vfs': 'workspace:^',
     });
     expect(supportPackage.dependencies ?? {}).not.toHaveProperty('xnl-vcs');
   });

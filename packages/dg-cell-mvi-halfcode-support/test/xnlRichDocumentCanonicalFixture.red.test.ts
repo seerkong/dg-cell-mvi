@@ -244,8 +244,8 @@ describe('canonical RichDocument support regression', () => {
     expect(dependencies(LOGIC_ROOT)).not.toHaveProperty('xnl-core');
     expect(dependencies(LOGIC_ROOT)).not.toHaveProperty('xnl-vfs');
     expect(dependencies(SUPPORT_ROOT)).toMatchObject({
-      'xnl-core': 'workspace:*',
-      'xnl-vfs': 'workspace:*',
+      'xnl-core': 'workspace:^',
+      'xnl-vfs': 'workspace:^',
     });
   });
 });

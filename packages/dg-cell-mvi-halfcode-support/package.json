@@ -1,7 +1,7 @@
 {
   "name": "dg-cell-mvi-halfcode-support",
   "private": false,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.com"
@@ -45,8 +45,8 @@
     "task-manager-logic": "workspace:*",
     "work-ctrl-flow-contract": "workspace:*",
     "work-ctrl-flow-logic": "workspace:*",
-    "xnl-core": "workspace:*",
-    "xnl-vfs": "workspace:*"
+    "xnl-core": "workspace:^",
+    "xnl-vfs": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

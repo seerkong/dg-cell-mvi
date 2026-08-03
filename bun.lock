@@ -19,7 +19,7 @@
     },
     "../../lang/xnl.ts/packages/core": {
       "name": "xnl-core",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "devDependencies": {
         "@types/node": "^22.7.4",
         "tsup": "^8.2.4",
@@ -369,7 +369,7 @@
     },
     "packages/dg-cell-mvi-halfcode-support": {
       "name": "dg-cell-mvi-halfcode-support",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "bp-ctrl-flow-contract": "workspace:*",
         "bp-ctrl-flow-logic": "workspace:*",
@@ -383,8 +383,8 @@
         "task-manager-logic": "workspace:*",
         "work-ctrl-flow-contract": "workspace:*",
         "work-ctrl-flow-logic": "workspace:*",
-        "xnl-core": "workspace:*",
-        "xnl-vfs": "workspace:*",
+        "xnl-core": "workspace:^",
+        "xnl-vfs": "workspace:^",
       },
       "devDependencies": {
         "@types/node": "^20.10.0",
