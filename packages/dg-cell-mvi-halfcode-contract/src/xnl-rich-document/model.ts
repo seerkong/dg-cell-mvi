@@ -9,6 +9,9 @@ export const XNL_RICH_DOCUMENT_NODE_KINDS = [
   'bullet-list',
   'ordered-list',
   'list-item',
+  'task-list',
+  'task-item',
+  'horizontal-rule',
   'image',
   'table',
   'table-row',
@@ -18,6 +21,7 @@ export const XNL_RICH_DOCUMENT_NODE_KINDS = [
   'mermaid',
   'component-embed',
   'capsule-embed',
+  'hard-break',
   'text',
 ] as const;
 
@@ -25,8 +29,11 @@ export const XNL_RICH_DOCUMENT_MARK_KINDS = [
   'bold',
   'italic',
   'strike',
+  'underline',
   'code',
   'link',
+  'text-color',
+  'highlight',
 ] as const;
 
 export type XnlRichDocumentNodeKind = (typeof XNL_RICH_DOCUMENT_NODE_KINDS)[number];
@@ -41,19 +48,32 @@ type XnlRichDocumentPersistentNode<TKind extends XnlRichDocumentPersistentNodeKi
 export type XnlRichDocumentBoldMark = Readonly<{ kind: 'bold' }>;
 export type XnlRichDocumentItalicMark = Readonly<{ kind: 'italic' }>;
 export type XnlRichDocumentStrikeMark = Readonly<{ kind: 'strike' }>;
+export type XnlRichDocumentUnderlineMark = Readonly<{ kind: 'underline' }>;
 export type XnlRichDocumentCodeMark = Readonly<{ kind: 'code' }>;
 export type XnlRichDocumentLinkMark = Readonly<{
   kind: 'link';
   href: string;
   title?: string;
 }>;
+export type XnlRichDocumentColor = string;
+export type XnlRichDocumentTextColorMark = Readonly<{
+  kind: 'text-color';
+  color: XnlRichDocumentColor;
+}>;
+export type XnlRichDocumentHighlightMark = Readonly<{
+  kind: 'highlight';
+  color?: XnlRichDocumentColor;
+}>;
 
 export type XnlRichDocumentMark =
   | XnlRichDocumentBoldMark
   | XnlRichDocumentItalicMark
   | XnlRichDocumentStrikeMark
+  | XnlRichDocumentUnderlineMark
   | XnlRichDocumentCodeMark
-  | XnlRichDocumentLinkMark;
+  | XnlRichDocumentLinkMark
+  | XnlRichDocumentTextColorMark
+  | XnlRichDocumentHighlightMark;
 
 export type XnlRichDocumentText = Readonly<{
   kind: 'text';
@@ -61,15 +81,25 @@ export type XnlRichDocumentText = Readonly<{
   marks?: readonly XnlRichDocumentMark[];
 }>;
 
+export type XnlRichDocumentHardBreak = XnlRichDocumentPersistentNode<'hard-break'>;
+
+export type XnlRichDocumentInlineNode =
+  | XnlRichDocumentText
+  | XnlRichDocumentHardBreak;
+
+export type XnlRichDocumentTextAlignment = 'start' | 'center' | 'end' | 'justify';
+
 export type XnlRichDocumentParagraph = XnlRichDocumentPersistentNode<'paragraph'> & Readonly<{
-  content: readonly XnlRichDocumentText[];
+  align?: XnlRichDocumentTextAlignment;
+  content: readonly XnlRichDocumentInlineNode[];
 }>;
 
 export type XnlRichDocumentHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type XnlRichDocumentHeading = XnlRichDocumentPersistentNode<'heading'> & Readonly<{
   level: XnlRichDocumentHeadingLevel;
-  content: readonly XnlRichDocumentText[];
+  align?: XnlRichDocumentTextAlignment;
+  content: readonly XnlRichDocumentInlineNode[];
 }>;
 
 export type XnlRichDocumentBlockquote = XnlRichDocumentPersistentNode<'blockquote'> & Readonly<{
@@ -88,6 +118,17 @@ export type XnlRichDocumentOrderedList = XnlRichDocumentPersistentNode<'ordered-
 export type XnlRichDocumentListItem = XnlRichDocumentPersistentNode<'list-item'> & Readonly<{
   children: readonly XnlRichDocumentBlockNode[];
 }>;
+
+export type XnlRichDocumentTaskList = XnlRichDocumentPersistentNode<'task-list'> & Readonly<{
+  children: readonly XnlRichDocumentTaskItem[];
+}>;
+
+export type XnlRichDocumentTaskItem = XnlRichDocumentPersistentNode<'task-item'> & Readonly<{
+  checked: boolean;
+  children: readonly XnlRichDocumentBlockNode[];
+}>;
+
+export type XnlRichDocumentHorizontalRule = XnlRichDocumentPersistentNode<'horizontal-rule'>;
 
 export type XnlRichDocumentImage = XnlRichDocumentPersistentNode<'image'> & Readonly<{
   src: string;
@@ -149,6 +190,8 @@ export type XnlRichDocumentBlockNode =
   | XnlRichDocumentBlockquote
   | XnlRichDocumentBulletList
   | XnlRichDocumentOrderedList
+  | XnlRichDocumentTaskList
+  | XnlRichDocumentHorizontalRule
   | XnlRichDocumentImage
   | XnlRichDocumentTable
   | XnlRichDocumentCodeBlock
@@ -160,9 +203,10 @@ export type XnlRichDocumentNode =
   | XnlRichDocument
   | XnlRichDocumentBlockNode
   | XnlRichDocumentListItem
+  | XnlRichDocumentTaskItem
   | XnlRichDocumentTableRow
   | XnlRichDocumentTableCellNode
-  | XnlRichDocumentText;
+  | XnlRichDocumentInlineNode;
 
 export type XnlRichDocument = XnlRichDocumentPersistentNode<'document'> & Readonly<{
   children: readonly XnlRichDocumentBlockNode[];

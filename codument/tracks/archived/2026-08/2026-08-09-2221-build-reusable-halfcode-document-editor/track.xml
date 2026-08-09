@@ -1,0 +1,112 @@
+<Track id="build-reusable-halfcode-document-editor" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>构建 canonical Tiptap adapter、Presentation compiler 和可复用 Halfcode Vue 文档编辑器。</Goal>
+    <Description>补齐传统语义的 Tiptap 双向适配，建立 stable-id 工具计划和单 draft owner 的响应式编辑器 capsule。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-08-09T14:43:00Z</CreatedAt>
+    <UpdatedAt>2026-08-09T19:21:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="rich-document-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/xnl-rich-document/"/>
+    <MaterialBundle role="input" name="rich-document-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/src/xnl-rich-document/"/>
+    <MaterialBundle role="input" name="existing-tiptap-adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="document-editor-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="document-editor-logic" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-logic/"/>
+    <MaterialBundle role="output" name="tiptap-editor-capsule" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="document-docs" domain="doc" path="vfs://@/docs/halfcode/dsl-bundle/spec/frontend/tiptap-document/"/>
+  </Ports>
+  <TaskSpace id="space_build-reusable-halfcode-document-editor" name="build-reusable-halfcode-document-editor" version="1" cdt:child-mode="dag">
+    <Description>先闭合 canonical adapter，再建立 data-only compiler，随后装配 editor capsule 并做真实浏览器验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Canonical Tiptap Adapter" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="冻结传统语义 Tiptap schema 与 round-trip 红测" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">Tests 覆盖所有新增 nodes/marks/attrs、persistent identity、absent alignment 与 invalid values</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">Hard-break 保持 inline atom，task-list 保持独立 node family</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="扩展唯一 extension registry 与 projection parser" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">Canonical GetPut/PutGet 对传统语义无损且使用 G2 color validation</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">不创建 parallel schema、registry 或 HTML adapter</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.3" name="扩展 transaction normalizer 与 draft lifecycle 覆盖" status="DONE" order="2" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.3-AC1" checked="true">Paste、IME、undo/redo、copy/move 与 attributes/inline edits 产生 canonical revision-free interaction</cdt:Criterion>
+              <cdt:Criterion id="T1.3-AC2" checked="true">Matching/replacement/conflict 保持既有单 EditorState lifecycle 语义</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Presentation Compiler And Registries" status="DONE" order="1">
+        <SubNodes>
+          <Task id="T2.1" name="定义并校验 serializable Presentation 与 ToolbarPlan" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">Types/validator 拒绝 duplicate、unknown、accessor、unsafe、closure 和 renderer objects</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">Plan deep frozen、递归可序列化且 diagnostics deterministic</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="实现 compiler、canonical command registry 与 restricted facade" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">Compiler 遵守 output = fn(runtime,input,config) 且 runtime 只承载 registry/capability references</cdt:Criterion>
+              <cdt:Criterion id="T2.2-AC2" checked="true">Presenter override 不能替换 canonical command；host tool 需 distinct id + grant</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Reusable Vue Editor Capsule" status="DONE" order="2">
+        <SubNodes>
+          <Task id="T3.1" name="实现单 draft owner editor factory 与 Vue surface" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">Host authoring/registry/effects 位于 runtime，input 不携 revision authority</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">Mount/update/unmount、composition、history 与 reproject 无第二 draft store</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T3.2" name="实现 responsive toolbar 与 enhanced code Presenter" status="DONE" order="1" priority="P1">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.2-AC1" checked="true">Grouped/contextual/overflow tools 全部可达并支持 focus、keyboard、tooltip</cdt:Criterion>
+              <cdt:Criterion id="T3.2-AC2" checked="true">Highlight/fold/copy/line numbers/theme 仅本地；clipboard/highlighter 经注入 effect</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P4" name="Browser Verification And Documentation" status="DONE" order="3">
+        <SubNodes>
+          <Task id="T4.1" name="运行 package、laws、jsdom 与真实浏览器宽窄验证" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.1-AC1" checked="true">Contract/logic/tiptap tests、typecheck、root ESM/CJS、diff check 全绿</cdt:Criterion>
+              <cdt:Criterion id="T4.1-AC2" checked="true">真实浏览器验证 overflow reachability/context/focus/tooltip/no horizontal-scroll hiding</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T4.2" name="更新分层用法、Presentation 和 public API 文档" status="DONE" order="1" priority="P1">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T4.2-AC1" checked="true">文档给出三档用法、runtime/input/config、authority 和 enhanced code boundary</cdt:Criterion>
+              <cdt:Criterion id="T4.2-AC2" checked="true">Public root 暴露稳定 API，internals 与 Workbench 实现不泄漏</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_build-reusable-halfcode-document-editor">
+      <Node id="P2"><After ref="P1"/></Node>
+      <Node id="P3"><After ref="P2"/></Node>
+      <Node id="P4"><After ref="P3"/></Node>
+    </Dag>
+    <Parallel max-concurrent="1" spot-check="true"/>
+  </Schedule>
+  <Hooks>
+    <Hook on="track:after"><cdt:AttractorCheck use="coding"/></Hook>
+  </Hooks>
+</Track>

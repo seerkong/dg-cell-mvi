@@ -10,6 +10,8 @@ export {
 export {
   createXnlRichDocumentTiptapBrowserHost,
 } from './tiptapBrowserHost';
+export { XnlDocumentEditor } from './XnlDocumentEditor';
+export { createXnlDocumentEditor } from './documentEditorSession';
 export {
   assembleXnlRichDocumentHalfcodeNodeViewOccurrence,
 } from './occurrenceAssembly';
@@ -23,6 +25,7 @@ export {
 } from './projection';
 export { normalizeTiptapTransaction } from './transactionNormalizer';
 export {
+  adoptXnlRichDocumentTiptapEditorState,
   applyXnlRichDocumentTiptapDraftTransaction,
   bindXnlRichDocumentTiptapDraftToEditorState,
   createXnlRichDocumentTiptapDraft,
@@ -66,6 +69,7 @@ export type {
   XnlRichDocumentTiptapAcceptedObservation,
   XnlRichDocumentTiptapAcceptedProjectionInput,
   XnlRichDocumentTiptapDraftConfig,
+  XnlRichDocumentTiptapDraftAdoptInput,
   XnlRichDocumentTiptapDraftCreateInput,
   XnlRichDocumentTiptapDraftEditorStateBindingInput,
   XnlRichDocumentTiptapDraftEditorStateBindingProcessor,
@@ -129,3 +133,28 @@ export type {
   XnlRichDocumentTiptapBrowserHostResult,
   XnlRichDocumentTiptapBrowserHostRuntime,
 } from './types';
+export type {
+  XnlDocumentEditorClipboardBinding,
+  XnlDocumentEditorClipboardEffect,
+  XnlDocumentEditorClipboardInput,
+  XnlDocumentEditorClipboardResult,
+  XnlDocumentEditorCommandFacade,
+  XnlDocumentEditorCommandBinding,
+  XnlDocumentEditorCommandInput,
+  XnlDocumentEditorCommandOutcome,
+  XnlDocumentEditorCommandProcessor,
+  XnlDocumentEditorConfig,
+  XnlDocumentEditorCreateResult,
+  XnlDocumentEditorDiagnosticSinkBinding,
+  XnlDocumentEditorDiagnosticSinkInput,
+  XnlDocumentEditorHighlightBinding,
+  XnlDocumentEditorHighlightConfig,
+  XnlDocumentEditorHighlightEffect,
+  XnlDocumentEditorHighlightInput,
+  XnlDocumentEditorHighlightResult,
+  XnlDocumentEditorHighlightToken,
+  XnlDocumentEditorInput,
+  XnlDocumentEditorRuntime,
+  XnlDocumentEditorSession,
+  XnlDocumentEditorSnapshot,
+} from './documentEditorTypes';

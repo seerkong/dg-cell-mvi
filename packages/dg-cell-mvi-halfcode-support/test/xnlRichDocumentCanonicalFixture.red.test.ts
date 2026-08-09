@@ -103,12 +103,15 @@ describe('canonical RichDocument support regression', () => {
       { kind: 'bold' },
       { kind: 'italic' },
       { kind: 'strike' },
+      { kind: 'underline' },
       { kind: 'code' },
       {
         kind: 'link',
         href: 'https://example.test/rich-document',
         title: 'RichDocument contract',
       },
+      { kind: 'text-color', color: '#1a2b3c' },
+      { kind: 'highlight' },
     ]);
     expect(Array.isArray(text.attributes?.marks)).toBe(true);
     expect(typeof text.attributes?.marks).not.toBe('string');

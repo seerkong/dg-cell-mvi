@@ -1,0 +1,53 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/traditional-document-semantics">
+    <requirement id="traditional-document-semantics">
+      <statement>The renderer-neutral RichDocument foundation SHALL represent underline, text alignment, text color, highlight, task list, horizontal rule and hard break as canonical serializable Domain XNL semantics; enhanced code block durability SHALL remain language plus text while syntax highlighting, folding and copying remain Presenter capabilities.</statement>
+      <suite id="canonical-model" name="Canonical traditional document model">
+        <case id="marks-and-alignment">
+          <given>A document contains underlined, colored or highlighted text and aligned paragraphs or headings.</given>
+          <when>The foundation validates, lowers, parses and normalizes it.</when>
+          <then>Every supported mark and alignment SHALL round-trip exactly with stable node identity and without HTML or style-declaration fallback.</then>
+        </case>
+        <case id="task-list-rule-break">
+          <given>A document contains checked and unchecked task items, horizontal rules and inline hard breaks.</given>
+          <when>The foundation processes and rematerializes the document.</when>
+          <then>Task structure, checked state, ordering, inline break position and persistent identities SHALL be preserved.</then>
+        </case>
+        <case id="hard-break-identity-provenance">
+          <given>A hard break is inserted or copied through an inline replacement or a copied semantic subtree.</given>
+          <when>The candidate materializer assigns temporary identities and classifies identity changes.</when>
+          <then>Every new hard break identity SHALL avoid all accepted and same-command identities, every copied hard break SHALL retain exact copy provenance, and inserted subtrees SHALL reject forged stable hard-break identities.</then>
+        </case>
+        <case id="enhanced-code-boundary">
+          <given>A code block is syntax highlighted, copied or folded by a Presenter.</given>
+          <when>The Domain document is persisted.</when>
+          <then>Only code language, text and explicitly canonical document attributes SHALL be durable; local highlight, copy and fold state SHALL NOT enter Domain XNL.</then>
+        </case>
+      </suite>
+      <suite id="semantic-authoring" name="Traditional semantic authoring">
+        <case id="atomic-command-materialization">
+          <given>A canonical semantic command inserts, deletes, moves or edits any newly supported node, mark or attribute.</given>
+          <when>The candidate materializer evaluates it against one accepted baseline.</when>
+          <then>The whole command SHALL apply atomically with exact before/after validation, or reject without partial mutation or external authority change.</then>
+        </case>
+        <case id="xnl-round-trip">
+          <given>A supported traditional document is represented as concrete XNL.</given>
+          <when>The support-owned adapter parses, materializes and serializes it.</when>
+          <then>The canonical result SHALL satisfy GetPut, preserve #id-based structure and produce readable mutations for accepted edits.</then>
+        </case>
+        <case id="invalid-values-fail-closed">
+          <given>A mark, alignment, color, checked state or node shape is malformed, accessor-backed, unsafe or unknown.</given>
+          <when>Any public boundary validates it.</when>
+          <then>The foundation SHALL return structured diagnostics and SHALL NOT silently drop, coerce through HTML or emit a partial command.</then>
+        </case>
+      </suite>
+      <suite id="package-boundary" name="Renderer-neutral ownership">
+        <case id="neutral-dependencies">
+          <given>The contract, logic and support packages are inspected.</given>
+          <when>The traditional semantics are implemented.</when>
+          <then>Contract and logic SHALL remain free of xnl-core, Tiptap, Vue, DOM and HTML; support MAY own concrete xnl-core adaptation but SHALL remain renderer-neutral.</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

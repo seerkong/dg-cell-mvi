@@ -32,19 +32,27 @@ export const XNL_RICH_DOCUMENT_CANONICAL_FIXTURE: XnlRichDocument = deepFreeze({
           { kind: 'bold' },
           { kind: 'italic' },
           { kind: 'strike' },
+          { kind: 'underline' },
           { kind: 'code' },
           {
             kind: 'link',
             href: 'https://example.test/rich-document',
             title: 'RichDocument contract',
           },
+          { kind: 'text-color', color: '#1a2b3c' },
+          { kind: 'highlight' },
         ],
       }],
     },
     {
       kind: 'paragraph',
       nodeId: nodeId('paragraph.introduction'),
-      content: [{ kind: 'text', text: 'Domain XNL remains authoritative.' }],
+      align: 'start',
+      content: [
+        { kind: 'text', text: 'Domain XNL remains' },
+        { kind: 'hard-break', nodeId: nodeId('hardbreak.introduction') },
+        { kind: 'text', text: 'authoritative.' },
+      ],
     },
     {
       kind: 'blockquote',
@@ -92,6 +100,24 @@ export const XNL_RICH_DOCUMENT_CANONICAL_FIXTURE: XnlRichDocument = deepFreeze({
       src: 'vfs://./assets/architecture.png',
       alt: 'RichDocument architecture',
       title: 'Architecture',
+    },
+    {
+      kind: 'task-list',
+      nodeId: nodeId('tasklist.release'),
+      children: [{
+        kind: 'task-item',
+        nodeId: nodeId('taskitem.release.verify'),
+        checked: true,
+        children: [{
+          kind: 'paragraph',
+          nodeId: nodeId('paragraph.task.release'),
+          content: [{ kind: 'text', text: 'Verify the canonical document' }],
+        }],
+      }],
+    },
+    {
+      kind: 'horizontal-rule',
+      nodeId: nodeId('horizontalrule.section'),
     },
     {
       kind: 'table',

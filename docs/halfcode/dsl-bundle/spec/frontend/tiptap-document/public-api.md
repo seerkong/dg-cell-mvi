@@ -11,7 +11,7 @@ subpath 导入，不使用 `src/*` deep import。
 | `dg-cell-mvi-halfcode-logic` | neutral lower/parse/normalize、canonical semantic dialect/translator/materializer、identity classification、canonical `x-id` derivation |
 | `dg-cell-mvi-halfcode-support` | logic-owned semantic values 的 package-root convenience re-export、translator binding、concrete XNL adaptation/materialization、trusted authoring host、authoring session/mutation/persistence assembly |
 | `dg-cell-mvi-halfcode-support/xnl-projection-presenter` | narrow Presenter capability/facet public surface |
-| `dg-cell-mvi-halfcode-tiptap-vue` | schema/extensions、官方 table browser authoring、JSON projection/parse、transaction normalizer、local draft、occurrence assembly、Halfcode/Mermaid NodeView host 与组合 browser host |
+| `dg-cell-mvi-halfcode-tiptap-vue` | schema/extensions、JSON projection/parse、transaction normalizer、local draft、Presentation-driven `XnlDocumentEditor`、enhanced code、occurrence assembly 与受限 NodeView hosts |
 | `dg-cell-mvi-halfcode-contract/test-fixtures/xnl-rich-document` | test-only canonical fixture；production root 不重导出 |
 
 `dg-cell-mvi-halfcode-tiptap-vue` 当前只声明 package root `"."` export。主要函数：
@@ -28,6 +28,56 @@ subpath 导入，不使用 `src/*` deep import。
   Effect、exact runtime/input/config/result public types；
 - `createXnlRichDocumentTiptapBrowserHost`，以及对应 composition
   runtime/input/config/result public types。
+- `createXnlDocumentEditor`、`XnlDocumentEditor`、restricted command/session/runtime/input/config
+  public types；
+- `adoptXnlRichDocumentTiptapEditorState`，用于接纳真实 Tiptap 已计算出的同一 next state，
+  不 replay transaction。
+
+## Reusable Editor 示例
+
+```ts
+import { h } from 'vue';
+import {
+  createDefaultDocumentEditorPresentationCompilerRuntime,
+  DEFAULT_DOCUMENT_EDITOR_PRESENTATION,
+  DEFAULT_DOCUMENT_EDITOR_PRESENTERS,
+  DEFAULT_DOCUMENT_EDITOR_TOOLS,
+} from 'dg-cell-mvi-halfcode-logic';
+import { XnlDocumentEditor } from 'dg-cell-mvi-halfcode-tiptap-vue';
+
+const runtime = {
+  authoring: { emitInteraction },
+  presentation: createDefaultDocumentEditorPresentationCompilerRuntime(),
+  clipboard: { runtime: clipboardRuntime, effect: writeClipboard },
+  highlighter: { runtime: highlightRuntime, effect: highlightCode },
+};
+const capabilities = {
+  tools: DEFAULT_DOCUMENT_EDITOR_TOOLS.map((tool) => tool.id),
+  presenters: DEFAULT_DOCUMENT_EDITOR_PRESENTERS.map((presenter) => presenter.id),
+  conditions: ['editor.editable', 'editor.table-active', 'editor.code-active'],
+  grants: ['editor.table.write'],
+};
+
+const vnode = h(XnlDocumentEditor, {
+  runtime,
+  input: {
+    document: acceptedRichDocument,
+    acceptedObservation: 'accepted:opaque-token',
+    presentation: DEFAULT_DOCUMENT_EDITOR_PRESENTATION,
+    capabilities,
+  },
+  config: {
+    planNodeId: 'xnlp:document.main',
+    staleDraftPolicy: 'conflict',
+    unknownToolPolicy: 'reject',
+  },
+});
+```
+
+`acceptedObservation` 是 opaque correlation，不是 revision。Host 在 `emitInteraction` 内读取
+live revision、完成 XNL mutation/dry-run/validate/accept/persist，再以新的 immutable input
+回投。Presenter 不能得到 raw Editor；host command 也必须作为 runtime binding 注册并被
+Presentation/capabilities/grant 编译进 toolbar plan。
 
 `createXnlRichDocumentTiptapExtensions()` 组合官方 Tiptap table extensions，因此
 table commands 和默认 `TableView` 通过真实 `Editor` 的 command/NodeView surface
@@ -41,7 +91,7 @@ composition browser host 创建。Host factories 都是 package-root value expor
 
 Public owner 与 package-root values 如下：
 
-- contract root 定义 `XnlRichDocumentSemanticNode`、八类
+- contract root 定义 `XnlRichDocumentSemanticNode`、十类
   `XnlRichDocumentSemanticEdit`、`XnlRichDocumentEditInteractionPayload`、
   `XnlRichDocumentEditCommand`、`XnlRichDocumentCandidateMaterializationResult` 与
   `XnlRichDocumentCandidateMaterializer`；

@@ -25,26 +25,40 @@ persist 与 reproject。
 
 1. [事实与模型](authority-and-model.md)：权威事实、accepted live 与 persisted
    facts、RichDocument 和 local draft 的等级。
-2. [三档用法](usage-tiers.md)：预建直用、配置组合、自定义代码 adapter/capability。
-3. [投影与 authoring 主链](projection-and-authoring.md)：无 HTML 的双向路径、
+2. [传统文档语义](traditional-semantics.md)：underline、alignment、颜色/高亮、任务列表、
+   分割线、hard break 与 enhanced code 的 durable boundary。
+3. [三档用法](usage-tiers.md)：预建直用、配置组合、自定义代码 adapter/capability。
+4. [可复用编辑器 Capsule](editor-capsule.md)：`XnlDocumentEditor`、Presentation、
+   runtime/input/config、受限 command facade 与响应式 toolbar。
+5. [投影与 authoring 主链](projection-and-authoring.md)：无 HTML 的双向路径、
    transaction 到 persist/reproject 的完整顺序和失败状态。
-4. [身份](identity.md)：`#id`、adapter-local address、`x-id`、move/copy/replacement
+6. [身份](identity.md)：`#id`、adapter-local address、`x-id`、move/copy/replacement
    和当前 multi-role 边界。
-5. [受限 NodeView](restricted-nodeview.md)：Component/Capsule capability，以及
+7. [受限 NodeView](restricted-nodeview.md)：Component/Capsule capability，以及
    runtime-bound Mermaid Effect、safe sink 与 lifecycle ownership。
-6. [公共 API](public-api.md)：workspace package entrypoints 与最小 TypeScript 示例。
-7. [当前与未来](boundaries.md)：已经验证的 headless/jsdom/package 能力和明确非目标。
+8. [公共 API](public-api.md)：workspace package entrypoints 与最小 TypeScript 示例。
+9. [当前与未来](boundaries.md)：已经验证的 headless/jsdom/package 能力和明确非目标。
 
 ## 当前结论
 
-- supported blocks/marks、table、code、Mermaid 与 Component/Capsule embed 已有
-  renderer-neutral model 和 Tiptap schema/JSON direct adapter；table 由官方 Tiptap
-  extensions/commands/`TableView` 唯一拥有 browser behavior。
+- renderer-neutral RichDocument foundation 与 canonical Tiptap adapter 已覆盖
+  paragraph/heading、传统 marks、task list、horizontal rule、hard break、table、code、
+  Mermaid 与 Component/Capsule embed。
+- `DocumentEditorPresentation -> ToolbarPlan -> XnlDocumentEditor` 已提供可复用 Vue surface；
+  toolbar plan 是 frozen serializable data，command/presenter/condition registry 与
+  authoring/clipboard/highlighter Effect 都由 runtime 绑定。
+- 一个 `XnlDocumentEditor` 实例只使用 Tiptap 计算的同一条 `EditorState` lineage；adapter
+  接纳该 state 并发布 revision-free Interaction，不维护平行 draft document。
+- 增强代码块的 line number、fold、copy feedback、theme 与 highlight decoration 属于
+  Presenter local state；durable data 仍只有 `language/text`。
+- 既有 table Presenter 仍由官方 Tiptap extensions/commands/`TableView` 唯一拥有
+  browser behavior。
 - canonical GetPut 与 accepted PutGet 已通过真实 ProseMirror transaction、既有
   authoring session、xnl-core mutation 和 revisioned persistence 集成验证。
 - contract/logic/support package roots 已提供 canonical semantic contract、dialect、
   translator、candidate materializer、translator binding 与 trusted host；生产链覆盖
-  normalizer 的 insert/delete/move/text/mark/table/code/mermaid-source 八类 edit。
+  normalizer 的 insert/delete/move/text/mark/inline/node-attributes/table/code/mermaid-source
+  十类 edit。
 - Component/Capsule NodeView 已在 jsdom 覆盖 mount/update/unmount、owner-token
   cleanup、selection/deletion 和交互事件隔离。
 - Mermaid NodeView 已在 jsdom 覆盖 runtime-first render/diagnostic Effect、exact untrusted
@@ -54,7 +68,8 @@ persist 与 reproject。
   consumer 已在同一个真实 `Editor` 验证 official table、Mermaid 与 Component/Capsule
   共存；local draft 同时提供 detached create 与真实 package-root `EditorState` binding，
   后者保留 schema/plugin lineage 并继续只发布 revision-free Interaction。
-  **Workbench 产品集成、真实产品浏览器 E2E 与 persistence/save UX 尚未完成**。
+  包内真实浏览器宽/窄容器验证已完成；**Workbench 产品集成与 persistence/save UX 仍由
+  后续产品 track 负责**。
 
 本文档不把旧 `dg-cell-mvi-admin-element-plus` HTML-first editor 视为本链路的一部分；
 它是切片外 legacy baseline，本 track 没有迁移或扩展它。

@@ -1,0 +1,25 @@
+<decision #build-reusable-halfcode-document-editor.authority {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>通用编辑器如何调用宿主 authoring 并保留强类型 runtime？</?>
+  <answer { }
+  (
+    <decision-text ?>host authoring、registry、clipboard/highlighter 均由 runtime 注入；input 只承载 accepted observation 与 serializable Presentation。</?>
+    <rationale ?>长生命周期能力不能偷渡进 input/config，adapter 也不能持有 revision authority。</?>
+  )>
+)>
+
+<decision #build-reusable-halfcode-document-editor.registry-override {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>业务 Scope 是否能覆盖工具实现？</?>
+  <answer { }
+  (
+    <decision-text ?>同 id override 只允许替换 presenter；canonical command 语义不可覆盖，新 host tool 使用新 id 与 capability grant。</?>
+    <rationale ?>视觉可扩展性不能演变为绕过 semantic authoring 的第二写入路径。</?>
+  )>
+)>

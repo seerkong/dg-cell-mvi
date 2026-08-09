@@ -26,8 +26,13 @@ function nodeChildren(node: XnlRichDocumentNode): readonly XnlRichDocumentNode[]
 
 function nodeData(node: XnlRichDocumentNode): XnlProjectionSerializableValue | undefined {
   switch (node.kind) {
-    case 'heading': return { level: node.level };
+    case 'paragraph': return node.align === undefined ? {} : { align: node.align };
+    case 'heading': return {
+      level: node.level,
+      ...(node.align === undefined ? {} : { align: node.align }),
+    };
     case 'ordered-list': return node.start === undefined ? {} : { start: node.start };
+    case 'task-item': return { checked: node.checked };
     case 'image': return {
       src: node.src,
       ...(node.alt === undefined ? {} : { alt: node.alt }),

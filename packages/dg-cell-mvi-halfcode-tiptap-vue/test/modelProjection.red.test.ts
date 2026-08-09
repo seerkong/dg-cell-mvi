@@ -24,6 +24,9 @@ const NODE_ALLOWED_TOP_LEVEL_FIELDS: Readonly<Record<string, readonly (typeof NO
   bulletList: ['attrs', 'content'],
   orderedList: ['attrs', 'content'],
   listItem: ['attrs', 'content'],
+  taskList: ['attrs', 'content'],
+  taskItem: ['attrs', 'content'],
+  horizontalRule: ['attrs'],
   image: ['attrs'],
   table: ['attrs', 'content'],
   tableRow: ['attrs', 'content'],
@@ -33,6 +36,7 @@ const NODE_ALLOWED_TOP_LEVEL_FIELDS: Readonly<Record<string, readonly (typeof NO
   mermaid: ['attrs'],
   componentEmbed: ['attrs'],
   capsuleEmbed: ['attrs'],
+  hardBreak: ['attrs'],
   text: ['marks', 'text'],
 };
 
@@ -40,8 +44,11 @@ const MARK_ALLOWED_TOP_LEVEL_FIELDS: Readonly<Record<string, readonly (typeof NO
   bold: [],
   italic: [],
   strike: [],
+  underline: [],
   code: [],
   link: ['attrs'],
+  textStyle: ['attrs'],
+  highlight: ['attrs'],
 };
 
 const INVALID_FIELD_VALUES: Readonly<Record<(typeof NODE_TOP_LEVEL_FIELDS)[number], readonly unknown[]>> = {
@@ -102,6 +109,8 @@ describe('RichDocument Tiptap model projection', () => {
       'bulletList',
       'orderedList',
       'image',
+      'taskList',
+      'horizontalRule',
       'table',
       'codeBlock',
       'mermaid',
@@ -120,6 +129,9 @@ describe('RichDocument Tiptap model projection', () => {
       { type: 'code' },
       { type: 'italic' },
       { type: 'strike' },
+      { type: 'underline' },
+      { type: 'textStyle', attrs: { color: '#1a2b3c' } },
+      { type: 'highlight' },
     ]);
 
     const parsed = parseTiptapDocument({}, { document: projected.document }, CONFIG);
@@ -150,12 +162,18 @@ describe('RichDocument Tiptap model projection', () => {
     expect(node.childCount).toBe(XNL_RICH_DOCUMENT_CANONICAL_FIXTURE.children.length);
     expect(Object.keys(schemaResult.schema.nodes)).toEqual(expect.arrayContaining([
       'doc', 'paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'listItem',
-      'image', 'table', 'tableRow', 'tableCell', 'tableHeader', 'codeBlock', 'mermaid',
+      'taskList', 'taskItem', 'horizontalRule', 'hardBreak', 'image', 'table', 'tableRow',
+      'tableCell', 'tableHeader', 'codeBlock', 'mermaid',
       'componentEmbed', 'capsuleEmbed', 'text',
     ]));
     expect(Object.keys(schemaResult.schema.marks)).toEqual(expect.arrayContaining([
-      'bold', 'italic', 'strike', 'code', 'link',
+      'bold', 'italic', 'strike', 'underline', 'code', 'link', 'textStyle', 'highlight',
     ]));
+
+    expect(schemaResult.schema.nodes.hardBreak.isInline).toBe(true);
+    expect(schemaResult.schema.nodes.hardBreak.isAtom).toBe(true);
+    expect(schemaResult.schema.nodes.taskList.spec.content).toBe('taskItem+');
+    expect(schemaResult.schema.nodes.bulletList.spec.content).toBe('listItem+');
 
     const parsedSchemaJson = parseTiptapDocument({}, { document: node.toJSON() }, CONFIG);
     expect(parsedSchemaJson).toEqual({
@@ -181,12 +199,45 @@ describe('RichDocument Tiptap model projection', () => {
 
     expect(identities).toContain('document.canonical');
     expect(identities).toContain('tablecell.capability.value');
+    expect(identities).toContain('hardbreak.introduction');
+    expect(identities).toContain('taskitem.release.verify');
+    expect(identities).toContain('horizontalrule.section');
     expect(new Set(identities).size).toBe(identities.length);
     expect(projected.identity).toEqual({
       field: 'nodeId',
       source: 'domain-#id',
       ordinaryPayloadUpdate: false,
     });
+  });
+
+  it('preserves absent alignment and rejects invalid traditional values through canonical validation', () => {
+    const projected = projectTiptapDocument(
+      {},
+      { document: XNL_RICH_DOCUMENT_CANONICAL_FIXTURE },
+      CONFIG,
+    );
+    if (projected.status !== 'projected') throw new Error('expected projected document');
+
+    const heading = findNode(projected.document, 'heading');
+    const paragraph = findNode(projected.document, 'paragraph');
+    const taskItem = findNode(projected.document, 'taskItem');
+    expect(heading?.attrs).not.toHaveProperty('textAlign');
+    expect(paragraph?.attrs).toMatchObject({ textAlign: 'start' });
+    expect(taskItem?.attrs).toMatchObject({ checked: true });
+
+    for (const mutate of [
+      (document: JSONContent) => { findNode(document, 'heading')!.attrs!.textAlign = 'left'; },
+      (document: JSONContent) => { findNode(document, 'taskItem')!.attrs!.checked = 'yes'; },
+      (document: JSONContent) => { findMark(document, 'textStyle')!.attrs!.color = 'var(--unsafe)'; },
+      (document: JSONContent) => { findMark(document, 'highlight')!.attrs = { color: 'url(x)' }; },
+    ]) {
+      const invalid = structuredClone(projected.document);
+      mutate(invalid);
+      expect(parseTiptapDocument({}, { document: invalid }, CONFIG)).toMatchObject({
+        status: 'rejected',
+        diagnostics: expect.arrayContaining([expect.objectContaining({ severity: 'error' })]),
+      });
+    }
   });
 
   it.each([

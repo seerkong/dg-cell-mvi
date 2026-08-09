@@ -1,0 +1,113 @@
+<Mission id="build-layered-programmable-document-editor" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>补齐可复用的传统 XNL 文档编辑底座，并在其上完成 Workbench 可编程文档的高级产品能力。</Goal>
+    <Description>先完善 RichDocument 语义和通用 Tiptap/Presentation 组件，再迁移 Workbench 工具栏并交付动态区块、VCS checkout、Undo/Redo 与 Agent 协作入口。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <Revision>1</Revision>
+    <CreatedAt>2026-08-09T13:38:37Z</CreatedAt>
+    <UpdatedAt>2026-08-09T18:43:10Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="input" name="halfcode-document-foundation" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="input" name="tiptap-document-presenter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+  </Ports>
+
+  <cdt:ProjectRefs>
+    <cdt:ProjectRef id="dg-cell-mvi" kind="host"/>
+    <cdt:ProjectRef id="eidolon-workbench" kind="external"/>
+  </cdt:ProjectRefs>
+
+  <cdt:ActorSets default="foundation-loop">
+    <cdt:ActorSet id="foundation-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="dg-cell-mvi"><Description>根据 RichDocument、Tiptap adapter、Presentation 和 Workbench 反馈切分或修订底层 tracks。</Description></cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="dg-cell-mvi"><Description>读取 canonical model、adapter tests、track/archive 状态和跨仓集成报告，投影底层实际态。</Description></cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="dg-cell-mvi"><Description>比较分层目标与实际 package authority，选择下一项底层动作，并阻止 Workbench 私建平行语义。</Description></cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="dg-cell-mvi"><Description>连续创建、执行、验证和归档底层 track，在动作内运行 round-trip、typecheck 与 package tests。</Description></cdt:Actor>
+    </cdt:ActorSet>
+    <cdt:ActorSet id="workbench-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="eidolon-workbench"><Description>把通用组件能力编排成可发现的 Programmable Document 产品交互，并把通用缺口反馈到底层。</Description></cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="eidolon-workbench"><Description>观察 Workbench 产品代码、现有 Agent/VFS/VCS/NodeView 能力、E2E 和窄视口实际态。</Description></cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="eidolon-workbench"><Description>判断产品能力可由通用组件组合还是需要底层 corrective track，并核对单向 mutation authority。</Description></cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="eidolon-workbench"><Description>执行 Workbench 集成 track、真实浏览器验证和产品修正，不复制底层 model、compiler 或 writer。</Description></cdt:Actor>
+    </cdt:ActorSet>
+  </cdt:ActorSets>
+
+  <TaskSpace id="space_build-layered-programmable-document-editor" name="build-layered-programmable-document-editor" version="1" cdt:child-mode="dag">
+    <Description>传统文档底座先行、可编程产品后置的跨仓 Mission DAG。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="基线与分层设计" status="DONE" order="0">
+        <Description>盘点现有 canonical 语义、旧 Tiptap 素材、Presentation 基座和 Workbench 产品缺口。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="记录能力与 authority 基线" status="DONE" order="0"/>
+          <Task id="G1-T2" name="冻结传统语义和 Presentation 分层" status="DONE" order="1"/>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G2" name="完善传统 RichDocument 语义" status="DONE" order="1">
+        <Description>在 renderer-neutral foundation 中补齐传统在线文档语义、mutation 和校验。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="创建并执行传统文档语义 track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="complete-rich-document-traditional-semantics" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G3" name="构建通用文档编辑组件" status="DONE" order="2">
+        <Description>实现 Tiptap canonical extensions、通用编辑组件、ToolbarPlan、tool registry 与响应式产品基座。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="创建并执行通用文档编辑组件 track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="build-reusable-halfcode-document-editor" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G4" name="迁移 Workbench 文档产品" status="DONE" order="3" cdt:actor-set="workbench-loop">
+        <Description>以通用组件和 Presentation 替换硬编码工具栏，并交付常规文档体验、显式 Undo/Redo 与响应式 overflow。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 Workbench 分层编辑器集成 track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="adopt-layered-document-editor-in-workbench" project-ref="eidolon-workbench"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G5" name="交付高级可编程工作台" status="DONE" order="4" cdt:actor-set="workbench-loop">
+        <Description>增加 Component/Capsule 插入、VCS checkout 和 Agent proposal/review 产品入口。</Description>
+        <SubNodes>
+          <Task id="G5-T1" name="创建并执行可编程工作台工具 track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="add-programmable-document-workspace-tools" project-ref="eidolon-workbench"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="VERIFY" name="跨仓验证与反馈收敛" status="DONE" order="5" cdt:actor-set="workbench-loop">
+        <Description>验证常规文档复用、全部传统语义、高级产品能力、刷新恢复和 authority residue。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="运行 package、typecheck、build、browser E2E 与 chaos" status="DONE" order="0"/>
+          <Task id="VERIFY-T2" name="对照成功判据并完成跨仓 gap 检查" status="DONE" order="1"/>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Dag for="space_build-layered-programmable-document-editor">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G3"/></Node>
+      <Node id="G5"><After ref="G4"/></Node>
+      <Node id="VERIFY"><After ref="G5"/></Node>
+    </Dag>
+  </Schedule>
+
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-tracks="10" on-limit="checkpoint" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

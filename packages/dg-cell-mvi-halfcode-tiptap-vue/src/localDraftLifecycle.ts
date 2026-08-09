@@ -17,6 +17,7 @@ import {
   XNL_RICH_DOCUMENT_TIPTAP_EXTENSION_IDS,
   XNL_RICH_DOCUMENT_TIPTAP_SCHEMA_ID,
   type XnlRichDocumentTiptapAcceptedProjectionInput,
+  type XnlRichDocumentTiptapDraftAdoptInput,
   type XnlRichDocumentTiptapDiagnostic,
   type XnlRichDocumentTiptapDraftConfig,
   type XnlRichDocumentTiptapDraftCreateInput,
@@ -193,6 +194,115 @@ export function applyXnlRichDocumentTiptapDraftTransaction(
   }
 }
 
+/**
+ * Adopts the exact EditorState already computed by the canonical Tiptap Editor.
+ * This is the browser bridge: it preserves one EditorState lineage while the
+ * draft lifecycle still owns normalization, publication and acceptance state.
+ */
+export function adoptXnlRichDocumentTiptapEditorState(
+  runtime: XnlRichDocumentTiptapDraftRuntime,
+  input: XnlRichDocumentTiptapDraftAdoptInput,
+  config: XnlRichDocumentTiptapDraftConfig,
+): XnlRichDocumentTiptapDraftResult {
+  let state: InternalDraftState | undefined;
+  try {
+    const diagnostics = [
+      ...validateRuntime(runtime),
+      ...validateExactRecord(
+        input,
+        new Set(['state', 'transaction', 'editorState', 'composition']),
+        'Draft adopt input',
+      ),
+      ...validateDraftConfig(config, DRAFT_CONFIG_KEYS),
+    ];
+    state = trustedState(ownData(input, 'state'));
+    if (state === undefined) {
+      diagnostics.push(diagnostic(
+        'INVALID_TIPTAP_DRAFT',
+        'Draft state is not owned by this adapter lifecycle.',
+      ));
+    }
+    const editorState = inspectCanonicalEditorState(
+      ownData(input, 'editorState'),
+      diagnostics,
+      { allowProvisionalIdentity: true },
+    );
+    const transaction = ownData(input, 'transaction') as Transaction;
+    const composition = ownData(input, 'composition');
+    if (composition !== undefined && composition !== 'intermediate') {
+      diagnostics.push(diagnostic(
+        'INVALID_TIPTAP_DRAFT',
+        'Draft adopt composition must be intermediate when present.',
+      ));
+    }
+    if (state !== undefined && transaction?.before?.eq(state.editorState.doc) !== true) {
+      diagnostics.push(diagnostic(
+        'INVALID_TIPTAP_DRAFT',
+        'Adopted transaction must begin at the current EditorState.',
+      ));
+    }
+    if (state !== undefined && editorState !== undefined
+      && editorState.schema !== state.editorState.schema) {
+      diagnostics.push(diagnostic(
+        'INVALID_TIPTAP_DRAFT',
+        'Adopted EditorState must retain the current canonical schema instance.',
+      ));
+    }
+    if (diagnostics.length > 0 || state === undefined || editorState === undefined) {
+      return rejected(state, diagnostics);
+    }
+    if (state.compositionActive && composition !== 'intermediate') {
+      return rejected(state, [diagnostic(
+        'INVALID_TIPTAP_DRAFT',
+        'An active composition must be settled explicitly before another transaction is published.',
+      )]);
+    }
+
+    const normalized = normalizeTiptapTransaction(
+      {},
+      composition === 'intermediate' ? { transaction, composition } : { transaction },
+      config,
+    );
+    if (normalized.status === 'rejected') return rejected(state, [...normalized.diagnostics]);
+
+    const next = makeState({
+      editorState,
+      acceptedDocument: state.acceptedDocument,
+      ...(state.acceptedObservation !== undefined
+        ? { acceptedObservation: state.acceptedObservation }
+        : {}),
+      pendingAcceptance: state.pendingAcceptance,
+      compositionActive: composition === 'intermediate',
+      ...(composition === 'intermediate'
+        ? { compositionBaseline: state.compositionBaseline ?? transaction.before }
+        : {}),
+    });
+    if (composition === 'intermediate') {
+      return result(next, {
+        status: 'composition-buffered',
+        published: false,
+        localDraft: hasLocalDraft(next),
+        pendingAcceptance: next.pendingAcceptance,
+      });
+    }
+    if (normalized.status === 'silent') {
+      return result(next, {
+        status: 'applied',
+        publication: 'silent',
+        reason: normalized.reason,
+        localDraft: hasLocalDraft(next),
+        pendingAcceptance: next.pendingAcceptance,
+      });
+    }
+    return publishApplied(runtime, next, normalized.intent, 'applied');
+  } catch {
+    return rejected(state, [diagnostic(
+      'INVALID_TIPTAP_DRAFT',
+      'EditorState adoption boundary could not be inspected safely.',
+    )]);
+  }
+}
+
 export function settleXnlRichDocumentTiptapComposition(
   runtime: XnlRichDocumentTiptapDraftRuntime,
   input: XnlRichDocumentTiptapDraftStateInput,
@@ -300,11 +410,26 @@ export function reprojectXnlRichDocumentTiptapAccepted(
     );
     if (document === undefined) return rejected(state, diagnostics);
 
-    const matchesDraft = document.eq(state.editorState.doc);
+    const exactDraftMatch = document.eq(state.editorState.doc);
+    const allocatedIdentityMatch = !exactDraftMatch
+      && matchesProvisionalIdentityCandidate(document, state.editorState.doc);
+    const matchesDraft = exactDraftMatch || allocatedIdentityMatch;
     const staleDraft = hasLocalDraft(state);
     if (matchesDraft) {
+      const acceptedEditorState = allocatedIdentityMatch
+        ? EditorState.create({
+            schema: document.type.schema,
+            doc: document,
+            selection: restoreSelection(
+              state.editorState.selection,
+              state.editorState.doc,
+              document,
+            ).selection,
+            plugins: state.editorState.plugins,
+          })
+        : state.editorState;
       const acknowledged = makeState({
-        editorState: state.editorState,
+        editorState: acceptedEditorState,
         acceptedDocument: document,
         ...(typeof observation === 'string' ? { acceptedObservation: observation } : {}),
         pendingAcceptance: false,
@@ -354,6 +479,81 @@ export function reprojectXnlRichDocumentTiptapAccepted(
   } catch {
     return rejected(state, [diagnostic('INVALID_TIPTAP_DRAFT', 'Accepted reproject boundary could not be inspected safely.')]);
   }
+}
+
+function matchesProvisionalIdentityCandidate(
+  accepted: ProseMirrorNode,
+  candidate: ProseMirrorNode,
+): boolean {
+  const identityCounts = collectCandidateIdentityCounts(candidate);
+  return matchesCandidateNode(accepted, candidate, identityCounts);
+}
+
+function matchesCandidateNode(
+  accepted: ProseMirrorNode,
+  candidate: ProseMirrorNode,
+  identityCounts: ReadonlyMap<string, number>,
+): boolean {
+  if (accepted.type !== candidate.type
+    || accepted.text !== candidate.text
+    || !ProseMirrorMark.sameSet(accepted.marks, candidate.marks)
+    || accepted.childCount !== candidate.childCount
+    || !matchesCandidateAttributes(accepted.attrs, candidate.attrs, identityCounts)) {
+    return false;
+  }
+  for (let index = 0; index < accepted.childCount; index += 1) {
+    if (!matchesCandidateNode(accepted.child(index), candidate.child(index), identityCounts)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function collectCandidateIdentityCounts(document: ProseMirrorNode): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  document.descendants((node) => {
+    const nodeId = node.attrs.nodeId;
+    if (typeof nodeId === 'string' && nodeId.length > 0) {
+      counts.set(nodeId, (counts.get(nodeId) ?? 0) + 1);
+    }
+  });
+  return counts;
+}
+
+function matchesCandidateAttributes(
+  accepted: Readonly<Record<string, unknown>>,
+  candidate: Readonly<Record<string, unknown>>,
+  identityCounts: ReadonlyMap<string, number>,
+): boolean {
+  const keys = Object.keys(accepted);
+  if (keys.length !== Object.keys(candidate).length) return false;
+  return keys.every((key) => {
+    const acceptedValue = accepted[key];
+    const candidateValue = candidate[key];
+    if (key === 'nodeId' && (candidateValue === null || candidateValue === undefined)) {
+      return typeof acceptedValue === 'string' && acceptedValue.length > 0;
+    }
+    if (key === 'nodeId'
+      && typeof candidateValue === 'string'
+      && identityCounts.get(candidateValue)! > 1) {
+      return typeof acceptedValue === 'string' && acceptedValue.length > 0;
+    }
+    return equalDraftValue(acceptedValue, candidateValue);
+  });
+}
+
+function equalDraftValue(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return left.length === right.length
+      && left.every((entry, index) => equalDraftValue(entry, right[index]));
+  }
+  if (isDataRecord(left) && isDataRecord(right)) {
+    const keys = Object.keys(left);
+    return keys.length === Object.keys(right).length
+      && keys.every((key) => equalDraftValue(left[key], right[key]));
+  }
+  return false;
 }
 
 function applyHistory(
@@ -561,6 +761,7 @@ function trustedNodeId(node: ProseMirrorNode): string | undefined {
 function inspectCanonicalEditorState(
   value: unknown,
   diagnostics: XnlRichDocumentTiptapDiagnostic[],
+  options: Readonly<{ allowProvisionalIdentity?: boolean }> = {},
 ): EditorState | undefined {
   if (!(value instanceof EditorState) || Object.getPrototypeOf(value) !== EditorState.prototype) {
     diagnostics.push(diagnostic('INVALID_TIPTAP_DRAFT', 'Binding input must contain a concrete ProseMirror EditorState.'));
@@ -634,12 +835,14 @@ function inspectCanonicalEditorState(
     return undefined;
   }
 
-  const parsed = parseXnlRichDocumentTiptapSemantics(
-    { document: ProseMirrorNode.prototype.toJSON.call(document) as JSONContent },
-  );
-  if (parsed.status !== 'parsed') {
-    diagnostics.push(diagnostic('INVALID_TIPTAP_DRAFT', 'EditorState document does not satisfy canonical RichDocument semantics.'));
-    return undefined;
+  if (options.allowProvisionalIdentity !== true) {
+    const parsed = parseXnlRichDocumentTiptapSemantics(
+      { document: ProseMirrorNode.prototype.toJSON.call(document) as JSONContent },
+    );
+    if (parsed.status !== 'parsed') {
+      diagnostics.push(diagnostic('INVALID_TIPTAP_DRAFT', 'EditorState document does not satisfy canonical RichDocument semantics.'));
+      return undefined;
+    }
   }
   return value;
 }

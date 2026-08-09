@@ -38,6 +38,9 @@ describe('XNL RichDocument public contract', () => {
       'bullet-list',
       'ordered-list',
       'list-item',
+      'task-list',
+      'task-item',
+      'horizontal-rule',
       'image',
       'table',
       'table-row',
@@ -47,14 +50,18 @@ describe('XNL RichDocument public contract', () => {
       'mermaid',
       'component-embed',
       'capsule-embed',
+      'hard-break',
       'text',
     ]);
     expect(XNL_RICH_DOCUMENT_MARK_KINDS).toEqual([
       'bold',
       'italic',
       'strike',
+      'underline',
       'code',
       'link',
+      'text-color',
+      'highlight',
     ]);
     expect(JSON.parse(JSON.stringify(documentFixture))).toEqual(documentFixture);
   });

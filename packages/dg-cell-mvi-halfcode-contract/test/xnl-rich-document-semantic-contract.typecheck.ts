@@ -37,12 +37,14 @@ type SemanticText = Extract<XnlRichDocumentSemanticNode, { kind: 'text' }>;
 type LocalSemanticNode = Extract<XnlRichDocumentSemanticNode, { localNodeId: string }>;
 type StableSemanticNode = Extract<XnlRichDocumentSemanticNode, { nodeId: XnlRichDocumentDomainNodeId }>;
 
-type AllEightEditKindsAreClosed = Expect<Equal<EditKinds,
+type AllTenEditKindsAreClosed = Expect<Equal<EditKinds,
   | 'insert'
   | 'delete'
   | 'move'
   | 'text'
   | 'mark'
+  | 'inline'
+  | 'node-attributes'
   | 'table'
   | 'code'
   | 'mermaid-source'>>;
@@ -65,7 +67,7 @@ type SemanticNodeHasNoAdapterType = Expect<Equal<HasKey<XnlRichDocumentSemanticN
 type SemanticNodeHasNoAdapterAttrs = Expect<Equal<HasKey<XnlRichDocumentSemanticNode, 'attrs'>, false>>;
 type ParagraphUsesCanonicalContent = Expect<Equal<
   SemanticParagraph['content'],
-  readonly SemanticText[]
+  readonly Extract<XnlRichDocumentSemanticNode, { kind: 'text' | 'hard-break' }>[]
 >>;
 type TableCellUsesCanonicalPayload = Expect<Equal<
   Pick<SemanticTableCell, 'colspan' | 'rowspan' | 'children'>,
@@ -187,7 +189,7 @@ void [
 ];
 
 type ContractAssertions = [
-  AllEightEditKindsAreClosed,
+  AllTenEditKindsAreClosed,
   SemanticNodeKindsAreCanonical,
   SemanticNodeIsSerializable,
   SemanticEditIsSerializable,

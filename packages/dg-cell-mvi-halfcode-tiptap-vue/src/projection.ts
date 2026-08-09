@@ -5,11 +5,12 @@ import {
   type XnlRichDocumentBlockNode,
   type XnlRichDocumentDiagnostic,
   type XnlRichDocumentGenericInputRecord,
+  type XnlRichDocumentInlineNode,
   type XnlRichDocumentMark,
   type XnlRichDocumentSerializableRecord,
   type XnlRichDocumentSerializableValue,
   type XnlRichDocumentTableCellNode,
-  type XnlRichDocumentText,
+  type XnlRichDocumentTextAlignment,
 } from 'dg-cell-mvi-halfcode-contract';
 import { parseXnlRichDocumentCandidate } from 'dg-cell-mvi-halfcode-logic';
 import { createXnlRichDocumentTiptapSchema } from './registry';
@@ -34,6 +35,8 @@ const BLOCK_TIPTAP_TYPES = new Set([
   'blockquote',
   'bulletList',
   'orderedList',
+  'taskList',
+  'horizontalRule',
   'image',
   'table',
   'codeBlock',
@@ -44,7 +47,14 @@ const BLOCK_TIPTAP_TYPES = new Set([
 
 const TIPTAP_NODE_FIELDS = ['type', 'attrs', 'content', 'marks', 'text'] as const;
 type TiptapNodeField = (typeof TIPTAP_NODE_FIELDS)[number];
-type TiptapContentRole = 'block' | 'list-item' | 'table-row' | 'table-cell' | 'text' | 'code-text';
+type TiptapContentRole =
+  | 'block'
+  | 'inline'
+  | 'list-item'
+  | 'task-item'
+  | 'table-row'
+  | 'table-cell'
+  | 'code-text';
 
 type TiptapNodeShape = Readonly<{
   fields: readonly TiptapNodeField[];
@@ -54,8 +64,16 @@ type TiptapNodeShape = Readonly<{
 
 const TIPTAP_NODE_SHAPES: Readonly<Record<string, TiptapNodeShape>> = {
   doc: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'block' },
-  paragraph: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'text' },
-  heading: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId', 'level'], contentRole: 'text' },
+  paragraph: {
+    fields: ['type', 'attrs', 'content'],
+    attrs: ['nodeId', 'textAlign'],
+    contentRole: 'inline',
+  },
+  heading: {
+    fields: ['type', 'attrs', 'content'],
+    attrs: ['nodeId', 'level', 'textAlign'],
+    contentRole: 'inline',
+  },
   blockquote: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'block' },
   bulletList: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'list-item' },
   orderedList: {
@@ -64,6 +82,13 @@ const TIPTAP_NODE_SHAPES: Readonly<Record<string, TiptapNodeShape>> = {
     contentRole: 'list-item',
   },
   listItem: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'block' },
+  taskList: { fields: ['type', 'attrs', 'content'], attrs: ['nodeId'], contentRole: 'task-item' },
+  taskItem: {
+    fields: ['type', 'attrs', 'content'],
+    attrs: ['nodeId', 'checked'],
+    contentRole: 'block',
+  },
+  horizontalRule: { fields: ['type', 'attrs'], attrs: ['nodeId'] },
   image: {
     fields: ['type', 'attrs'],
     attrs: ['nodeId', 'src', 'alt', 'title', 'width', 'height'],
@@ -94,6 +119,7 @@ const TIPTAP_NODE_SHAPES: Readonly<Record<string, TiptapNodeShape>> = {
     fields: ['type', 'attrs'],
     attrs: ['nodeId', 'ref', 'version', 'input'],
   },
+  hardBreak: { fields: ['type', 'attrs'], attrs: ['nodeId'] },
   text: { fields: ['type', 'marks', 'text'], attrs: [] },
 };
 
@@ -101,11 +127,14 @@ const TIPTAP_MARK_SHAPES: Readonly<Record<string, TiptapNodeShape>> = {
   bold: { fields: ['type'], attrs: [] },
   italic: { fields: ['type'], attrs: [] },
   strike: { fields: ['type'], attrs: [] },
+  underline: { fields: ['type'], attrs: [] },
   code: { fields: ['type'], attrs: [] },
   link: {
     fields: ['type', 'attrs'],
     attrs: ['href', 'title', 'target', 'rel', 'class'],
   },
+  textStyle: { fields: ['type', 'attrs'], attrs: ['color'] },
+  highlight: { fields: ['type', 'attrs'], attrs: ['color'] },
 };
 
 const TIPTAP_MARK_ORDER = new Map([
@@ -114,6 +143,9 @@ const TIPTAP_MARK_ORDER = new Map([
   ['code', 2],
   ['italic', 3],
   ['strike', 4],
+  ['underline', 5],
+  ['textStyle', 6],
+  ['highlight', 7],
 ]);
 
 const IDENTITY = {
@@ -256,13 +288,33 @@ function projectBlock(
   const attrs = { nodeId: node.nodeId };
   switch (node.kind) {
     case 'paragraph':
-      return { type: 'paragraph', attrs, content: projectTextContent(node.content, path, context) };
+      return {
+        type: 'paragraph',
+        attrs: compact({ ...attrs, textAlign: node.align }),
+        content: projectInlineContent(node.content, path, context),
+      };
     case 'heading':
       return {
         type: 'heading',
-        attrs: { ...attrs, level: node.level },
-        content: projectTextContent(node.content, path, context),
+        attrs: compact({ ...attrs, level: node.level, textAlign: node.align }),
+        content: projectInlineContent(node.content, path, context),
       };
+    case 'task-list':
+      return {
+        type: 'taskList',
+        attrs,
+        content: node.children.map((item, itemIndex) => ({
+          type: 'taskItem',
+          attrs: { nodeId: item.nodeId, checked: item.checked },
+          content: item.children.map((child, childIndex) => projectBlock(
+            child,
+            [...path, 'children', itemIndex, 'children', childIndex],
+            context,
+          )),
+        })),
+      };
+    case 'horizontal-rule':
+      return { type: 'horizontalRule', attrs };
     case 'blockquote':
       return {
         type: 'blockquote',
@@ -360,13 +412,16 @@ function projectCell(
   };
 }
 
-function projectTextContent(
-  content: readonly XnlRichDocumentText[],
+function projectInlineContent(
+  content: readonly XnlRichDocumentInlineNode[],
   path: Path,
   context: ParseContext,
 ): JSONContent[] {
-  return content.map((text, index) => {
-    if (text.text.length === 0) {
+  return content.map((inline, index) => {
+    if (inline.kind === 'hard-break') {
+      return { type: 'hardBreak', attrs: { nodeId: inline.nodeId } };
+    }
+    if (inline.text.length === 0) {
       context.diagnostics.push(diagnostic(
         'LOSSY_TIPTAP_VALUE',
         'Tiptap cannot preserve an empty text node as a distinct node.',
@@ -375,11 +430,11 @@ function projectTextContent(
     }
     return {
       type: 'text',
-      text: text.text,
-      ...(text.marks === undefined
+      text: inline.text,
+      ...(inline.marks === undefined
         ? {}
         : {
-            marks: text.marks
+            marks: inline.marks
               .map(projectMark)
               .sort((left, right) => (
                 (TIPTAP_MARK_ORDER.get(left.type) ?? Number.MAX_SAFE_INTEGER)
@@ -391,12 +446,21 @@ function projectTextContent(
 }
 
 function projectMark(mark: XnlRichDocumentMark): NonNullable<JSONContent['marks']>[number] {
-  return mark.kind === 'link'
-    ? {
+  switch (mark.kind) {
+    case 'link':
+      return {
         type: 'link',
         attrs: compact({ href: mark.href, title: mark.title }),
-      }
-    : { type: mark.kind };
+      };
+    case 'text-color':
+      return { type: 'textStyle', attrs: { color: mark.color } };
+    case 'highlight':
+      return mark.color === undefined
+        ? { type: 'highlight' }
+        : { type: 'highlight', attrs: { color: mark.color } };
+    default:
+      return { type: mark.kind };
+  }
 }
 
 function parseDocument(
@@ -445,12 +509,18 @@ function parseBlock(
   switch (node.type) {
     case 'paragraph':
     case 'heading': {
-      const allowed = node.type === 'heading' ? ['nodeId', 'level'] : ['nodeId'];
+      const allowed = node.type === 'heading'
+        ? ['nodeId', 'level', 'textAlign']
+        : ['nodeId', 'textAlign'];
       const attrs = readAttrs(node.attrs, allowed, [...path, 'attrs'], context);
       const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
-      const content = parseTextContent(node.content, [...path, 'content'], context);
+      const content = parseInlineContent(node.content, [...path, 'content'], context);
+      const align = optionalField(
+        'align',
+        attrs.textAlign === null ? undefined : attrs.textAlign as XnlRichDocumentTextAlignment,
+      );
       if (nodeId === undefined) return undefined;
-      if (node.type === 'paragraph') return { kind: 'paragraph', nodeId, content };
+      if (node.type === 'paragraph') return { kind: 'paragraph', nodeId, ...align, content };
       const level = attrs.level;
       if (!Number.isInteger(level) || typeof level !== 'number' || level < 1 || level > 6) {
         context.diagnostics.push(diagnostic(
@@ -460,7 +530,13 @@ function parseBlock(
         ));
         return undefined;
       }
-      return { kind: 'heading', nodeId, level: level as 1 | 2 | 3 | 4 | 5 | 6, content };
+      return {
+        kind: 'heading',
+        nodeId,
+        level: level as 1 | 2 | 3 | 4 | 5 | 6,
+        ...align,
+        content,
+      };
     }
     case 'blockquote': {
       const attrs = readAttrs(node.attrs, ['nodeId'], [...path, 'attrs'], context);
@@ -489,6 +565,19 @@ function parseBlock(
         return undefined;
       }
       return { kind: 'ordered-list', nodeId, ...(start === undefined ? {} : { start }), children };
+    }
+    case 'taskList': {
+      const attrs = readAttrs(node.attrs, ['nodeId'], [...path, 'attrs'], context);
+      const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
+      const children = readContent(node.content, [...path, 'content'], context).map((child, index) => (
+        parseTaskItem(child, [...path, 'content', index], context)
+      )).filter((child): child is NonNullable<typeof child> => child !== undefined);
+      return nodeId === undefined ? undefined : { kind: 'task-list', nodeId, children };
+    }
+    case 'horizontalRule': {
+      const attrs = readAttrs(node.attrs, ['nodeId'], [...path, 'attrs'], context);
+      const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
+      return nodeId === undefined ? undefined : { kind: 'horizontal-rule', nodeId };
     }
     case 'image': {
       const attrs = readAttrs(
@@ -589,6 +678,32 @@ function parseListItem(
   const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
   const children = parseBlockContent(node.content, [...path, 'content'], context);
   return nodeId === undefined ? undefined : { kind: 'list-item' as const, nodeId, children };
+}
+
+function parseTaskItem(
+  value: XnlRichDocumentSerializableValue,
+  path: Path,
+  context: ParseContext,
+) {
+  const node = readNode(value, path, context);
+  if (node === undefined) return undefined;
+  if (node.type !== 'taskItem') {
+    context.diagnostics.push(diagnostic(
+      'UNSUPPORTED_TIPTAP_NODE',
+      `Task-list content must use taskItem, received "${node.type}".`,
+      [...path, 'type'],
+    ));
+    return undefined;
+  }
+  const attrs = readAttrs(node.attrs, ['nodeId', 'checked'], [...path, 'attrs'], context);
+  const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
+  const children = parseBlockContent(node.content, [...path, 'content'], context);
+  return nodeId === undefined ? undefined : {
+    kind: 'task-item' as const,
+    nodeId,
+    checked: attrs.checked as boolean,
+    children,
+  };
 }
 
 function parseTableRow(
@@ -718,29 +833,34 @@ function parseBlockContent(
   )).filter((child): child is XnlRichDocumentBlockNode => child !== undefined);
 }
 
-function parseTextContent(
+function parseInlineContent(
   value: XnlRichDocumentSerializableValue | undefined,
   path: Path,
   context: ParseContext,
-): XnlRichDocumentText[] {
-  return readContent(value, path, context).map((child, index) => parseText(
+): XnlRichDocumentInlineNode[] {
+  return readContent(value, path, context).map((child, index) => parseInline(
     child,
     [...path, index],
     context,
-  )).filter((child): child is XnlRichDocumentText => child !== undefined);
+  )).filter((child): child is XnlRichDocumentInlineNode => child !== undefined);
 }
 
-function parseText(
+function parseInline(
   value: XnlRichDocumentSerializableValue,
   path: Path,
   context: ParseContext,
-): XnlRichDocumentText | undefined {
+): XnlRichDocumentInlineNode | undefined {
   const node = readNode(value, path, context);
   if (node === undefined) return undefined;
+  if (node.type === 'hardBreak') {
+    const attrs = readAttrs(node.attrs, ['nodeId'], [...path, 'attrs'], context);
+    const nodeId = readNodeId(attrs, [...path, 'attrs', 'nodeId'], context);
+    return nodeId === undefined ? undefined : { kind: 'hard-break', nodeId };
+  }
   if (node.type !== 'text') {
     context.diagnostics.push(diagnostic(
       'UNSUPPORTED_TIPTAP_NODE',
-      `Inline content must use text, received "${node.type}".`,
+      `Inline content must use text or hardBreak, received "${node.type}".`,
       [...path, 'type'],
     ));
     return undefined;
@@ -770,9 +890,22 @@ function parseMark(
 ): XnlRichDocumentMark | undefined {
   const mark = readNode(value, path, context);
   if (mark === undefined) return undefined;
-  if (mark.type === 'bold' || mark.type === 'italic' || mark.type === 'strike' || mark.type === 'code') {
+  if (mark.type === 'bold'
+    || mark.type === 'italic'
+    || mark.type === 'strike'
+    || mark.type === 'underline'
+    || mark.type === 'code') {
     if (mark.attrs !== undefined) readAttrs(mark.attrs, [], [...path, 'attrs'], context);
     return { kind: mark.type };
+  }
+  if (mark.type === 'textStyle' || mark.type === 'highlight') {
+    const attrs = readAttrs(mark.attrs, ['color'], [...path, 'attrs'], context);
+    if (mark.type === 'textStyle') {
+      return { kind: 'text-color', color: attrs.color as string };
+    }
+    return attrs.color === undefined || attrs.color === null
+      ? { kind: 'highlight' }
+      : { kind: 'highlight', color: attrs.color as string };
   }
   if (mark.type !== 'link') {
     context.diagnostics.push(diagnostic(
@@ -914,6 +1047,8 @@ function validateTiptapContentShape(
     }
     const expected = role === 'list-item'
       ? 'listItem'
+      : role === 'task-item'
+        ? 'taskItem'
       : role === 'table-row'
         ? 'tableRow'
         : undefined;
@@ -925,7 +1060,15 @@ function validateTiptapContentShape(
       validateTiptapNodeShape(child, childPath, undefined, context);
       return;
     }
-    validateTiptapNodeShape(child, childPath, role === 'text' ? 'text' : undefined, context);
+    if (role === 'inline' && child.type !== 'text' && child.type !== 'hardBreak') {
+      context.diagnostics.push(diagnostic(
+        'UNSUPPORTED_TIPTAP_NODE',
+        `Inline content must use text or hardBreak, received "${child.type}".`,
+        [...childPath, 'type'],
+      ));
+      return;
+    }
+    validateTiptapNodeShape(child, childPath, undefined, context);
   });
 }
 

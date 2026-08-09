@@ -11,6 +11,8 @@ import type {
   XnlRichDocumentComponentEmbed,
   XnlRichDocumentEmbedRef,
   XnlRichDocumentHeading,
+  XnlRichDocumentHardBreak,
+  XnlRichDocumentHorizontalRule,
   XnlRichDocumentImage,
   XnlRichDocumentListItem,
   XnlRichDocumentMark,
@@ -21,7 +23,10 @@ import type {
   XnlRichDocumentTableCell,
   XnlRichDocumentTableHeader,
   XnlRichDocumentTableRow,
+  XnlRichDocumentTaskItem,
+  XnlRichDocumentTaskList,
   XnlRichDocumentText,
+  XnlRichDocumentTextAlignment,
 } from './model';
 import type { XnlRichDocumentProcessor } from './runtime';
 import type { XnlRichDocumentSerializableRecord } from './serializable';
@@ -36,6 +41,8 @@ export const XNL_RICH_DOCUMENT_SEMANTIC_EDIT_KINDS = Object.freeze([
   'move',
   'text',
   'mark',
+  'inline',
+  'node-attributes',
   'table',
   'code',
   'mermaid-source',
@@ -85,12 +92,29 @@ type XnlRichDocumentSemanticPersistentNode<TPayload> =
 
 export type XnlRichDocumentSemanticText = XnlRichDocumentText;
 
+export type XnlRichDocumentSemanticHardBreak = XnlRichDocumentSemanticPersistentNode<
+  Omit<XnlRichDocumentHardBreak, 'nodeId'>
+>;
+
+export type XnlRichDocumentSemanticInlineNode =
+  | XnlRichDocumentSemanticText
+  | XnlRichDocumentSemanticHardBreak;
+
 export type XnlRichDocumentSemanticParagraph = XnlRichDocumentSemanticPersistentNode<
-  Omit<XnlRichDocumentParagraph, 'nodeId'>
+  Readonly<{
+    kind: XnlRichDocumentParagraph['kind'];
+    align?: XnlRichDocumentParagraph['align'];
+    content: readonly XnlRichDocumentSemanticInlineNode[];
+  }>
 >;
 
 export type XnlRichDocumentSemanticHeading = XnlRichDocumentSemanticPersistentNode<
-  Omit<XnlRichDocumentHeading, 'nodeId'>
+  Readonly<{
+    kind: XnlRichDocumentHeading['kind'];
+    level: XnlRichDocumentHeading['level'];
+    align?: XnlRichDocumentHeading['align'];
+    content: readonly XnlRichDocumentSemanticInlineNode[];
+  }>
 >;
 
 export type XnlRichDocumentSemanticBlockquote = XnlRichDocumentSemanticPersistentNode<Readonly<{
@@ -113,6 +137,21 @@ export type XnlRichDocumentSemanticListItem = XnlRichDocumentSemanticPersistentN
   kind: XnlRichDocumentListItem['kind'];
   children: readonly XnlRichDocumentSemanticBlockNode[];
 }>>;
+
+export type XnlRichDocumentSemanticTaskList = XnlRichDocumentSemanticPersistentNode<Readonly<{
+  kind: XnlRichDocumentTaskList['kind'];
+  children: readonly XnlRichDocumentSemanticTaskItem[];
+}>>;
+
+export type XnlRichDocumentSemanticTaskItem = XnlRichDocumentSemanticPersistentNode<Readonly<{
+  kind: XnlRichDocumentTaskItem['kind'];
+  checked: boolean;
+  children: readonly XnlRichDocumentSemanticBlockNode[];
+}>>;
+
+export type XnlRichDocumentSemanticHorizontalRule = XnlRichDocumentSemanticPersistentNode<
+  Omit<XnlRichDocumentHorizontalRule, 'nodeId'>
+>;
 
 export type XnlRichDocumentSemanticImage = XnlRichDocumentSemanticPersistentNode<
   Omit<XnlRichDocumentImage, 'nodeId'>
@@ -178,6 +217,8 @@ export type XnlRichDocumentSemanticBlockNode =
   | XnlRichDocumentSemanticBlockquote
   | XnlRichDocumentSemanticBulletList
   | XnlRichDocumentSemanticOrderedList
+  | XnlRichDocumentSemanticTaskList
+  | XnlRichDocumentSemanticHorizontalRule
   | XnlRichDocumentSemanticImage
   | XnlRichDocumentSemanticTable
   | XnlRichDocumentSemanticCodeBlock
@@ -194,9 +235,10 @@ export type XnlRichDocumentSemanticNode =
   | XnlRichDocumentSemanticDocument
   | XnlRichDocumentSemanticBlockNode
   | XnlRichDocumentSemanticListItem
+  | XnlRichDocumentSemanticTaskItem
   | XnlRichDocumentSemanticTableRow
   | XnlRichDocumentSemanticTableCellNode
-  | XnlRichDocumentSemanticText;
+  | XnlRichDocumentSemanticInlineNode;
 
 export type XnlRichDocumentLocalSemanticNode = Extract<
   XnlRichDocumentSemanticNode,
@@ -207,6 +249,16 @@ export type XnlRichDocumentInlineRun = Readonly<{
   text: string;
   marks: readonly XnlRichDocumentMark[];
 }>;
+
+export type XnlRichDocumentNodeAttributes =
+  | Readonly<{
+      kind: 'paragraph' | 'heading';
+      align?: XnlRichDocumentTextAlignment;
+    }>
+  | Readonly<{
+      kind: 'task-item';
+      checked: boolean;
+    }>;
 
 export type XnlRichDocumentSemanticEdit =
   | Readonly<{
@@ -247,6 +299,18 @@ export type XnlRichDocumentSemanticEdit =
       nodeId: XnlRichDocumentDomainNodeId;
       before: readonly XnlRichDocumentInlineRun[];
       after: readonly XnlRichDocumentInlineRun[];
+    }>
+  | Readonly<{
+      kind: 'inline';
+      nodeId: XnlRichDocumentDomainNodeId;
+      before: readonly XnlRichDocumentSemanticInlineNode[];
+      after: readonly XnlRichDocumentSemanticInlineNode[];
+    }>
+  | Readonly<{
+      kind: 'node-attributes';
+      nodeId: XnlRichDocumentDomainNodeId;
+      before: XnlRichDocumentNodeAttributes;
+      after: XnlRichDocumentNodeAttributes;
     }>
   | Readonly<{
       kind: 'table';

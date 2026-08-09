@@ -30,7 +30,7 @@
       <case id="transaction-proposal">
         <given>A Tiptap transaction changes supported document content.</given>
         <when>The adapter normalizes the transaction.</when>
-        <then>It SHALL emit only the revision-free kind=&amp;amp;amp;amp;amp;quot;interaction&amp;amp;amp;amp;amp;quot; variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then>
+        <then>It SHALL emit only the revision-free kind=&amp;amp;amp;amp;amp;amp;amp;quot;interaction&amp;amp;amp;amp;amp;amp;amp;quot; variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then>
       </case>
       <case id="trusted-host-proposal">
         <given>A trusted host receives a valid Interaction edit intent.</given>
@@ -260,6 +260,89 @@
         <given>The binding receives malformed, accessor-backed or noncanonical EditorState data.</given>
         <when>It validates the boundary.</when>
         <then>It SHALL reject before invoking emitInteraction and SHALL NOT accept Editor, DOM, raw NodeView, authoring session, revision, VFS/VCS, mutation writer or persistence authority.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="traditional-document-semantics">
+    <statement>The renderer-neutral RichDocument foundation SHALL represent underline, text alignment, text color, highlight, task list, horizontal rule and hard break as canonical serializable Domain XNL semantics; enhanced code block durability SHALL remain language plus text while syntax highlighting, folding and copying remain Presenter capabilities.</statement>
+    <suite id="canonical-model" name="Canonical traditional document model">
+      <case id="marks-and-alignment">
+        <given>A document contains underlined, colored or highlighted text and aligned paragraphs or headings.</given>
+        <when>The foundation validates, lowers, parses and normalizes it.</when>
+        <then>Every supported mark and alignment SHALL round-trip exactly with stable node identity and without HTML or style-declaration fallback.</then>
+      </case>
+      <case id="task-list-rule-break">
+        <given>A document contains checked and unchecked task items, horizontal rules and inline hard breaks.</given>
+        <when>The foundation processes and rematerializes the document.</when>
+        <then>Task structure, checked state, ordering, inline break position and persistent identities SHALL be preserved.</then>
+      </case>
+      <case id="hard-break-identity-provenance">
+        <given>A hard break is inserted or copied through an inline replacement or a copied semantic subtree.</given>
+        <when>The candidate materializer assigns temporary identities and classifies identity changes.</when>
+        <then>Every new hard break identity SHALL avoid all accepted and same-command identities, every copied hard break SHALL retain exact copy provenance, and inserted subtrees SHALL reject forged stable hard-break identities.</then>
+      </case>
+      <case id="enhanced-code-boundary">
+        <given>A code block is syntax highlighted, copied or folded by a Presenter.</given>
+        <when>The Domain document is persisted.</when>
+        <then>Only code language, text and explicitly canonical document attributes SHALL be durable; local highlight, copy and fold state SHALL NOT enter Domain XNL.</then>
+      </case>
+    </suite>
+    <suite id="semantic-authoring" name="Traditional semantic authoring">
+      <case id="atomic-command-materialization">
+        <given>A canonical semantic command inserts, deletes, moves or edits any newly supported node, mark or attribute.</given>
+        <when>The candidate materializer evaluates it against one accepted baseline.</when>
+        <then>The whole command SHALL apply atomically with exact before/after validation, or reject without partial mutation or external authority change.</then>
+      </case>
+      <case id="xnl-round-trip">
+        <given>A supported traditional document is represented as concrete XNL.</given>
+        <when>The support-owned adapter parses, materializes and serializes it.</when>
+        <then>The canonical result SHALL satisfy GetPut, preserve #id-based structure and produce readable mutations for accepted edits.</then>
+      </case>
+      <case id="invalid-values-fail-closed">
+        <given>A mark, alignment, color, checked state or node shape is malformed, accessor-backed, unsafe or unknown.</given>
+        <when>Any public boundary validates it.</when>
+        <then>The foundation SHALL return structured diagnostics and SHALL NOT silently drop, coerce through HTML or emit a partial command.</then>
+      </case>
+    </suite>
+    <suite id="package-boundary" name="Renderer-neutral ownership">
+      <case id="neutral-dependencies">
+        <given>The contract, logic and support packages are inspected.</given>
+        <when>The traditional semantics are implemented.</when>
+        <then>Contract and logic SHALL remain free of xnl-core, Tiptap, Vue, DOM and HTML; support MAY own concrete xnl-core adaptation but SHALL remain renderer-neutral.</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="reusable-layered-document-editor">
+    <statement>系统 SHALL 提供由 canonical XNL RichDocument 驱动、Presentation 可配置且不拥有领域事实的可复用文档编辑器。</statement>
+    <suite id="canonical-adapter" name="Canonical Tiptap 适配">
+      <case id="traditional-round-trip">
+        <given>accepted RichDocument 包含 alignment、underline、color/highlight、task list、horizontal rule 或 hard break</given>
+        <when>系统投影到 Tiptap 并把真实 transaction 归一化为 semantic interaction</when>
+        <then>系统 MUST 无损保留语义、identity 与 absent/explicit 差异，并拒绝 lossy 或 unsafe 值</then>
+      </case>
+    </suite>
+    <suite id="presentation" name="Presentation 编译">
+      <case id="data-only-toolbar-plan">
+        <given>业务提供只含 stable id 与 serializable options 的 DocumentEditorPresentation</given>
+        <when>系统编译 ToolbarPlan</when>
+        <then>结果 MUST deep frozen 且不包含 Vue、Tiptap、DOM、effect 或 closure；未知和重复配置产生确定性 diagnostics</then>
+      </case>
+      <case id="override-is-presentation-only">
+        <given>Scope 在同 presenter id 下提供覆盖</given>
+        <when>工具被渲染和调用</when>
+        <then>覆盖 MUST 只改变呈现，不得替换 canonical command 语义或取得 host authority</then>
+      </case>
+    </suite>
+    <suite id="editor-capsule" name="可复用编辑器 Capsule">
+      <case id="single-draft-owner">
+        <given>编辑器接收新的 accepted observation 或本地 transaction</given>
+        <when>执行 edit、composition、undo、redo、accept、replace 或 conflict</when>
+        <then>系统 MUST 复用同一 EditorState lineage 和既有 draft lifecycle，并只经 runtime authoring effect 发出 revision-free interaction</then>
+      </case>
+      <case id="responsive-toolbar">
+        <given>容器处于宽或窄视口且存在 contextual tools</given>
+        <when>工具栏布局和键盘导航</when>
+        <then>全部工具 SHALL 可达，低优先级组进入 overflow，且不得以横向滚动隐藏能力</then>
       </case>
     </suite>
   </requirement>

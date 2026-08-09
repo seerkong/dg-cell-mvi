@@ -1,0 +1,26 @@
+<decision #complete-rich-document-traditional-semantics.inline-model {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>hard break 如何进入当前只包含 text run 的 inline model？</?>
+  <answer { } (
+    <decision-text ?>将 paragraph/heading inline content 扩展为 text 或 hard-break；marks 仍只属于 text。</?>
+    <rationale ?>hard break 有结构位置但没有文本内容，把它编码成换行字符串会丢失语义并污染 text edit。</?>
+    <evidence ?>Tiptap/ProseMirror 将 hardBreak 表达为 inline atom，现有 text-only model 无法无损表示。</?>
+  )>
+)>
+
+<decision #complete-rich-document-traditional-semantics.code-boundary {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>enhanced code block 的哪些状态应持久化？</?>
+  <answer { } (
+    <decision-text ?>领域事实保持 language 和 text；syntax highlight、copy 和 fold 均属于 Presenter/local UI，除非未来有独立领域需求批准持久配置。</?>
+    <rationale ?>这些能力可由同一事实重建，写入领域会制造实现耦合和衍生反写。</?>
+    <evidence ?>旧 enhanced code block 将 lowlight 和 fold/copy 控件混在 Vue NodeView 中。</?>
+  )>
+)>
+

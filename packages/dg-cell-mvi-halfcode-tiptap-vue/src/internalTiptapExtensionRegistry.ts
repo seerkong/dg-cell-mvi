@@ -5,13 +5,20 @@ import {
   type NodeViewRenderer,
 } from '@tiptap/core';
 import Code from '@tiptap/extension-code';
+import CodeBlock from '@tiptap/extension-code-block';
+import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import Image from '@tiptap/extension-image';
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
 import {
   Table,
   TableCell,
   TableHeader,
   TableRow,
 } from '@tiptap/extension-table';
+import TextAlign from '@tiptap/extension-text-align';
+import { TextStyle } from '@tiptap/extension-text-style';
 import StarterKit from '@tiptap/starter-kit';
 
 const PERSISTENT_NODE_TYPES = [
@@ -22,8 +29,12 @@ const PERSISTENT_NODE_TYPES = [
   'bulletList',
   'orderedList',
   'listItem',
+  'taskList',
+  'taskItem',
+  'horizontalRule',
   'image',
   'codeBlock',
+  'hardBreak',
 ] as const;
 
 const PersistentNodeIdentity = Extension.create({
@@ -63,9 +74,28 @@ const Mermaid = Node.create({
 });
 
 interface XnlRichDocumentTiptapHostNodeViews {
+  readonly codeBlock?: NodeViewRenderer;
   readonly mermaid?: NodeViewRenderer;
   readonly componentEmbed?: NodeViewRenderer;
   readonly capsuleEmbed?: NodeViewRenderer;
+}
+
+function createCodeBlockNode(nodeView?: NodeViewRenderer) {
+  const base = CodeBlock.extend({
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        nodeId: { default: null },
+      };
+    },
+  });
+  return nodeView === undefined
+    ? base
+    : base.extend({
+        addNodeView() {
+          return nodeView;
+        },
+      });
 }
 
 function createMermaidNode(nodeView?: NodeViewRenderer) {
@@ -113,6 +143,9 @@ const RichDocumentListItem = Node.create({
     return ['li', HTMLAttributes, 0];
   },
 });
+const RichDocumentTaskItem = TaskItem.extend({
+  content: 'block+',
+});
 const RichDocumentTable = Table.extend({
   addAttributes() {
     return {
@@ -153,20 +186,29 @@ export function createXnlRichDocumentTiptapHostExtensions(
   return [
     StarterKit.configure({
       code: false,
+      codeBlock: false,
       dropcursor: false,
       gapcursor: false,
-      hardBreak: false,
-      horizontalRule: false,
       listItem: false,
       listKeymap: false,
       trailingNode: false,
-      underline: false,
       undoRedo: false,
     }),
     ComposableCode,
+    createCodeBlockNode(nodeViews.codeBlock),
     RichDocumentListItem,
+    TaskList,
+    RichDocumentTaskItem,
     PersistentNodeIdentity,
     LinkTitle,
+    TextAlign.configure({
+      types: ['paragraph', 'heading'],
+      alignments: ['start', 'center', 'end', 'justify'],
+      defaultAlignment: null,
+    }),
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
     Image.configure({ resize: false }),
     RichDocumentTable,
     RichDocumentTableRow,

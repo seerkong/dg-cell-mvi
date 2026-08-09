@@ -37,6 +37,8 @@ describe('XNL RichDocument canonical semantic contract', () => {
       'move',
       'text',
       'mark',
+      'inline',
+      'node-attributes',
       'table',
       'code',
       'mermaid-source',

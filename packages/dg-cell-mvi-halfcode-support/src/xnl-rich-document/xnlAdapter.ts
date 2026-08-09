@@ -36,6 +36,9 @@ const TAG_BY_KIND: Readonly<Record<XnlRichDocumentNodeKind, string>> = Object.fr
   'bullet-list': 'BulletList',
   'ordered-list': 'OrderedList',
   'list-item': 'ListItem',
+  'task-list': 'TaskList',
+  'task-item': 'TaskItem',
+  'horizontal-rule': 'HorizontalRule',
   image: 'Image',
   table: 'Table',
   'table-row': 'TableRow',
@@ -45,6 +48,7 @@ const TAG_BY_KIND: Readonly<Record<XnlRichDocumentNodeKind, string>> = Object.fr
   mermaid: 'Mermaid',
   'component-embed': 'ComponentEmbed',
   'capsule-embed': 'CapsuleEmbed',
+  'hard-break': 'HardBreak',
   text: 'Text',
 });
 
@@ -168,8 +172,10 @@ function projectionData(node: XnlNode): XnlProjectionSerializableRecord | undefi
   ) as XnlProjectionSerializableRecord;
 
   switch (kind) {
-    case 'heading': return pick('level');
+    case 'paragraph': return pick('align');
+    case 'heading': return pick('level', 'align');
     case 'ordered-list': return pick('start');
+    case 'task-item': return pick('checked');
     case 'image': return pick('src', 'alt', 'title');
     case 'table-cell':
     case 'table-header': return pick('colspan', 'rowspan');
@@ -202,14 +208,20 @@ function toXnlNode(node: XnlRichDocumentNode): XnlNode {
     case 'document':
     case 'blockquote':
     case 'bullet-list':
+    case 'task-list':
     case 'list-item':
     case 'table':
     case 'table-row':
       return element(node.kind, node.nodeId, {}, node.children.map(toXnlNode));
+    case 'task-item':
+      return element(node.kind, node.nodeId, { checked: node.checked }, node.children.map(toXnlNode));
     case 'paragraph':
-      return element(node.kind, node.nodeId, {}, node.content.map(toXnlNode));
+      return element(node.kind, node.nodeId, node.align === undefined ? {} : { align: node.align }, node.content.map(toXnlNode));
     case 'heading':
-      return element(node.kind, node.nodeId, { level: node.level }, node.content.map(toXnlNode));
+      return element(node.kind, node.nodeId, {
+        level: node.level,
+        ...(node.align === undefined ? {} : { align: node.align }),
+      }, node.content.map(toXnlNode));
     case 'ordered-list':
       return element(
         node.kind,
@@ -217,6 +229,9 @@ function toXnlNode(node: XnlRichDocumentNode): XnlNode {
         node.start === undefined ? {} : { start: node.start },
         node.children.map(toXnlNode),
       );
+    case 'horizontal-rule':
+    case 'hard-break':
+      return element(node.kind, node.nodeId, {});
     case 'image':
       return element(node.kind, node.nodeId, {
         src: node.src,

@@ -307,6 +307,10 @@ function flatten(document: XnlRichDocument): readonly LocatedNode[] {
     switch (node.kind) {
       case 'paragraph':
       case 'heading':
+        node.content.forEach((child, index) => visit(child, [...path, 'content', index]));
+        return;
+      case 'hard-break':
+      case 'horizontal-rule':
       case 'image':
       case 'code-block':
       case 'mermaid':
@@ -327,9 +331,17 @@ function semanticFingerprint(node: LocatedNode['node']): string {
     case 'document':
     case 'blockquote':
     case 'bullet-list':
+    case 'task-list':
     case 'list-item':
     case 'table':
     case 'table-row':
+      value = { kind: node.kind };
+      break;
+    case 'task-item':
+      value = { kind: node.kind, checked: node.checked };
+      break;
+    case 'horizontal-rule':
+    case 'hard-break':
       value = { kind: node.kind };
       break;
     case 'ordered-list':
@@ -348,6 +360,7 @@ function semanticFingerprint(node: LocatedNode['node']): string {
       value = {
         kind: node.kind,
         ...('level' in node ? { level: node.level } : {}),
+        ...(node.align === undefined ? {} : { align: node.align }),
         content: node.content,
       };
       break;

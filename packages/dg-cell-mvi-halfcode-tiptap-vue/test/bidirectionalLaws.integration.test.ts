@@ -440,7 +440,7 @@ describe('T4.1 bidirectional document laws', () => {
     const first = reprojected.children[0];
     expect(first?.kind).toBe('paragraph');
     if (first?.kind !== 'paragraph') throw new Error('Expected the edited paragraph.');
-    expect(first.content[0]?.text).toBe('Alpha!');
+    expect(first.content[0]).toMatchObject({ kind: 'text', text: 'Alpha!' });
   });
 
   it('keeps command, stale, rejected and lossy failures before acceptance from advancing either truth', async () => {

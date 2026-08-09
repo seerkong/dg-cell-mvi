@@ -186,7 +186,9 @@ describe('RichDocument structural semantic materializer', () => {
       expect(result.status).toBe('materialized');
       if (result.status !== 'materialized') continue;
       expect(result.candidate.children.slice(0, 3).map((node) => (
-        node.kind === 'paragraph' ? node.content[0]?.text : undefined
+        node.kind === 'paragraph' && node.content[0]?.kind === 'text'
+          ? node.content[0].text
+          : undefined
       ))).toEqual(finalOrder);
     }
   });

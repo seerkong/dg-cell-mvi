@@ -17,6 +17,9 @@ export const XNL_RICH_DOCUMENT_CLASSIFICATION_IDS = {
   'bullet-list': 'xnl.rich-document:bullet-list',
   'ordered-list': 'xnl.rich-document:ordered-list',
   'list-item': 'xnl.rich-document:list-item',
+  'task-list': 'xnl.rich-document:task-list',
+  'task-item': 'xnl.rich-document:task-item',
+  'horizontal-rule': 'xnl.rich-document:horizontal-rule',
   image: 'xnl.rich-document:image',
   table: 'xnl.rich-document:table',
   'table-row': 'xnl.rich-document:table-row',
@@ -26,6 +29,7 @@ export const XNL_RICH_DOCUMENT_CLASSIFICATION_IDS = {
   mermaid: 'xnl.rich-document:mermaid',
   'component-embed': 'xnl.rich-document:component-embed',
   'capsule-embed': 'xnl.rich-document:capsule-embed',
+  'hard-break': 'xnl.rich-document:hard-break',
   text: 'xnl.rich-document:text',
 } as const;
 

@@ -10,6 +10,7 @@ import {
   type XnlRichDocumentDiagnostic,
   type XnlRichDocumentDomainNodeId,
   type XnlRichDocumentGenericInputRecord,
+  type XnlRichDocumentInlineNode,
   type XnlRichDocumentLogicConfig,
   type XnlRichDocumentLogicRuntime,
   type XnlRichDocumentLowerInput,
@@ -23,8 +24,10 @@ import {
   type XnlRichDocumentSerializableValue,
   type XnlRichDocumentTableCellNode,
   type XnlRichDocumentTableRow,
+  type XnlRichDocumentTaskItem,
   type XnlRichDocumentText,
 } from 'dg-cell-mvi-halfcode-contract';
+import { isXnlRichDocumentColor } from './color';
 
 const CLASSIFICATION_TO_KIND = new Map<string, XnlRichDocumentNodeKind>(
   Object.entries(XNL_RICH_DOCUMENT_CLASSIFICATION_IDS)
@@ -37,6 +40,8 @@ const BLOCK_KINDS = new Set<XnlRichDocumentNodeKind>([
   'blockquote',
   'bullet-list',
   'ordered-list',
+  'task-list',
+  'horizontal-rule',
   'image',
   'table',
   'code-block',
@@ -44,8 +49,9 @@ const BLOCK_KINDS = new Set<XnlRichDocumentNodeKind>([
   'component-embed',
   'capsule-embed',
 ]);
-const TEXT_KIND = new Set<XnlRichDocumentNodeKind>(['text']);
+const INLINE_KINDS = new Set<XnlRichDocumentNodeKind>(['text', 'hard-break']);
 const LIST_ITEM_KIND = new Set<XnlRichDocumentNodeKind>(['list-item']);
+const TASK_ITEM_KIND = new Set<XnlRichDocumentNodeKind>(['task-item']);
 const TABLE_ROW_KIND = new Set<XnlRichDocumentNodeKind>(['table-row']);
 const TABLE_CELL_KINDS = new Set<XnlRichDocumentNodeKind>(['table-cell', 'table-header']);
 const MARK_ORDER = new Map<string, number>(
@@ -200,15 +206,21 @@ function lowerPlanNode(
     case 'document':
     case 'blockquote':
     case 'bullet-list':
+    case 'task-list':
     case 'list-item':
     case 'table':
     case 'table-row':
       return { kind, ...identity, children };
+    case 'task-item':
+      return { kind, ...identity, ...pick(data, ['checked']), children };
     case 'ordered-list':
       return { kind, ...identity, ...pick(data, ['start']), children };
     case 'paragraph':
     case 'heading':
-      return { kind, ...identity, ...pick(data, ['level']), content: children };
+      return { kind, ...identity, ...pick(data, ['level', 'align']), content: children };
+    case 'horizontal-rule':
+    case 'hard-break':
+      return { kind, ...identity };
     case 'table-cell':
     case 'table-header':
       return { kind, ...identity, ...pick(data, ['colspan', 'rowspan']), children };
@@ -284,12 +296,15 @@ function readPlanData(
 
 const PLAN_DATA_KEYS: Record<XnlRichDocumentNodeKind, ReadonlySet<string>> = {
   document: new Set(),
-  paragraph: new Set(),
-  heading: new Set(['level']),
+  paragraph: new Set(['align']),
+  heading: new Set(['level', 'align']),
   blockquote: new Set(),
   'bullet-list': new Set(),
   'ordered-list': new Set(['start']),
   'list-item': new Set(),
+  'task-list': new Set(),
+  'task-item': new Set(['checked']),
+  'horizontal-rule': new Set(),
   image: new Set(['src', 'alt', 'title']),
   table: new Set(),
   'table-row': new Set(),
@@ -299,6 +314,7 @@ const PLAN_DATA_KEYS: Record<XnlRichDocumentNodeKind, ReadonlySet<string>> = {
   mermaid: new Set(['source']),
   'component-embed': new Set(['ref', 'version', 'input']),
   'capsule-embed': new Set(['ref', 'version', 'input']),
+  'hard-break': new Set(),
   text: new Set(['text', 'marks']),
 };
 
@@ -343,13 +359,19 @@ function parseNode(
     case 'document':
       return { kind, ...identity, children: parseBlockChildren(value.children, path, context) };
     case 'paragraph':
-      return { kind, ...identity, content: parseTextChildren(value.content, path, context) };
+      return {
+        kind,
+        ...identity,
+        ...parseOptionalAlignment(value.align, [...path, 'align'], context),
+        content: parseInlineChildren(value.content, path, context),
+      };
     case 'heading':
       return {
         kind,
         ...identity,
         level: parseInteger(value.level, [...path, 'level'], context, 1, 6) as 1 | 2 | 3 | 4 | 5 | 6,
-        content: parseTextChildren(value.content, path, context),
+        ...parseOptionalAlignment(value.align, [...path, 'align'], context),
+        content: parseInlineChildren(value.content, path, context),
       };
     case 'blockquote':
       return { kind, ...identity, children: parseBlockChildren(value.children, path, context) };
@@ -370,6 +392,22 @@ function parseNode(
     }
     case 'list-item':
       return { kind, ...identity, children: parseBlockChildren(value.children, path, context) };
+    case 'task-list':
+      return {
+        kind,
+        ...identity,
+        children: parseTaskItems(value.children, path, context),
+      };
+    case 'task-item':
+      return {
+        kind,
+        ...identity,
+        checked: parseBoolean(value.checked, [...path, 'checked'], context),
+        children: parseBlockChildren(value.children, path, context),
+      };
+    case 'horizontal-rule':
+    case 'hard-break':
+      return { kind, ...identity };
     case 'image': {
       const src = parseRequiredString(value.src, [...path, 'src'], context);
       const alt = parseOptionalString(value.alt, [...path, 'alt'], context);
@@ -428,12 +466,15 @@ function parseNode(
 
 const NODE_KEYS: Record<XnlRichDocumentNodeKind, ReadonlySet<string>> = {
   document: new Set(['kind', 'nodeId', 'children']),
-  paragraph: new Set(['kind', 'nodeId', 'content']),
-  heading: new Set(['kind', 'nodeId', 'level', 'content']),
+  paragraph: new Set(['kind', 'nodeId', 'align', 'content']),
+  heading: new Set(['kind', 'nodeId', 'level', 'align', 'content']),
   blockquote: new Set(['kind', 'nodeId', 'children']),
   'bullet-list': new Set(['kind', 'nodeId', 'children']),
   'ordered-list': new Set(['kind', 'nodeId', 'start', 'children']),
   'list-item': new Set(['kind', 'nodeId', 'children']),
+  'task-list': new Set(['kind', 'nodeId', 'children']),
+  'task-item': new Set(['kind', 'nodeId', 'checked', 'children']),
+  'horizontal-rule': new Set(['kind', 'nodeId']),
   image: new Set(['kind', 'nodeId', 'src', 'alt', 'title']),
   table: new Set(['kind', 'nodeId', 'children']),
   'table-row': new Set(['kind', 'nodeId', 'children']),
@@ -443,6 +484,7 @@ const NODE_KEYS: Record<XnlRichDocumentNodeKind, ReadonlySet<string>> = {
   mermaid: new Set(['kind', 'nodeId', 'source']),
   'component-embed': new Set(['kind', 'nodeId', 'component', 'input']),
   'capsule-embed': new Set(['kind', 'nodeId', 'capsule', 'input']),
+  'hard-break': new Set(['kind', 'nodeId']),
   text: new Set(['kind', 'text', 'marks']),
 };
 
@@ -489,6 +531,16 @@ function parseMarks(
       const href = parseRequiredString(candidate.href, [...markPath, 'href'], context);
       const title = parseOptionalString(candidate.title, [...markPath, 'title'], context);
       marks.push({ kind, href, ...(title === undefined ? {} : { title }) });
+    } else if (kind === 'text-color' || kind === 'highlight') {
+      checkAllowedKeys(candidate, new Set(['kind', 'color']), markPath, context);
+      const color = kind === 'highlight'
+        ? parseOptionalColor(candidate.color, [...markPath, 'color'], context)
+        : parseRequiredColor(candidate.color, [...markPath, 'color'], context);
+      if (kind === 'text-color') {
+        if (color !== undefined) marks.push({ kind, color });
+      } else {
+        marks.push({ kind, ...(color === undefined ? {} : { color }) });
+      }
     } else {
       checkAllowedKeys(candidate, new Set(['kind']), markPath, context);
       marks.push({ kind });
@@ -533,12 +585,20 @@ function parseBlockChildren(
   return parseChildren(value, path, 'children', BLOCK_KINDS, context) as readonly XnlRichDocumentBlockNode[];
 }
 
-function parseTextChildren(
+function parseInlineChildren(
   value: unknown,
   path: readonly (string | number)[],
   context: ParseContext,
-): readonly XnlRichDocumentText[] {
-  return parseChildren(value, path, 'content', TEXT_KIND, context) as readonly XnlRichDocumentText[];
+): readonly XnlRichDocumentInlineNode[] {
+  return parseChildren(value, path, 'content', INLINE_KINDS, context) as readonly XnlRichDocumentInlineNode[];
+}
+
+function parseTaskItems(
+  value: unknown,
+  path: readonly (string | number)[],
+  context: ParseContext,
+): readonly XnlRichDocumentTaskItem[] {
+  return parseChildren(value, path, 'children', TASK_ITEM_KIND, context) as readonly XnlRichDocumentTaskItem[];
 }
 
 function parseListItems(
@@ -882,6 +942,59 @@ function parseOptionalString(
 ): string | undefined {
   if (value === undefined) return undefined;
   return parseString(value, path, context);
+}
+
+const ALIGNMENTS = new Set(['start', 'center', 'end', 'justify']);
+
+function parseOptionalAlignment(
+  value: unknown,
+  path: readonly (string | number)[],
+  context: ParseContext,
+): { readonly align?: 'start' | 'center' | 'end' | 'justify' } {
+  if (value === undefined) return {};
+  if (typeof value !== 'string' || !ALIGNMENTS.has(value)) {
+    context.diagnostics.push(diagnostic(
+      'LOSSY_CONSTRUCT',
+      'Text alignment must be start, center, end or justify.',
+      path,
+    ));
+    return {};
+  }
+  return { align: value as 'start' | 'center' | 'end' | 'justify' };
+}
+
+function parseRequiredColor(
+  value: unknown,
+  path: readonly (string | number)[],
+  context: ParseContext,
+): string | undefined {
+  if (!isXnlRichDocumentColor(value)) {
+    context.diagnostics.push(diagnostic(
+      'LOSSY_CONSTRUCT',
+      'Color must be a safe canonical color token.',
+      path,
+    ));
+    return undefined;
+  }
+  return value;
+}
+
+function parseOptionalColor(
+  value: unknown,
+  path: readonly (string | number)[],
+  context: ParseContext,
+): string | undefined {
+  return value === undefined ? undefined : parseRequiredColor(value, path, context);
+}
+
+function parseBoolean(
+  value: unknown,
+  path: readonly (string | number)[],
+  context: ParseContext,
+): boolean {
+  if (typeof value === 'boolean') return value;
+  context.diagnostics.push(diagnostic('LOSSY_CONSTRUCT', 'Value must be a boolean.', path));
+  return false;
 }
 
 function parseInteger(

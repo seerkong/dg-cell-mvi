@@ -358,8 +358,8 @@ describe('trusted-host sequential materialization diagnostics', () => {
       status: 'rejected',
       diagnostics: [expect.objectContaining({
         code: 'LOSSY_CONSTRUCT',
-        message: 'text before inline runs do not match the accepted baseline.',
-        path: ['command', 'payload', 'edits', 0, 'beforeInlineRuns'],
+        message: 'Inline before snapshot does not match the accepted baseline.',
+        path: ['command', 'payload', 'edits', 0, 'before'],
         nodeId: nodeId('paragraph.introduction'),
       })],
     });

@@ -16,6 +16,7 @@ import {
   type XnlRichDocumentSemanticEdit,
 } from 'dg-cell-mvi-halfcode-contract';
 import type { XnlProjectionCompilerDialect } from '../xnl-projection/compiler';
+import { isXnlRichDocumentColor } from './color';
 
 export type XnlRichDocumentEditTranslationRuntime = Readonly<Record<PropertyKey, never>>;
 
@@ -223,6 +224,21 @@ function validateEdit(value: unknown, path: Path, context: ValidationContext): v
       validateInlineRuns(edit.before, [...path, 'before'], context);
       validateInlineRuns(edit.after, [...path, 'after'], context);
       return;
+    case 'inline':
+      pushExactKeys(edit, new Set(['kind', 'nodeId', 'before', 'after']), path, 'Inline edit', context);
+      validateStableId(edit.nodeId, [...path, 'nodeId'], context);
+      validateSemanticInlineContent(edit.before, [...path, 'before'], context, false);
+      validateSemanticInlineContent(edit.after, [...path, 'after'], context, false);
+      return;
+    case 'node-attributes':
+      pushExactKeys(edit, new Set(['kind', 'nodeId', 'before', 'after']), path, 'Node attributes edit', context);
+      validateStableId(edit.nodeId, [...path, 'nodeId'], context);
+      validateNodeAttributes(edit.before, [...path, 'before'], context);
+      validateNodeAttributes(edit.after, [...path, 'after'], context);
+      if (isRecord(edit.before) && isRecord(edit.after) && edit.before.kind !== edit.after.kind) {
+        context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_EDIT', 'Node attribute edit cannot change node kind.', undefined, [...path, 'after', 'kind']));
+      }
+      return;
     case 'table':
       pushExactKeys(edit, new Set(['kind', 'nodeId', 'before', 'after']), path, 'Table edit', context);
       validateStableId(edit.nodeId, [...path, 'nodeId'], context);
@@ -283,8 +299,10 @@ function validateSemanticNode(
     case 'document':
     case 'blockquote':
     case 'bullet-list':
+    case 'task-list':
     case 'ordered-list':
     case 'list-item':
+    case 'task-item':
     case 'table':
     case 'table-row':
     case 'table-cell':
@@ -293,11 +311,17 @@ function validateSemanticNode(
       break;
     case 'paragraph':
     case 'heading':
-      validateInlineContent(value.content, [...path, 'content'], context);
+      validateSemanticInlineContent(value.content, [...path, 'content'], context, requireLocal);
       break;
   }
   if (value.kind === 'heading' && (!Number.isInteger(value.level) || Number(value.level) < 1 || Number(value.level) > 6)) {
     context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_SEMANTIC_NODE', 'Heading level must be an integer from 1 through 6.', undefined, [...path, 'level']));
+  }
+  if ((value.kind === 'paragraph' || value.kind === 'heading') && value.align !== undefined) {
+    validateAlignment(value.align, [...path, 'align'], context);
+  }
+  if (value.kind === 'task-item' && typeof value.checked !== 'boolean') {
+    context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_SEMANTIC_NODE', 'Task item checked must be a boolean.', undefined, [...path, 'checked']));
   }
   if (value.kind === 'ordered-list' && value.start !== undefined) validatePositiveInteger(value.start, [...path, 'start'], context);
   if ((value.kind === 'table-cell' || value.kind === 'table-header')) {
@@ -325,11 +349,13 @@ function validateSemanticNode(
 
 function semanticPayloadKeys(kind: string): readonly string[] | undefined {
   switch (kind) {
-    case 'document': case 'blockquote': case 'bullet-list': case 'list-item': case 'table': case 'table-row':
+    case 'document': case 'blockquote': case 'bullet-list': case 'task-list': case 'list-item': case 'table': case 'table-row':
       return ['children'];
+    case 'task-item': return ['checked', 'children'];
     case 'ordered-list': return ['start', 'children'];
-    case 'paragraph': return ['content'];
-    case 'heading': return ['level', 'content'];
+    case 'paragraph': return ['align', 'content'];
+    case 'heading': return ['level', 'align', 'content'];
+    case 'horizontal-rule': case 'hard-break': return [];
     case 'image': return ['src', 'alt', 'title'];
     case 'table-cell': case 'table-header': return ['colspan', 'rowspan', 'children'];
     case 'code-block': return ['language', 'text'];
@@ -377,18 +403,29 @@ function validateSemanticChildren(
 function allowedChildKinds(parentKind: string): ReadonlySet<string> {
   switch (parentKind) {
     case 'bullet-list': case 'ordered-list': return new Set(['list-item']);
+    case 'task-list': return new Set(['task-item']);
     case 'table': return new Set(['table-row']);
     case 'table-row': return new Set(['table-cell', 'table-header']);
-    default: return new Set(['paragraph', 'heading', 'blockquote', 'bullet-list', 'ordered-list', 'image', 'table', 'code-block', 'mermaid', 'component-embed', 'capsule-embed']);
+    default: return new Set(['paragraph', 'heading', 'blockquote', 'bullet-list', 'ordered-list', 'task-list', 'horizontal-rule', 'image', 'table', 'code-block', 'mermaid', 'component-embed', 'capsule-embed']);
   }
 }
 
-function validateInlineContent(value: unknown, path: Path, context: ValidationContext): void {
+function validateSemanticInlineContent(
+  value: unknown,
+  path: Path,
+  context: ValidationContext,
+  requireLocal: boolean,
+): void {
   if (!Array.isArray(value)) {
     context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_SEMANTIC_NODE', 'Inline content must be an array.', undefined, path));
     return;
   }
-  value.forEach((child, index) => validateSemanticNode(child, [...path, index], context, false, 'text'));
+  value.forEach((child, index) => {
+    validateSemanticNode(child, [...path, index], context, requireLocal);
+    if (isRecord(child) && child.kind !== 'text' && child.kind !== 'hard-break') {
+      context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_SEMANTIC_NODE', 'Inline content supports only text and hard-break.', undefined, [...path, index, 'kind']));
+    }
+  });
 }
 
 function validateInlineRuns(value: unknown, path: Path, context: ValidationContext): void {
@@ -413,22 +450,64 @@ function validateMarks(value: unknown, path: Path, context: ValidationContext): 
     context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_MARK', 'Marks must be an array.', undefined, path));
     return;
   }
+  const seen = new Set<string>();
   value.forEach((mark, index) => {
     const markPath = [...path, index];
     if (!isRecord(mark) || typeof mark.kind !== 'string') {
       context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_MARK', 'Mark must be a canonical mark record.', undefined, markPath));
       return;
     }
+    if (seen.has(mark.kind)) {
+      context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_MARK', `Duplicate mark kind "${mark.kind}" is ambiguous.`, undefined, markPath));
+    }
+    seen.add(mark.kind);
     if (mark.kind === 'link') {
       pushExactKeys(mark, new Set(['kind', 'href', 'title']), markPath, 'Link mark', context);
       validateNonEmptyString(mark.href, [...markPath, 'href'], context);
       validateOptionalString(mark.title, [...markPath, 'title'], context);
-    } else if (['bold', 'italic', 'strike', 'code'].includes(mark.kind)) {
+    } else if (mark.kind === 'text-color' || mark.kind === 'highlight') {
+      pushExactKeys(mark, new Set(['kind', 'color']), markPath, 'Color mark', context);
+      if (mark.kind === 'text-color' || mark.color !== undefined) validateColor(mark.color, [...markPath, 'color'], context);
+    } else if (['bold', 'italic', 'strike', 'underline', 'code'].includes(mark.kind)) {
       pushExactKeys(mark, new Set(['kind']), markPath, 'Mark', context);
     } else {
       context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_MARK', `Unsupported mark kind "${mark.kind}".`, undefined, [...markPath, 'kind']));
     }
   });
+}
+
+function validateNodeAttributes(value: unknown, path: Path, context: ValidationContext): void {
+  if (!isRecord(value)) {
+    context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_EDIT', 'Node attributes must be a plain record.', undefined, path));
+    return;
+  }
+  if (value.kind === 'paragraph' || value.kind === 'heading') {
+    pushExactKeys(value, new Set(['kind', 'align']), path, 'Text block attributes', context);
+    if (value.align !== undefined) validateAlignment(value.align, [...path, 'align'], context);
+    return;
+  }
+  if (value.kind === 'task-item') {
+    pushExactKeys(value, new Set(['kind', 'checked']), path, 'Task item attributes', context);
+    if (typeof value.checked !== 'boolean') {
+      context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_EDIT', 'Task item checked must be a boolean.', undefined, [...path, 'checked']));
+    }
+    return;
+  }
+  context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_EDIT', 'Node attributes support paragraph, heading or task-item only.', undefined, [...path, 'kind']));
+}
+
+const ALIGNMENTS = new Set(['start', 'center', 'end', 'justify']);
+
+function validateAlignment(value: unknown, path: Path, context: ValidationContext): void {
+  if (typeof value !== 'string' || !ALIGNMENTS.has(value)) {
+    context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_VALUE', 'Alignment must be start, center, end or justify.', undefined, path));
+  }
+}
+
+function validateColor(value: unknown, path: Path, context: ValidationContext): void {
+  if (!isXnlRichDocumentColor(value)) {
+    context.diagnostics.push(diagnostic('INVALID_RICH_DOCUMENT_VALUE', 'Color must be a safe canonical color token.', undefined, path));
+  }
 }
 
 function validateRef(value: unknown, path: Path, stableOnly: boolean, context: ValidationContext): void {

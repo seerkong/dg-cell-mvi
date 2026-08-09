@@ -1,0 +1,39 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/reusable-layered-document-editor">
+    <requirement id="reusable-layered-document-editor">
+      <statement>系统 SHALL 提供由 canonical XNL RichDocument 驱动、Presentation 可配置且不拥有领域事实的可复用文档编辑器。</statement>
+      <suite id="canonical-adapter" name="Canonical Tiptap 适配">
+        <case id="traditional-round-trip">
+          <given>accepted RichDocument 包含 alignment、underline、color/highlight、task list、horizontal rule 或 hard break</given>
+          <when>系统投影到 Tiptap 并把真实 transaction 归一化为 semantic interaction</when>
+          <then>系统 MUST 无损保留语义、identity 与 absent/explicit 差异，并拒绝 lossy 或 unsafe 值</then>
+        </case>
+      </suite>
+      <suite id="presentation" name="Presentation 编译">
+        <case id="data-only-toolbar-plan">
+          <given>业务提供只含 stable id 与 serializable options 的 DocumentEditorPresentation</given>
+          <when>系统编译 ToolbarPlan</when>
+          <then>结果 MUST deep frozen 且不包含 Vue、Tiptap、DOM、effect 或 closure；未知和重复配置产生确定性 diagnostics</then>
+        </case>
+        <case id="override-is-presentation-only">
+          <given>Scope 在同 presenter id 下提供覆盖</given>
+          <when>工具被渲染和调用</when>
+          <then>覆盖 MUST 只改变呈现，不得替换 canonical command 语义或取得 host authority</then>
+        </case>
+      </suite>
+      <suite id="editor-capsule" name="可复用编辑器 Capsule">
+        <case id="single-draft-owner">
+          <given>编辑器接收新的 accepted observation 或本地 transaction</given>
+          <when>执行 edit、composition、undo、redo、accept、replace 或 conflict</when>
+          <then>系统 MUST 复用同一 EditorState lineage 和既有 draft lifecycle，并只经 runtime authoring effect 发出 revision-free interaction</then>
+        </case>
+        <case id="responsive-toolbar">
+          <given>容器处于宽或窄视口且存在 contextual tools</given>
+          <when>工具栏布局和键盘导航</when>
+          <then>全部工具 SHALL 可达，低优先级组进入 overflow，且不得以横向滚动隐藏能力</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>
+

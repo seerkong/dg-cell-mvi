@@ -7,6 +7,18 @@ composition 或 custom implementation 的深度。它们不是“运行时三档
 可序列化选项；translator、materializer、allocator、registry、session 与 writer 都属于
 代码/runtime capability。
 
+对需要完整编辑 UI 的 consumer，三档对应为：
+
+1. **预建直用**：直接挂载 `XnlDocumentEditor`，使用默认 Presentation 与 registries，只绑定
+   authoring/clipboard/highlighter Effect；
+2. **配置组合**：替换 `DocumentEditorPresentation`、capabilities 与 grants，复用同一 compiler、
+   canonical commands 和 Vue surface；
+3. **代码扩展**：在 runtime 注册 distinct host tool/command/presenter/condition binding，
+   Presentation 仍只引用 stable id，不嵌函数或组件实现。
+
+三档共用一个 RichDocument authority 和一个 Tiptap `EditorState` lineage。第二档不能替换
+canonical command，第三档也不能复用 `rich-text.command.*` namespace 冒充 canonical tool。
+
 ## 功能采用模式 1：Projection / Local State
 
 直接使用 adapter package 的 canonical schema、RichDocument/Tiptap JSON 转换和

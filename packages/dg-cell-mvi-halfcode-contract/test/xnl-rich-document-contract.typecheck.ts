@@ -1,15 +1,25 @@
 import {
   type XnlRichDocument,
   type XnlRichDocumentAdapterPosition,
+  type XnlRichDocumentColor,
   type XnlRichDocumentDiagnostic,
   type XnlRichDocumentDomainNodeId,
+  type XnlRichDocumentHardBreak,
+  type XnlRichDocumentHighlightMark,
+  type XnlRichDocumentHorizontalRule,
   type XnlRichDocumentIdentityAllocationRequest,
   type XnlRichDocumentIdentityAllocationResult,
   type XnlRichDocumentIdentityAllocator,
   type XnlRichDocumentGenericInputRecord,
+  type XnlRichDocumentInlineNode,
   type XnlRichDocumentOccurrenceXId,
   type XnlRichDocumentNormalizedResult,
   type XnlRichDocumentSerializableValue,
+  type XnlRichDocumentTaskItem,
+  type XnlRichDocumentTaskList,
+  type XnlRichDocumentTextColorMark,
+  type XnlRichDocumentTextAlignment,
+  type XnlRichDocumentUnderlineMark,
 } from 'dg-cell-mvi-halfcode-contract';
 
 type Equal<Left, Right> =
@@ -115,6 +125,78 @@ const invalidGenericAllocator = {
   identityAllocator: 'allocator:one',
 } satisfies XnlRichDocumentGenericInputRecord;
 
+const canonicalColor = '#1a2b3c' as XnlRichDocumentColor;
+const validAlignment = 'justify' satisfies XnlRichDocumentTextAlignment;
+const underlineMark = { kind: 'underline' } satisfies XnlRichDocumentUnderlineMark;
+const textColorMark = {
+  kind: 'text-color',
+  color: canonicalColor,
+} satisfies XnlRichDocumentTextColorMark;
+const defaultHighlightMark = { kind: 'highlight' } satisfies XnlRichDocumentHighlightMark;
+const hardBreak = {
+  kind: 'hard-break',
+  nodeId: 'hard-break:one' as XnlRichDocumentDomainNodeId,
+} satisfies XnlRichDocumentHardBreak;
+const inlineNodes = [
+  { kind: 'text', text: 'before', marks: [underlineMark, textColorMark, defaultHighlightMark] },
+  hardBreak,
+  { kind: 'text', text: 'after' },
+] satisfies readonly XnlRichDocumentInlineNode[];
+const horizontalRule = {
+  kind: 'horizontal-rule',
+  nodeId: 'rule:one' as XnlRichDocumentDomainNodeId,
+} satisfies XnlRichDocumentHorizontalRule;
+const taskItem = {
+  kind: 'task-item',
+  nodeId: 'task:item-one' as XnlRichDocumentDomainNodeId,
+  checked: false,
+  children: [{
+    kind: 'paragraph',
+    nodeId: 'paragraph:task-one' as XnlRichDocumentDomainNodeId,
+    content: inlineNodes,
+  }],
+} satisfies XnlRichDocumentTaskItem;
+const taskList = {
+  kind: 'task-list',
+  nodeId: 'task:list-one' as XnlRichDocumentDomainNodeId,
+  children: [taskItem],
+} satisfies XnlRichDocumentTaskList;
+const traditionalDocument = {
+  kind: 'document',
+  nodeId: 'document:traditional' as XnlRichDocumentDomainNodeId,
+  children: [taskList, horizontalRule],
+} satisfies XnlRichDocument;
+
+const invalidAlignment = {
+  kind: 'paragraph',
+  nodeId: 'paragraph:left' as XnlRichDocumentDomainNodeId,
+  // @ts-expect-error Physical left/right values are not canonical alignment values.
+  align: 'left',
+  content: [],
+} satisfies XnlRichDocument['children'][number];
+const invalidTaskChecked = {
+  kind: 'task-item',
+  nodeId: 'task:invalid-checked' as XnlRichDocumentDomainNodeId,
+  // @ts-expect-error Task checked state is boolean and is never string-coerced.
+  checked: 'false',
+  children: [],
+} satisfies XnlRichDocumentTaskItem;
+const invalidTaskListChild = {
+  kind: 'task-list',
+  nodeId: 'task:invalid-child' as XnlRichDocumentDomainNodeId,
+  children: [{
+    // @ts-expect-error Task lists contain task items, not arbitrary block nodes.
+    kind: 'paragraph',
+    nodeId: 'paragraph:invalid-task-child' as XnlRichDocumentDomainNodeId,
+    content: [],
+  }],
+} satisfies XnlRichDocumentTaskList;
+const invalidHardBreakMarks = {
+  kind: 'hard-break',
+  // @ts-expect-error Hard breaks are inline atoms and cannot carry text marks.
+  marks: [{ kind: 'bold' }],
+} satisfies XnlRichDocumentHardBreak;
+
 void [
   invalidDomainFromOccurrence,
   invalidDomainFromPosition,
@@ -132,6 +214,21 @@ void [
   invalidGenericSession,
   invalidGenericSubmit,
   invalidGenericAllocator,
+  canonicalColor,
+  validAlignment,
+  underlineMark,
+  textColorMark,
+  defaultHighlightMark,
+  hardBreak,
+  inlineNodes,
+  horizontalRule,
+  taskItem,
+  taskList,
+  traditionalDocument,
+  invalidAlignment,
+  invalidTaskChecked,
+  invalidTaskListChild,
+  invalidHardBreakMarks,
 ];
 
 type ContractAssertions = [

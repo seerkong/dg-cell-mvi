@@ -254,7 +254,7 @@ function inlineText(value: XnlRichDocument, id: string): string {
   if (found === undefined || !('content' in found) || !Array.isArray(found.content)) {
     throw new Error(`Missing inline RichDocument node "${id}".`);
   }
-  return found.content.map((run) => run.text).join('');
+  return found.content.map((run) => run.kind === 'text' ? run.text : ' ').join('');
 }
 
 function normalize(

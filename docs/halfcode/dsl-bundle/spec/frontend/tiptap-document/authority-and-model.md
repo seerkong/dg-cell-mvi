@@ -38,9 +38,10 @@ RichDocument 只承担 renderer-neutral projection contract：
 Projection/Authoring data；只有 support package 适配 concrete `XnlNode`，并复用
 既有 XNL parser、formatter、diff、dry-run 与 mutation 能力。
 
-当前支持的模型族包括 paragraph、heading、blockquote、bullet/ordered list、image、
-table、code block、Mermaid、Component/Capsule embed，以及 bold、italic、strike、
-code、link marks。输入若包含未知 node/mark、不可表达字段、非法 schema shape、
+当前支持的模型族包括 paragraph、heading、blockquote、bullet/ordered/task list、
+horizontal rule、hard break、image、table、code block、Mermaid、Component/Capsule embed，
+以及 bold、italic、strike、underline、code、link、text-color、highlight marks。输入若包含
+未知 node/mark、不可表达字段、非法 schema shape、
 duplicate/missing required identity 或不可序列化/authority-bearing 值，处理器返回
 结构化 diagnostic，不静默降级为 HTML、raw JSON 或 plain text。
 
@@ -64,3 +65,8 @@ transaction。真实 Tiptap Editor 必须通过 dedicated adapter 的 package-ro
 session、revision、VFS 或 writer。Selection 保持 local 且静默；composition intermediate
 只缓冲，settle 至多发布一次；undo/redo 只产生新的 Interaction proposal。以上 state 都不因
 绑定真实 Editor 而升级为 accepted 或 persisted fact。
+
+可复用 `XnlDocumentEditor` 进一步使用 `adoptXnlRichDocumentTiptapEditorState` 接纳 Tiptap
+为一次 transaction 已计算出的**同一个** next `EditorState`。Adapter wrapper 只保留 accepted/
+pending/composition metadata，不复制 document store，也不 replay transaction 生成第二条 state
+lineage。Accepted reproject 后，Tiptap view 直接安装 lifecycle 返回的 state。

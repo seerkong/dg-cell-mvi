@@ -850,6 +850,9 @@ function visitPersistent(
   if (node.kind === 'text') return;
   visitor(node);
   if ('children' in node) node.children.forEach((child) => visitPersistent(child, visitor));
+  if (node.kind === 'paragraph' || node.kind === 'heading') {
+    node.content.forEach((child) => visitPersistent(child, visitor));
+  }
 }
 
 function replaceNodeIds(
@@ -861,6 +864,9 @@ function replaceNodeIds(
     const nodeId = replacements.get(node.nodeId) ?? node.nodeId;
     if ('children' in node) {
       return { ...node, nodeId, children: node.children.map(replace) } as XnlRichDocumentNode;
+    }
+    if (node.kind === 'paragraph' || node.kind === 'heading') {
+      return { ...node, nodeId, content: node.content.map(replace) } as XnlRichDocumentNode;
     }
     return { ...node, nodeId } as XnlRichDocumentNode;
   };

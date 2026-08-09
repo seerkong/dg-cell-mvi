@@ -1,0 +1,64 @@
+<decision #build-layered-programmable-document-editor.layering {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>传统在线文档能力与可编程文档高级能力应如何分层？</?>
+  <answer { }
+  (
+    <raw-answer ?>底层先支持传统在线文档应有能力，上层再解决动态区块、版本、Agent 和 Presentation 等高级问题。</?>
+    <decision-text ?>RichDocument 语义、Tiptap adapter、通用编辑组件与工具 Presentation 属于可复用底层；Component/Capsule catalog、VCS checkout、Agent 协作和产品 inspector 属于上层组合。</?>
+    <rationale ?>常规文档产品不应依赖 Workbench，高级可编程能力也不应污染基础富文本语义。</?>
+    <evidence ?>用户在 2026-08-09 明确要求以传统在线文档能力作为底层，并在其上叠加前期可编程文档能力。</?>
+  )
+  >
+)>
+
+<decision #build-layered-programmable-document-editor.semantic-authority {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>新增传统格式能力是否可以只作为 Tiptap/HTML 功能存在？</?>
+  <answer { }
+  (
+    <raw-answer ?>底层文档组件应真正支持这些传统能力，并可在常规用途复用。</?>
+    <decision-text ?>所有可持久编辑能力必须先进入 renderer-neutral RichDocument canonical model，再由 Tiptap projection 和 transaction normalizer 双向适配；HTML、DOM 和 Tiptap JSON不成为事实源。</?>
+    <rationale ?>只有领域语义完整，组件才能被不同 Presenter 和产品安全复用并产生 XNL mutation。</?>
+    <evidence ?>既有 programmable-document authority 已冻结 Domain XNL 单写者与无 HTML round-trip 原则。</?>
+  )
+  >
+)>
+
+<decision #build-layered-programmable-document-editor.presentation {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>工具栏和编辑器体验应继续由 Workbench 硬编码吗？</?>
+  <answer { }
+  (
+    <raw-answer ?>应基于底层能力解决工具栏硬编码与能力投影不完整的问题。</?>
+    <decision-text ?>建立 serializable DocumentEditorPresentation 与 ToolbarPlan；Presentation 只引用 stable tool/presenter id，具体命令、Vue 组件和 Tiptap 实现由代码 registry 与 Scope runtime 绑定。</?>
+    <rationale ?>这延续 SchemaEditorDialect + transformer registry 和 Halfcode 实现分离原则，同时允许不同业务产品复用和覆盖同一工具语义。</?>
+    <evidence ?>现有工具栏全部写在 Workbench Vue render function 中，窄视口仅通过横向滚动隐藏后续能力。</?>
+  )
+  >
+)>
+
+<decision #build-layered-programmable-document-editor.ownership {
+  priority = "P1"
+  status = "accepted"
+}
+(
+  <question ?>跨仓 Mission 的控制面由谁拥有？</?>
+  <answer { }
+  (
+    <raw-answer ?>先建立 dg-cell-mvi 底层基座，再改造 Workbench 在线文档。</?>
+    <decision-text ?>dg-cell-mvi 是 Mission host 和通用文档能力 owner；eidolon-workbench 是外部产品集成与反馈项目。</?>
+    <rationale ?>底层协议不能成为 Workbench 私有实现，应用反馈仍可通过 Mission 重规划回流 foundation track。</?>
+    <evidence ?>上一轮可编程文档 Mission 已采用相同 owner 边界并成功形成 Document、Projection、Tiptap 与 Workbench 分工。</?>
+  )
+  >
+)>
+

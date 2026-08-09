@@ -18,3 +18,4 @@ export * from './schema-editor';
 export * from './xnl-projection';
 export * from './xnl-authoring';
 export * from './xnl-rich-document';
+export * from './document-editor';

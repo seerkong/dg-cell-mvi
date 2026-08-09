@@ -420,6 +420,10 @@ export const XNL_RICH_DOCUMENT_TIPTAP_EXTENSION_IDS = [
   'starter-kit',
   'persistent-node-id',
   'link-title',
+  'text-alignment',
+  'text-color',
+  'highlight',
+  'task-list',
   'image',
   'table',
   'mermaid',
@@ -629,6 +633,13 @@ export type XnlRichDocumentTiptapDraftEditorStateBindingInput = Readonly<{
 export type XnlRichDocumentTiptapDraftTransactionInput = Readonly<{
   state: XnlRichDocumentTiptapDraftState;
   transaction: Transaction;
+  composition?: 'intermediate';
+}>;
+
+export type XnlRichDocumentTiptapDraftAdoptInput = Readonly<{
+  state: XnlRichDocumentTiptapDraftState;
+  transaction: Transaction;
+  editorState: EditorState;
   composition?: 'intermediate';
 }>;
 

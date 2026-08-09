@@ -27,10 +27,14 @@
 - package tests/typechecks、ESM/CJS public import、dependency/residue scan、headless 与
   jsdom verification；仓内 package-root consumer 已在同一个真实 `Editor` 验证 official
   table、Mermaid 与 Component/Capsule 共存。
+- `DocumentEditorPresentation`/`ToolbarPlan` compiler、restricted command facade、
+  `XnlDocumentEditor` Vue surface、响应式 grouped overflow 与 enhanced code Presenter；
+- 包内真实浏览器宽/窄容器验证，包括 overflow reachability、tooltip/ARIA、focus、contextual
+  tools 与无横向滚动隐藏。
 
-“已验证”覆盖 repository package/headless/jsdom boundary，以及已完成的 package
+“已验证”覆盖 repository package/headless/jsdom boundary、包内真实浏览器 fixture、package
 tests/typecheck、ESM/CJS smoke 与仓内 package-root 单 Editor consumer probe。它不等于
-Workbench 产品集成、真实产品浏览器 E2E 或 persistence/save UX 已经完成。
+Workbench 产品集成或 persistence/save UX 已经完成。
 
 ## 当前未完成
 

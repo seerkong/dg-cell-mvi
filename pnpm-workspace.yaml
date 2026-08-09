@@ -16,5 +16,13 @@ packages:
   - "../../lang/xnl.ts/packages/core"
   - "../../lang/xnl.ts/packages/collab-core"
   - "../../lang/xnl.ts/packages/vfs"
+allowBuilds:
+  '@parcel/watcher': set this to true or false
+  bufferutil: set this to true or false
+  canvas: set this to true or false
+  edgedriver: set this to true or false
+  esbuild: true
+  geckodriver: set this to true or false
+  utf-8-validate: set this to true or false
 
 linkWorkspacePackages: true
