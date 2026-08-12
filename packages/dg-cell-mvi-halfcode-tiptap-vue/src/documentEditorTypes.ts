@@ -6,6 +6,7 @@ import type {
   DocumentEditorSerializableRecord,
   DocumentEditorToolbarDiagnostic,
   DocumentEditorToolbarPlan,
+  DocumentDisplayModeProjection,
   XnlRichDocument,
 } from 'dg-cell-mvi-halfcode-contract';
 import type {
@@ -15,6 +16,7 @@ import type {
   XnlRichDocumentTiptapDraftRuntime,
   XnlRichDocumentTiptapStaleDraftPolicy,
 } from './types';
+import type { XnlRichDocumentStructuredNodeViewModeRuntime } from './structuredNodeViewMode';
 
 export type XnlDocumentEditorClipboardInput = Readonly<{
   text: string;
@@ -77,6 +79,7 @@ export type XnlDocumentEditorRuntime = Readonly<{
   commands?: ReadonlyMap<string, XnlDocumentEditorCommandBinding>;
   clipboard?: XnlDocumentEditorClipboardBinding;
   highlighter?: XnlDocumentEditorHighlightBinding;
+  structuredNodeViews?: XnlRichDocumentStructuredNodeViewModeRuntime;
   rendererHost?: Readonly<{
     extensions: Extensions;
   }>;
@@ -104,6 +107,8 @@ export type XnlDocumentEditorCommandProcessor<TRuntime extends object = object> 
 export type XnlDocumentEditorCommandBinding<TRuntime extends object = object> = Readonly<{
   runtime: TRuntime;
   processor: XnlDocumentEditorCommandProcessor<TRuntime>;
+  /** Defaults to true. Set false only for a non-authoring business command. */
+  requiresEditable?: boolean;
 }>;
 
 export type XnlDocumentEditorInput = Readonly<{
@@ -111,6 +116,8 @@ export type XnlDocumentEditorInput = Readonly<{
   acceptedObservation?: string;
   presentation: DocumentEditorPresentation;
   capabilities: DocumentEditorCapabilities;
+  /** Frozen observation only. The editor never receives mode owner authority. */
+  displayMode?: DocumentDisplayModeProjection;
 }>;
 
 export type XnlDocumentEditorConfig = Readonly<{
@@ -137,6 +144,7 @@ export type XnlDocumentEditorSnapshot = Readonly<{
   pendingAcceptance: boolean;
   compositionActive: boolean;
   codeFolded: boolean;
+  displayMode: DocumentDisplayModeProjection | undefined;
 }>;
 
 export interface XnlDocumentEditorCommandFacade {

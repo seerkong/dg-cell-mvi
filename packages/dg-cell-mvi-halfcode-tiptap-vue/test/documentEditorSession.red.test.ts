@@ -8,6 +8,7 @@ import {
   DEFAULT_DOCUMENT_EDITOR_TOOLS,
 } from 'dg-cell-mvi-halfcode-logic';
 import type {
+  DocumentDisplayModeProjection,
   XnlRichDocument,
   XnlRichDocumentDomainNodeId,
 } from 'dg-cell-mvi-halfcode-contract';
@@ -61,6 +62,17 @@ const input = (text?: string): XnlDocumentEditorInput => ({
   capabilities,
 });
 
+const displayMode = (effectiveMode: 'view' | 'edit'): DocumentDisplayModeProjection => ({
+  valid: true,
+  target: { kind: 'document', unitInstanceId: 'document-editor-test' },
+  inheritedMode: effectiveMode,
+  overlay: 'inherit',
+  effectiveMode,
+  allowedModes: ['view', 'edit'],
+  canSwitch: true,
+  diagnostics: [],
+});
+
 const codeInput = (): XnlDocumentEditorInput => ({
   ...input(),
   document: {
@@ -112,6 +124,34 @@ const config = {
 };
 
 describe('XnlDocumentEditor reusable capsule', () => {
+  it('switches display mode in place without rebuilding or publishing authoring interactions', async () => {
+    const intents: XnlRichDocumentTiptapInteractionIntent[] = [];
+    const editableInput = { ...input(), displayMode: displayMode('edit') };
+    const result = createXnlDocumentEditor(runtime(intents), editableInput, config);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    sessions.push(result.session);
+    const editor = readXnlDocumentEditorInternalEditor(result.session)!;
+    const state = readXnlDocumentEditorInternalState(result.session);
+
+    editor.view.dispatch(editor.state.tr.insertText('Unaccepted draft ', 1));
+    expect(editor.state.doc.textContent).toContain('Unaccepted draft');
+    intents.length = 0;
+
+    result.session.update({ ...editableInput, displayMode: displayMode('view') });
+    expect(readXnlDocumentEditorInternalEditor(result.session)).toBe(editor);
+    expect(editor.isEditable).toBe(false);
+    expect(readXnlDocumentEditorInternalState(result.session)?.doc.toJSON()).toEqual(state!.doc.toJSON());
+    expect(editor.state.doc.textContent).not.toContain('Unaccepted draft');
+    expect(intents).toEqual([]);
+    expect(await result.session.commands.execute({ commandId: 'rich-text.command.inline.bold' })).toMatchObject({ status: 'unavailable' });
+
+    result.session.update(editableInput);
+    expect(readXnlDocumentEditorInternalEditor(result.session)).toBe(editor);
+    expect(editor.isEditable).toBe(true);
+    expect(intents).toEqual([]);
+  });
+
   it('owns one hidden Tiptap EditorState lineage and exposes only a restricted command facade', async () => {
     const intents: XnlRichDocumentTiptapInteractionIntent[] = [];
     const result = createXnlDocumentEditor(runtime(intents), input(), config);
@@ -318,7 +358,7 @@ describe('XnlDocumentEditor reusable capsule', () => {
     expect(more).not.toBeNull();
     more?.click();
     await nextTick();
-    expect(host.querySelector('[role="menu"]')).not.toBeNull();
+    expect(host.querySelector('[role="group"][aria-label="More document tools"]')).not.toBeNull();
     expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth || host.scrollWidth);
   });
 

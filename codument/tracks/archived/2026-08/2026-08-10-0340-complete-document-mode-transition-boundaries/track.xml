@@ -1,0 +1,34 @@
+<Track id="complete-document-mode-transition-boundaries" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>保持稳定 occurrence overlay 跨 browser-host replacement，并正确投影 Inherit 可用性。</Goal>
+    <Description>增加 presentation-owned registration coordinator 装配点与 inherited-mode shell 边界。</Description>
+    <QuestionMode>decision-tree</QuestionMode><QuestionSeverity>auto</QuestionSeverity><CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-09T21:15:00Z</CreatedAt><UpdatedAt>2026-08-10T00:40:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="tiptap-host" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="tiptap-host" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+  </Ports>
+  <TaskSpace id="space_complete-document-mode-transition-boundaries" name="complete-document-mode-transition-boundaries" version="1">
+    <SubNodes>
+      <TaskGroup id="P1" name="Shared lifecycle and transitions" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="提供可选 presentation-owned coordinator" status="DONE" order="0"><cdt:Acceptance>
+            <cdt:Criterion id="T1.1-AC1" checked="true">稳定 identity 跨 host replacement 保留单一 lease 与 overlay</cdt:Criterion>
+            <cdt:Criterion id="T1.1-AC2" checked="true">默认不同 host、不同 identity 与最终 dispose 继续隔离清理</cdt:Criterion>
+          </cdt:Acceptance></Task>
+          <Task id="T1.2" name="投影 inherited mode 并禁用不可达 Inherit" status="DONE" order="1"><cdt:Acceptance>
+            <cdt:Criterion id="T1.2-AC1" checked="true">policy 不允许 inherited mode 时 Inherit affordance disabled</cdt:Criterion>
+          </cdt:Acceptance></Task>
+          <Task id="T1.3" name="运行 package 与 Workbench identity 回归" status="DONE" order="2"><cdt:Acceptance>
+            <cdt:Criterion id="T1.3-AC1" checked="true">unit/typecheck/browser identity chaos 全绿</cdt:Criterion>
+          </cdt:Acceptance></Task>
+        </SubNodes>
+        <Hooks><Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule/>
+</Track>

@@ -19,3 +19,4 @@ export * from './xnl-projection';
 export * from './xnl-authoring';
 export * from './xnl-rich-document';
 export * from './document-editor';
+export * from './document-display-mode';

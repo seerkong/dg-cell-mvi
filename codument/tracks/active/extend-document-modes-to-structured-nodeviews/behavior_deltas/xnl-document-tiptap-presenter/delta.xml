@@ -1,0 +1,31 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/mode-aware-structured-nodeviews">
+    <requirement id="mode-aware-structured-nodeviews">
+      <statement>具备独立阅读与编辑投影的结构化 NodeView SHALL 复用 document base 与 occurrence overlay 显示模式。</statement>
+      <suite id="projection" name="结构化 NodeView 模式投影">
+        <case id="mermaid-view-edit">
+          <given>Mermaid occurrence 已注册且 document 或 overlay 模式发生变化</given>
+          <when>NodeView 投影 effective mode</when>
+          <then>view SHALL 只显示安全渲染图，edit SHALL 显示图与源码 authoring surface</then>
+        </case>
+        <case id="code-view-edit">
+          <given>Enhanced Code Block occurrence 已注册</given>
+          <when>effective mode 为 view 或 edit</when>
+          <then>Fold/Copy SHALL 始终可用，而源码 authoring SHALL 只在 edit 可用</then>
+        </case>
+        <case id="mode-transition-invariant">
+          <given>用户只切换 structured NodeView occurrence mode</given>
+          <when>transition 被 policy 接受</when>
+          <then>系统 SHALL NOT 产生 RichDocument edit、XNL mutation、revision 或 VFS write</then>
+        </case>
+      </suite>
+      <suite id="discovery" name="插入后发现性">
+        <case id="new-block-selected">
+          <given>用户通过 Insert 创建 mode-aware block</given>
+          <when>插入 command 成功</when>
+          <then>新 occurrence SHALL 立即显示低对比度 contextual mode 入口，并在 hover/focus/selection 时增强</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

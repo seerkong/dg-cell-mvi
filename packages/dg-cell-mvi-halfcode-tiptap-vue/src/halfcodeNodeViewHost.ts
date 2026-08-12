@@ -5,6 +5,10 @@ import {
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { NodeView } from '@tiptap/pm/view';
 import {
+  formatDocumentInstanceRef,
+  type DocumentDisplayModeProjection,
+  type DocumentDisplayModeSession,
+  type DocumentInstanceRef,
   type DocumentInstanceRegistry,
   type UnitRenderPlan,
   type XnlProjectionSerializableRecord,
@@ -23,6 +27,7 @@ import {
   h,
   shallowReactive,
   type App,
+  type Component,
 } from 'vue';
 import {
   createXnlRichDocumentEmbeddedPresenterCapability,
@@ -32,6 +37,8 @@ import { createXnlRichDocumentTiptapHostExtensions } from './internalTiptapExten
 import { verifyXnlRichDocumentHalfcodeNodeViewOccurrence } from './occurrenceAssembly';
 import type {
   XnlRichDocumentEmbeddedPresenterInput,
+  XnlRichDocumentEmbeddedModeView,
+  XnlRichDocumentModeAwareEmbeddedPresenterInput,
   XnlRichDocumentHalfcodeNodeViewDiagnostic,
   XnlRichDocumentHalfcodeNodeViewDiagnosticCode,
   XnlRichDocumentHalfcodeNodeViewHostConfig,
@@ -40,7 +47,13 @@ import type {
   XnlRichDocumentHalfcodeNodeViewHostRuntime,
   XnlRichDocumentHalfcodeNodeViewOccurrence,
   XnlRichDocumentHalfcodeNodeViewTarget,
+  XnlRichDocumentModeShellPresenterRegistry,
 } from './types';
+import { DefaultModeAwareHalfcodeNodeViewShell } from './modeAwareNodeViewShell';
+import {
+  createXnlRichDocumentModeRegistrationCoordinator,
+  type XnlRichDocumentModeRegistrationCoordinator,
+} from './modeRegistrationCoordinator';
 
 const EMPTY = Object.freeze({}) as Readonly<Record<PropertyKey, never>>;
 type EmbedKind = XnlRichDocumentHalfcodeNodeViewTarget['kind'];
@@ -57,6 +70,9 @@ interface HostCapabilities<TView extends object, THost extends object> {
   readonly canonicalRegistry?: CanonicalComponentRegistry;
   readonly register: DocumentInstanceRegistry['register'];
   readonly unregister: DocumentInstanceRegistry['unregister'];
+  readonly displayModeSession?: DocumentDisplayModeSession;
+  readonly modeRegistrations?: XnlRichDocumentModeRegistrationCoordinator;
+  readonly modeShellPresenters?: XnlRichDocumentModeShellPresenterRegistry;
 }
 
 interface MountedNodeView {
@@ -86,7 +102,11 @@ interface EmbedSnapshot extends XnlProjectionSerializableRecord {
 interface VueMountState<TView extends object> {
   plan: UnitRenderPlan;
   presenterIdentity: string;
-  embeddedInput: XnlRichDocumentEmbeddedPresenterInput<TView>;
+  baseInput: XnlRichDocumentEmbeddedPresenterInput<TView>;
+  embeddedInput: XnlRichDocumentModeAwareEmbeddedPresenterInput<TView>;
+  mode: XnlRichDocumentEmbeddedModeView;
+  selected: boolean;
+  modeShellPresenterId?: string;
   revision: number;
 }
 
@@ -138,12 +158,22 @@ export function prepareXnlRichDocumentHalfcodeNodeViewCapability<
     diagnostics.push(item);
     return item;
   };
+  const ownsModeRegistrations = capabilities.value.displayModeSession !== undefined
+    && capabilities.value.modeRegistrations === undefined;
+  const modeRegistrations = capabilities.value.modeRegistrations
+    ?? (capabilities.value.displayModeSession === undefined
+      ? undefined
+      : createXnlRichDocumentModeRegistrationCoordinator(
+          capabilities.value.displayModeSession,
+          report,
+        ));
 
   const componentEmbed = createNodeViewRenderer(
     'component-embed',
     capabilities.value,
     prepared.value,
     mounts,
+    modeRegistrations,
     () => disposed,
     report,
   );
@@ -152,6 +182,7 @@ export function prepareXnlRichDocumentHalfcodeNodeViewCapability<
     capabilities.value,
     prepared.value,
     mounts,
+    modeRegistrations,
     () => disposed,
     report,
   );
@@ -162,6 +193,7 @@ export function prepareXnlRichDocumentHalfcodeNodeViewCapability<
     if (disposed) return;
     disposed = true;
     for (const mount of [...mounts]) mount.destroy();
+    if (ownsModeRegistrations) modeRegistrations?.dispose();
   };
 
   return Object.freeze({
@@ -177,6 +209,7 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
   capabilities: HostCapabilities<TView, THost>,
   prepared: PreparedHostInput,
   mounts: Set<MountedNodeView>,
+  modeRegistrations: XnlRichDocumentModeRegistrationCoordinator | undefined,
   isDisposed: () => boolean,
   report: (
     code: XnlRichDocumentHalfcodeNodeViewDiagnosticCode,
@@ -269,18 +302,91 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
       return diagnosticView('DUPLICATE_HALFCODE_NODEVIEW_OCCURRENCE', message);
     }
 
-    const state = shallowReactive<VueMountState<TView>>({
-      plan: target.plan,
-      presenterIdentity: target.presenterIdentity,
-      embeddedInput: capability.embeddedInput,
-      revision: 0,
-    });
+    let state!: VueMountState<TView>;
     let app: App<Element> | undefined;
     let vueMounted = false;
     let destroyed = false;
     let registrationReleased = false;
+    const modeRegistration = modeRegistrations?.acquire(occurrence.instanceRef);
+    let unsubscribeMode: (() => void) | undefined;
+    let modeCommandSequence = 0;
     let vueFailure: unknown;
     const ownerToken = registerResult.ownerToken;
+    const requestModeTransition: XnlRichDocumentModeAwareEmbeddedPresenterInput<TView>['requestModeTransition'] = async (
+      _runtime,
+      modeInput,
+    ) => {
+      const session = capabilities.displayModeSession;
+      const modeLease = modeRegistration?.lease();
+      if (session === undefined || modeLease === undefined || destroyed) {
+        return Object.freeze({ status: 'rejected' as const, reason: 'Display mode occurrence is not available.' });
+      }
+      modeCommandSequence += 1;
+      const correlationId = `${formatDocumentInstanceRef(occurrence.instanceRef)}:mode:${modeCommandSequence}`;
+      const result = await session.dispatch(modeInput.mode === 'inherit'
+        ? { type: 'clear-overlay', correlationId, ref: occurrence.instanceRef, lease: modeLease }
+        : { type: 'set-overlay', correlationId, ref: occurrence.instanceRef, lease: modeLease, mode: modeInput.mode });
+      if (!result.ok) {
+        const reason = result.diagnostics.map((item) => item.message).join('; ') || 'Display mode transition was rejected.';
+        report('HALFCODE_NODEVIEW_MODE_TRANSITION_REJECTED', reason);
+        return Object.freeze({ status: 'rejected' as const, reason });
+      }
+      return Object.freeze({ status: 'accepted' as const });
+    };
+    const createModeAwareInput = (
+      baseInput: XnlRichDocumentEmbeddedPresenterInput<TView>,
+      mode: XnlRichDocumentEmbeddedModeView,
+    ): XnlRichDocumentModeAwareEmbeddedPresenterInput<TView> => Object.freeze({
+      view: baseInput.view,
+      snapshot: baseInput.snapshot,
+      instanceRef: baseInput.instanceRef,
+      emitEditIntent: async (presenterRuntime, editInput, editConfig) => {
+        if (state.mode.mode !== 'edit') {
+          return Object.freeze({
+            status: 'rejected' as const,
+            diagnostics: Object.freeze([{
+              severity: 'error' as const,
+              code: 'EMBEDDED_PRESENTER_EDIT_MODE_DENIED' as const,
+              message: 'Document authoring is unavailable while this occurrence is in view mode.',
+            }]) as never,
+          });
+        }
+        return baseInput.emitEditIntent(presenterRuntime, editInput, editConfig);
+      },
+      mode,
+      requestModeTransition,
+    });
+    const initialMode = capabilities.displayModeSession === undefined
+      ? legacyEditModeView()
+      : closedOccurrenceModeView();
+    state = shallowReactive<VueMountState<TView>>({
+      plan: target.plan,
+      presenterIdentity: target.presenterIdentity,
+      baseInput: capability.embeddedInput,
+      embeddedInput: undefined as never,
+      mode: initialMode,
+      selected: false,
+      ...(target.modeShellPresenterId === undefined ? {} : { modeShellPresenterId: target.modeShellPresenterId }),
+      revision: 0,
+    });
+    state.embeddedInput = createModeAwareInput(state.baseInput, state.mode);
+
+    const updateModeProjection = (projection: DocumentDisplayModeProjection) => {
+      state.mode = embeddedModeView(projection);
+      state.embeddedInput = createModeAwareInput(state.baseInput, state.mode);
+      state.revision += 1;
+    };
+    if (capabilities.displayModeSession !== undefined) {
+      const session = capabilities.displayModeSession;
+      unsubscribeMode = session.subscribe((snapshot) => {
+        const occurrenceKey = formatDocumentInstanceRef(occurrence.instanceRef);
+        const projection = snapshot.projections.find((item) => (
+          item.target.kind === 'occurrence'
+          && formatDocumentInstanceRef(item.target.ref) === occurrenceKey
+        ));
+        if (!destroyed && projection !== undefined) updateModeProjection(projection);
+      });
+    }
     const cleanupRegistration = () => {
       if (registrationReleased) return;
       registrationReleased = true;
@@ -342,9 +448,21 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
         }
         state.plan = nextTarget.plan;
         state.presenterIdentity = nextTarget.presenterIdentity;
-        state.embeddedInput = updateCapability.embeddedInput;
+        state.baseInput = updateCapability.embeddedInput;
+        state.embeddedInput = createModeAwareInput(state.baseInput, state.mode);
+        state.modeShellPresenterId = nextTarget.modeShellPresenterId;
         state.revision += 1;
         return true;
+      },
+      selectNode() {
+        if (destroyed || state.selected) return;
+        state.selected = true;
+        state.revision += 1;
+      },
+      deselectNode() {
+        if (destroyed || !state.selected) return;
+        state.selected = false;
+        state.revision += 1;
       },
       destroy() {
         if (destroyed) return;
@@ -361,6 +479,9 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
             `Halfcode NodeView Vue cleanup threw: ${errorMessage(error)}`,
           );
         }
+        unsubscribeMode?.();
+        unsubscribeMode = undefined;
+        modeRegistration?.release();
         cleanupRegistration();
       },
       stopEvent(event) {
@@ -376,7 +497,7 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
     const Root = defineComponent({
       name: 'XnlRichDocumentHalfcodeNodeViewRoot',
       setup() {
-        return () => h(CanonicalHalfcodeRenderer, {
+        const renderHalfcode = () => h(CanonicalHalfcodeRenderer, {
           plan: state.plan,
           runtime: capabilities.halfcodeRuntime,
           registry: capabilities.canonicalRegistry,
@@ -384,6 +505,22 @@ function createNodeViewRenderer<TView extends object, THost extends object>(
           hostPresenterIdentity: state.presenterIdentity,
           revision: state.revision,
         });
+        return () => {
+          if (capabilities.displayModeSession === undefined) return renderHalfcode();
+          const Shell = resolveModeShellPresenter(
+            state.modeShellPresenterId,
+            capabilities.modeShellPresenters,
+            report,
+          );
+          return h(Shell, {
+            kind: expectedKind,
+            title: targetTitle(state.plan, initial.value.ref),
+            mode: state.mode,
+            selected: state.selected,
+            view: state.embeddedInput.view,
+            requestModeTransition,
+          }, { default: renderHalfcode });
+        };
       },
     });
     try {
@@ -419,6 +556,8 @@ function readHostCapabilities<TView extends object, THost extends object>(
   const documentInstances = runtimeCapability(runtime, 'documentInstances');
   const halfcodeRuntime = runtimeCapability(runtime, 'halfcodeRuntime');
   const canonicalRegistry = resolveApplicationDataCapability(runtime, 'canonicalRegistry');
+  const displayMode = resolveApplicationDataCapability(runtime, 'displayMode');
+  const modeShellPresenters = resolveApplicationDataCapability(runtime, 'modeShellPresenters');
   if (!documentInstances.ok) return documentInstances;
   if (!halfcodeRuntime.ok) return halfcodeRuntime;
   if (!isObject(documentInstances.value)) {
@@ -446,6 +585,40 @@ function readHostCapabilities<TView extends object, THost extends object>(
   } else if (!isAbsentOptionalCapability(canonicalRegistry.reason)) {
     return { ok: false, message: `Halfcode NodeView canonicalRegistry ${canonicalRegistry.reason}.` };
   }
+  let displayModeSession: DocumentDisplayModeSession | undefined;
+  let modeRegistrations: XnlRichDocumentModeRegistrationCoordinator | undefined;
+  if (displayMode.ok) {
+    if (!isObject(displayMode.value)) return { ok: false, message: 'Halfcode NodeView displayMode must be an object.' };
+    const session = runtimeCapability(displayMode.value, 'session');
+    if (!session.ok || !isObject(session.value)) return { ok: false, message: 'Halfcode NodeView displayMode session is invalid.' };
+    for (const method of ['snapshot', 'register', 'unregister', 'dispatch', 'subscribe'] as const) {
+      const candidate = runtimeCapability(session.value, method);
+      if (!candidate.ok || typeof candidate.value !== 'function') return { ok: false, message: `Halfcode NodeView displayMode session ${method} must be a function.` };
+    }
+    displayModeSession = session.value as unknown as DocumentDisplayModeSession;
+    const registrations = runtimeCapability(displayMode.value, 'registrations');
+    if (registrations.ok) {
+      if (!isObject(registrations.value)) return { ok: false, message: 'Halfcode NodeView displayMode registrations must be an object.' };
+      for (const method of ['acquire', 'dispose'] as const) {
+        const candidate = runtimeCapability(registrations.value, method);
+        if (!candidate.ok || typeof candidate.value !== 'function') return { ok: false, message: `Halfcode NodeView displayMode registrations ${method} must be a function.` };
+      }
+      modeRegistrations = registrations.value as unknown as XnlRichDocumentModeRegistrationCoordinator;
+    } else if (!isAbsentOptionalCapability(registrations.message)) {
+      return { ok: false, message: `Halfcode NodeView displayMode registrations ${registrations.message}.` };
+    }
+  } else if (!isAbsentOptionalCapability(displayMode.reason)) {
+    return { ok: false, message: `Halfcode NodeView displayMode ${displayMode.reason}.` };
+  }
+  let shellRegistry: XnlRichDocumentModeShellPresenterRegistry | undefined;
+  if (modeShellPresenters.ok) {
+    if (!isObject(modeShellPresenters.value)) return { ok: false, message: 'Halfcode NodeView modeShellPresenters must be an object.' };
+    const resolve = runtimeCapability(modeShellPresenters.value, 'resolve');
+    if (!resolve.ok || typeof resolve.value !== 'function') return { ok: false, message: 'Halfcode NodeView mode shell registry resolve must be a function.' };
+    shellRegistry = modeShellPresenters.value as unknown as XnlRichDocumentModeShellPresenterRegistry;
+  } else if (!isAbsentOptionalCapability(modeShellPresenters.reason)) {
+    return { ok: false, message: `Halfcode NodeView modeShellPresenters ${modeShellPresenters.reason}.` };
+  }
   return {
     ok: true,
     value: {
@@ -457,6 +630,9 @@ function readHostCapabilities<TView extends object, THost extends object>(
         : {}),
       register: register.value.bind(documentInstances.value) as DocumentInstanceRegistry['register'],
       unregister: unregister.value.bind(documentInstances.value) as DocumentInstanceRegistry['unregister'],
+      ...(displayModeSession === undefined ? {} : { displayModeSession }),
+      ...(modeRegistrations === undefined ? {} : { modeRegistrations }),
+      ...(shellRegistry === undefined ? {} : { modeShellPresenters: shellRegistry }),
     },
   };
 }
@@ -465,6 +641,61 @@ function isAbsentOptionalCapability(reason: string): boolean {
   return reason.includes('missing')
     || reason.includes('global platform prototype boundary')
     || reason.includes('native intrinsic prototype boundary');
+}
+
+function embeddedModeView(projection: DocumentDisplayModeProjection): XnlRichDocumentEmbeddedModeView {
+  const requested = projection.overlay === 'inherit' ? projection.inheritedMode : projection.overlay;
+  const source = projection.effectiveMode !== requested || projection.diagnostics.length > 0
+    ? 'policy' as const
+    : projection.overlay === 'inherit' ? 'base' as const : 'overlay' as const;
+  return Object.freeze({
+    mode: projection.effectiveMode,
+    overlay: projection.overlay,
+    inheritedMode: projection.inheritedMode,
+    source,
+    allowedModes: Object.freeze([...projection.allowedModes]),
+    canSwitch: projection.canSwitch,
+    ...(projection.reason === undefined ? {} : { reason: projection.reason }),
+  });
+}
+
+function closedOccurrenceModeView(): XnlRichDocumentEmbeddedModeView {
+  return Object.freeze({
+    mode: 'view',
+    overlay: 'inherit',
+    inheritedMode: 'view',
+    source: 'policy',
+    allowedModes: Object.freeze([]),
+    canSwitch: false,
+    reason: 'Display mode registration is pending.',
+  });
+}
+
+function legacyEditModeView(): XnlRichDocumentEmbeddedModeView {
+  return Object.freeze({
+    mode: 'edit',
+    overlay: 'inherit',
+    inheritedMode: 'edit',
+    source: 'base',
+    allowedModes: Object.freeze(['edit'] as const),
+    canSwitch: false,
+  });
+}
+
+function resolveModeShellPresenter(
+  id: string | undefined,
+  registry: XnlRichDocumentModeShellPresenterRegistry | undefined,
+  report: (code: XnlRichDocumentHalfcodeNodeViewDiagnosticCode, message: string) => XnlRichDocumentHalfcodeNodeViewDiagnostic,
+): Component {
+  if (id === undefined) return DefaultModeAwareHalfcodeNodeViewShell;
+  const resolved = registry?.resolve(id);
+  if (resolved !== undefined) return resolved;
+  report('UNKNOWN_HALFCODE_NODEVIEW_SHELL_PRESENTER', `No mode shell presenter is registered for "${id}".`);
+  return DefaultModeAwareHalfcodeNodeViewShell;
+}
+
+function targetTitle(plan: UnitRenderPlan, fallback: string): string {
+  return typeof plan.unitFqn === 'string' && plan.unitFqn.length > 0 ? plan.unitFqn : fallback;
 }
 
 function prepareHostInput(input: unknown): ReadResult<PreparedHostInput> {
@@ -478,7 +709,9 @@ function prepareHostInput(input: unknown): ReadResult<PreparedHostInput> {
   for (const value of targetItems.value) {
     const target = readExactDataRecord(
       value,
-      ['kind', 'ref', 'presenterIdentity', 'plan'],
+      hasOwnDataProperty(value, 'modeShellPresenterId')
+        ? ['kind', 'ref', 'presenterIdentity', 'modeShellPresenterId', 'plan']
+        : ['kind', 'ref', 'presenterIdentity', 'plan'],
       'Halfcode NodeView target',
     );
     if (!target.ok) return target;
@@ -489,6 +722,9 @@ function prepareHostInput(input: unknown): ReadResult<PreparedHostInput> {
       !validTargetRef(target.value.kind, target.value.ref)
       || typeof target.value.presenterIdentity !== 'string'
       || target.value.presenterIdentity.trim().length === 0
+      || (target.value.modeShellPresenterId !== undefined
+        && (typeof target.value.modeShellPresenterId !== 'string'
+          || target.value.modeShellPresenterId.trim().length === 0))
     ) {
       return { ok: false, message: 'Halfcode NodeView target ref or canonical render plan is invalid.' };
     }
@@ -510,6 +746,9 @@ function prepareHostInput(input: unknown): ReadResult<PreparedHostInput> {
       kind: target.value.kind,
       ref: target.value.ref,
       presenterIdentity: target.value.presenterIdentity,
+      ...(target.value.modeShellPresenterId === undefined
+        ? {}
+        : { modeShellPresenterId: target.value.modeShellPresenterId as string }),
       plan: plan.value,
     }));
   }
@@ -630,6 +869,16 @@ function readExactDataRecord(
     result[key] = descriptor.value;
   }
   return { ok: true, value: result };
+}
+
+function hasOwnDataProperty(value: unknown, key: string): boolean {
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) return false;
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor !== undefined && 'value' in descriptor;
+  } catch {
+    return false;
+  }
 }
 
 function readDenseArray(value: unknown, label: string): ReadResult<readonly unknown[]> {

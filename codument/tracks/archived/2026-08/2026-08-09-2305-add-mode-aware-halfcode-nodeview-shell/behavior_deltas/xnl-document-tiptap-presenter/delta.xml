@@ -1,0 +1,10 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/mode-aware-halfcode-nodeview-shell">
+    <requirement id="mode-aware-halfcode-nodeview-shell">
+      <statement>系统 SHALL 为文档内嵌 Component/Capsule 提供统一 mode shell、受限模式能力与双 registry lifecycle。</statement>
+      <suite id="restricted-capability" name="Restricted mode capability"><case id="view-authoring-guard"><given>occurrence effective mode 为 view</given><when>组件直接调用 edit intent 或 shell authoring control</when><then>host MUST 拒绝 authoring 且继续允许独立授权的业务 interaction</then></case></suite>
+      <suite id="lifecycle" name="Dual lifecycle"><case id="async-mode-registration"><given>NodeView 同步创建且 mode registration 异步完成</given><when>mount 更新销毁或 host dispose</when><then>document owner token 与 mode lease MUST 各自精确释放，迟到结果不得复活 mount</then></case></suite>
+      <suite id="presentation" name="Shell presentation"><case id="stable-override"><given>target 声明 stable shell presenter id</given><when>runtime registry 解析 override</when><then>仅 shell 视觉可替换，transition guard lifecycle authority MUST 保持 host-owned</then></case></suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

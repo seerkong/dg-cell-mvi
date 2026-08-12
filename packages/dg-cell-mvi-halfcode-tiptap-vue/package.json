@@ -53,7 +53,8 @@
     "dg-cell-mvi-halfcode-contract": "^0.1.1",
     "dg-cell-mvi-halfcode-logic": "^0.1.1",
     "dg-cell-mvi-halfcode-support": "^0.1.1",
-    "dg-cell-mvi-halfcode-vue": "^0.1.1"
+    "dg-cell-mvi-halfcode-vue": "^0.1.1",
+    "lucide-vue-next": "^1.0.0"
   },
   "peerDependencies": {
     "vue": ">=3.3"

@@ -1,0 +1,16 @@
+<Track id="add-mode-aware-halfcode-nodeview-shell" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata><Status>completed</Status><Goal>为 Component/Capsule NodeView 建立统一 mode-aware shell 与受限能力。</Goal><Description>组合独立 mode lease、shell presenter、authoring guard 与异步 lifecycle。</Description><QuestionMode>decision-tree</QuestionMode><QuestionSeverity>auto</QuestionSeverity><CommitMode>manual</CommitMode><CreatedAt>2026-08-09T20:05:00Z</CreatedAt><UpdatedAt>2026-08-09T20:05:00Z</UpdatedAt></Metadata>
+  <Ports scope="track"><MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/><MaterialBundle role="input" name="mode-session" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/documentDisplayModeSession.ts"/><MaterialBundle role="output" name="nodeview-shell" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/></Ports>
+  <TaskSpace id="space_add-mode-aware-halfcode-nodeview-shell" name="add-mode-aware-halfcode-nodeview-shell" version="1" cdt:child-mode="dag"><SubNodes>
+    <TaskGroup id="P1" name="Capability And Lifecycle" status="DONE" order="0"><SubNodes>
+      <Task id="T1.1" name="扩展 restricted mode facade 与 authoring guard" status="DONE" order="0" priority="P0"><cdt:Acceptance><cdt:Criterion id="T1.1-AC1" checked="true">Presenter 仅获得 frozen mode view、transition grant 与 mode-aware edit intent</cdt:Criterion><cdt:Criterion id="T1.1-AC2" checked="true">view 拒绝 authoring intent 且业务 interaction 保持可用</cdt:Criterion></cdt:Acceptance></Task>
+      <Task id="T1.2" name="组合 document token 与 async mode lease" status="DONE" order="1" priority="P0"><cdt:Acceptance><cdt:Criterion id="T1.2-AC1" checked="true">独立 token/lease 在普通与迟到 registration cleanup 中各释放一次</cdt:Criterion></cdt:Acceptance></Task>
+    </SubNodes></TaskGroup>
+    <TaskGroup id="P2" name="Shell And Verification" status="DONE" order="1"><SubNodes>
+      <Task id="T2.1" name="实现默认 shell 与 stable presenter override" status="DONE" order="0" priority="P0"><cdt:Acceptance><cdt:Criterion id="T2.1-AC1" checked="true">stable override 只接收 exact props 并复用 host transition grant</cdt:Criterion></cdt:Acceptance></Task>
+      <Task id="T2.2" name="验证 lifecycle business interaction accessibility" status="DONE" order="1" priority="P0"><cdt:Acceptance><cdt:Criterion id="T2.2-AC1" checked="true">Component/Capsule mode path、XNL-neutral transition 和窄 shell CSS 有可执行证据</cdt:Criterion></cdt:Acceptance></Task>
+    </SubNodes><Hooks><Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook></Hooks></TaskGroup>
+  </SubNodes></TaskSpace>
+  <Schedule><Dag for="space_add-mode-aware-halfcode-nodeview-shell"><Node id="P2"><After ref="P1"/></Node></Dag><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+  <Hooks><Hook on="track:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+</Track>

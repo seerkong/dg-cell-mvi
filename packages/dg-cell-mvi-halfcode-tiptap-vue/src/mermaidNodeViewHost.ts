@@ -18,6 +18,10 @@ import type {
   XnlRichDocumentMermaidRenderInput,
   XnlRichDocumentMermaidRenderResult,
 } from './types';
+import {
+  createModeAwareStructuredNodeViewRenderer,
+  type XnlRichDocumentStructuredNodeViewModeRuntime,
+} from './structuredNodeViewMode';
 
 const EMPTY = Object.freeze({}) as Readonly<Record<PropertyKey, never>>;
 const HOST_REQUEST_ID = 'mermaid-nodeview-host';
@@ -45,6 +49,10 @@ interface MountedMermaidNodeView {
   destroy(): void;
 }
 
+interface ModeAwareMermaidNodeView extends NodeView {
+  setDisplayMode(mode: 'view' | 'edit'): void;
+}
+
 export type XnlRichDocumentMermaidNodeViewCapabilityResult =
   | Readonly<{
       status: 'ready';
@@ -54,7 +62,7 @@ export type XnlRichDocumentMermaidNodeViewCapabilityResult =
   | Extract<XnlRichDocumentMermaidNodeViewHostResult, { status: 'rejected' }>;
 
 interface MermaidNodeSnapshot {
-  readonly nodeId: string;
+  readonly nodeId: string | undefined;
   readonly source: string;
 }
 
@@ -84,6 +92,7 @@ export function prepareXnlRichDocumentMermaidNodeViewCapability<
   runtime: XnlRichDocumentMermaidNodeViewRuntime<TRenderRuntime, TDiagnosticRuntime>,
   input: XnlRichDocumentMermaidNodeViewHostInput,
   config: XnlRichDocumentMermaidNodeViewHostConfig,
+  displayMode?: XnlRichDocumentStructuredNodeViewModeRuntime,
 ): XnlRichDocumentMermaidNodeViewCapabilityResult {
   const outer = readExactDataCarrier(runtime, ['renderer', 'diagnostics'], 'Mermaid NodeView runtime');
   if (!outer.ok) return rejected('INVALID_MERMAID_NODEVIEW_RUNTIME', outer.message);
@@ -126,7 +135,22 @@ export function prepareXnlRichDocumentMermaidNodeViewCapability<
 
   const mounts = new Set<MountedMermaidNodeView>();
   let disposed = false;
-  const mermaid = createMermaidNodeViewRenderer(effects, mounts, () => disposed);
+  const baseMermaid = createMermaidNodeViewRenderer(effects, mounts, () => disposed);
+  const mermaid = displayMode === undefined
+    ? baseMermaid
+    : createModeAwareStructuredNodeViewRenderer({
+        ...displayMode,
+        innerRenderer: baseMermaid,
+        projection: {
+          title: (node) => typeof node.attrs.nodeId === 'string' ? node.attrs.nodeId : 'Mermaid diagram',
+          applyMode: (nodeView, mode) => {
+            if (isModeAwareMermaidNodeView(nodeView)) nodeView.setDisplayMode(mode.mode);
+          },
+        },
+      }, {
+        projectionRole: 'mermaid',
+        kindLabel: 'Mermaid',
+      });
   const dispose = () => {
     if (disposed) return;
     disposed = true;
@@ -184,7 +208,7 @@ function createMermaidNodeViewRenderer(
     };
     const render = (source: string): void => {
       if (destroyed || isDisposed()) return;
-      const requestId = `${snapshot.nodeId}:${++sequence}`;
+      const requestId = `${snapshot.nodeId ?? 'mermaid'}:${++sequence}`;
       liveRequestId = requestId;
       Promise.resolve()
         .then(() => effects.render(Object.freeze({ source, requestId })))
@@ -248,7 +272,7 @@ function createMermaidNodeViewRenderer(
         });
     };
     const updateSource = (): void => {
-      if (destroyed || isDisposed()) return;
+      if (destroyed || isDisposed() || sourceEditor.disabled) return;
       const position = typeof props.getPos === 'function' ? props.getPos() : undefined;
       if (typeof position !== 'number') return;
       props.view.dispatch(props.view.state.tr.setNodeMarkup(position, undefined, {
@@ -258,8 +282,11 @@ function createMermaidNodeViewRenderer(
     };
     sourceEditor.addEventListener('input', updateSource);
 
-    const mount: MountedMermaidNodeView & NodeView = {
+    const mount: MountedMermaidNodeView & ModeAwareMermaidNodeView = {
       dom,
+      setDisplayMode(mode: 'view' | 'edit') {
+        sourceEditor.disabled = mode === 'view';
+      },
       update(node: ProseMirrorNode) {
         if (destroyed || isDisposed() || node.type.name !== props.node.type.name) return false;
         const next = readMermaidNodeSnapshot(node);
@@ -293,10 +320,14 @@ function createMermaidNodeViewRenderer(
   };
 }
 
+function isModeAwareMermaidNodeView(nodeView: NodeView): nodeView is ModeAwareMermaidNodeView {
+  return typeof (nodeView as Partial<ModeAwareMermaidNodeView>).setDisplayMode === 'function';
+}
+
 function readMermaidNodeSnapshot(node: ProseMirrorNode): MermaidNodeSnapshot {
   const nodeId = typeof node.attrs.nodeId === 'string' && node.attrs.nodeId.length > 0
     ? node.attrs.nodeId
-    : 'mermaid';
+    : undefined;
   const source = typeof node.attrs.source === 'string' ? node.attrs.source : '';
   return { nodeId, source };
 }

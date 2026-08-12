@@ -1,0 +1,33 @@
+<Track id="add-mode-aware-document-editor-runtime" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>实现单 owner mode session，并让文档编辑器在同一 lineage 上动态切换显示模式。</Goal>
+    <Description>交付 async policy、lease freshness、受限 projection、setEditable 与最终 command guard。</Description>
+    <QuestionMode>decision-tree</QuestionMode><QuestionSeverity>auto</QuestionSeverity><CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-09T19:50:00Z</CreatedAt><UpdatedAt>2026-08-09T19:50:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/src/document-display-mode/"/>
+    <MaterialBundle role="output" name="support-session" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/src/documentDisplayModeSession.ts"/>
+    <MaterialBundle role="output" name="editor-adapter" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+  </Ports>
+  <TaskSpace id="space_add-mode-aware-document-editor-runtime" name="add-mode-aware-document-editor-runtime" version="1" cdt:child-mode="dag">
+    <SubNodes>
+      <TaskGroup id="P1" name="Mode Session" status="DONE" order="0"><SubNodes>
+        <Task id="T1.1" name="实现 async policy 串行 actor 与 freshness" status="DONE" order="0" priority="P0"/>
+        <Task id="T1.2" name="实现 policy refresh subscription destroy" status="DONE" order="1" priority="P0"/>
+      </SubNodes></TaskGroup>
+      <TaskGroup id="P2" name="Editor Adapter" status="DONE" order="1"><SubNodes>
+        <Task id="T2.1" name="接入 frozen projection 与原位 setEditable" status="DONE" order="0" priority="P0"/>
+        <Task id="T2.2" name="关闭 toolbar command bypass" status="DONE" order="1" priority="P0"/>
+      </SubNodes></TaskGroup>
+      <TaskGroup id="P3" name="Verification" status="DONE" order="2"><SubNodes>
+        <Task id="T3.1" name="验证零 authoring 写入与同一 lineage" status="DONE" order="0" priority="P0"/>
+        <Task id="T3.2" name="运行 fresh gap 与 package checks" status="DONE" order="1" priority="P0"/>
+      </SubNodes><Hooks><Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook></Hooks></TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule><Dag for="space_add-mode-aware-document-editor-runtime"><Node id="P2"><After ref="P1"/></Node><Node id="P3"><After ref="P2"/></Node></Dag><Parallel max-concurrent="1" spot-check="true"/></Schedule>
+  <Hooks><Hook on="track:after"><cdt:AttractorCheck use="coding"/></Hook></Hooks>
+</Track>

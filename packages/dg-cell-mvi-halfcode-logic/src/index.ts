@@ -47,5 +47,6 @@ export {
   type XnlRichDocumentEditTranslator,
 } from './xnl-rich-document';
 export * from './document-editor';
+export * from './document-display-mode';
 
 export * from 'dg-cell-mvi-halfcode-contract';

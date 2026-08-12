@@ -7,6 +7,10 @@ import type {
   XnlDocumentEditorDiagnosticSinkBinding,
   XnlDocumentEditorHighlightBinding,
 } from './documentEditorTypes';
+import {
+  createModeAwareStructuredNodeViewRenderer,
+  type XnlRichDocumentStructuredNodeViewModeRuntime,
+} from './structuredNodeViewMode';
 
 export type EnhancedCodeBlockPresenterDiagnostic = Readonly<{
   severity: 'warning';
@@ -19,6 +23,7 @@ export type EnhancedCodeBlockPresenterRuntime = Readonly<{
   clipboard?: XnlDocumentEditorClipboardBinding;
   highlighter?: XnlDocumentEditorHighlightBinding;
   diagnostics?: XnlDocumentEditorDiagnosticSinkBinding<EnhancedCodeBlockPresenterDiagnostic>;
+  displayMode?: XnlRichDocumentStructuredNodeViewModeRuntime;
 }>;
 
 export type EnhancedCodeBlockPresenterConfig = Readonly<{
@@ -43,7 +48,7 @@ export function createEnhancedCodeBlockPresenter(
   const views = new Set<CodeNodeView>();
   let disposed = false;
 
-  const nodeView: NodeViewRenderer = (props) => {
+  const baseNodeView: NodeViewRenderer = (props) => {
     const ownerDocument = (props.editor.options.element as Element | null)?.ownerDocument;
     if (ownerDocument === undefined) {
       throw new Error('Enhanced code presenter requires a mounted DOM owner document.');
@@ -66,6 +71,26 @@ export function createEnhancedCodeBlockPresenter(
     view.refreshFold(folded);
     return view;
   };
+  const nodeView = runtime.displayMode === undefined
+    ? baseNodeView
+    : createModeAwareStructuredNodeViewRenderer({
+        ...runtime.displayMode,
+        innerRenderer: baseNodeView,
+        projection: {
+          title: (node) => typeof node.attrs.nodeId === 'string' ? node.attrs.nodeId : 'Code block',
+          applyMode: (nodeView, mode) => {
+            const content = nodeView.contentDOM;
+            const HTMLElementConstructor = nodeView.dom.ownerDocument.defaultView?.HTMLElement;
+            if (HTMLElementConstructor === undefined || !(content instanceof HTMLElementConstructor)) return;
+            if (mode.mode === 'view') content.setAttribute('contenteditable', 'false');
+            else content.removeAttribute('contenteditable');
+            nodeView.dom.setAttribute('data-display-mode', mode.mode);
+          },
+        },
+      }, {
+        projectionRole: 'code-block',
+        kindLabel: 'Code',
+      });
 
   const highlighting = Extension.create({
     name: 'xnlEnhancedCodeHighlighting',

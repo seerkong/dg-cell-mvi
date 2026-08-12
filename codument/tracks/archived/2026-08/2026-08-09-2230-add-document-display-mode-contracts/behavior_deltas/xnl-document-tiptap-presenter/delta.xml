@@ -1,0 +1,19 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/document-display-mode-overlay">
+    <requirement id="document-display-mode-overlay">
+      <statement>系统 SHALL 以 renderer-neutral session facts 和 runtime policy 派生文档 base mode 与 occurrence overlay 的有效显示模式。</statement>
+      <suite id="overlay-contract" name="显示模式覆盖契约">
+        <case id="canonical-overlay">
+          <given>一个由 compiled Document mode 初始化且含完整 occurrence identity 的文档会话</given>
+          <when>调用方请求切换 base mode 或 occurrence overlay</when>
+          <then>effective mode 由 canonical base/overlay 与 runtime policy 纯派生，inherit 删除 overlay，拒绝操作不改变既有事实</then>
+        </case>
+        <case id="authority-separation">
+          <given>一个 policy 允许 edit 显示投影的 occurrence</given>
+          <when>Presenter 获得 mode projection</when>
+          <then>投影不包含 authoring capability、policy implementation、ACL、DOM 或持久化 authority</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

@@ -1,0 +1,12 @@
+<decision #add-document-display-mode-contracts.authority {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>文档显示模式由谁持有并如何约束？</?>
+  <answer { } (
+    <decision-text ?>DocumentDisplayMode 复用既有 DocumentMode；base/overlay 由会话 owner 持有，runtime-bound policy 负责约束。</?>
+    <rationale ?>显示模式是临时产品事实，不应进入领域 XNL、版本历史或 renderer 私有状态。</?>
+    <evidence ?>完整 occurrence identity、独立 lease、exact snapshot 与 async policy 对抗测试均已通过。</?>
+  )>
+)>

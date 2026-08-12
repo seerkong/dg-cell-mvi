@@ -1,0 +1,12 @@
+<decision #add-mode-aware-document-editor-runtime.readonly-projection {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>XnlDocumentEditor 应获得 session 还是 projection？</?>
+  <answer { } (
+    <decision-text ?>只接收 frozen DocumentDisplayModeProjection；session authority 留在可信宿主。</?>
+    <rationale ?>Editor 是显示适配器，不应成为 mode owner 或得到 occurrence lifecycle authority。</?>
+    <evidence ?>原位 setEditable 测试证明无需重建 Editor/draft 即可完成切换。</?>
+  )>
+)>

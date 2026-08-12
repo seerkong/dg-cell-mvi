@@ -1,0 +1,60 @@
+<Track id="extend-document-modes-to-structured-nodeviews" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 Insert 中具备独立 presenter 的 Mermaid 与 Enhanced Code Block 支持统一 View/Edit occurrence 模式。</Goal>
+    <Description>复用 display-mode session 与 contextual shell，补齐结构化 NodeView 模式投影和插入后发现性。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <GapRound>2</GapRound>
+    <CreatedAt>2026-08-10T10:05:00Z</CreatedAt>
+    <UpdatedAt>2026-08-10T11:06:36Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="display-mode-foundation" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="structured-nodeviews" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="foundation-tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/test/"/>
+    <MaterialBundle role="output" name="workbench-integration" domain="code" path="vfs://@/../../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/src/programmable-document/"/>
+    <MaterialBundle role="output" name="workbench-tests" domain="test" path="vfs://@/../../../ai/eidolon/eidolon-workbench/frontend/packages/bastard/tests/"/>
+  </Ports>
+  <TaskSpace id="space_extend-document-modes-to-structured-nodeviews" name="extend-document-modes-to-structured-nodeviews" version="1">
+    <Description>先下沉通用 occurrence adapter，再接入 presenter 和 Workbench。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Structured NodeView mode foundation" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="建立通用 structured occurrence mode adapter" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">Mermaid/Code 可复用同一 registration、projection、transition 与 shell 生命周期</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">mode transition 不产生 Domain mutation 或持久化</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="接入 Mermaid 与 Enhanced Code presenter" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">Mermaid view/edit 和 Code authoring gate 符合行为规范</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Workbench discovery and verification" status="DONE" order="1">
+        <SubNodes>
+          <Task id="T2.1" name="补齐插入后 contextual chrome 发现性" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">新插入 mode-aware block 无需预先 hover 即可发现模式入口</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T2.2" name="运行 unit、build、desktop/390 E2E 与 gap-loop" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.2-AC1" checked="true">全部既有测试与新增真实交互验收通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="true"/></Hook>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule/>
+</Track>

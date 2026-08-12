@@ -37,11 +37,11 @@ const run = (apply: (context: CanonicalCommandContext) => boolean) => command((c
 export const CANONICAL_DOCUMENT_EDITOR_COMMANDS: ReadonlyMap<string, CanonicalCommandBinding> = new Map([
   ['rich-text.command.history.undo', command(
     ({ history }) => history.undo(),
-    ({ history }) => history.canUndo(),
+    ({ editor, history }) => editor.isEditable && history.canUndo(),
   )],
   ['rich-text.command.history.redo', command(
     ({ history }) => history.redo(),
-    ({ history }) => history.canRedo(),
+    ({ editor, history }) => editor.isEditable && history.canRedo(),
   )],
   ['rich-text.command.block.paragraph', run(({ editor }) => editor.chain().focus().setParagraph().run())],
   ['rich-text.command.block.heading-1', run(({ editor }) => editor.chain().focus().toggleHeading({ level: 1 }).run())],
@@ -64,7 +64,7 @@ export const CANONICAL_DOCUMENT_EDITOR_COMMANDS: ReadonlyMap<string, CanonicalCo
     const href = input.options?.href;
     if (typeof href !== 'string' || href.length === 0) return unavailable('A non-empty href is required.');
     return editor.chain().focus().setLink({ href }).run() ? executed() : unavailable('The command is not available here.');
-  }, ({ editor, input }) => editor.isActive('link') || typeof input.options?.href === 'string')],
+  }, ({ editor, input }) => editor.isEditable && (editor.isActive('link') || typeof input.options?.href === 'string'))],
   ['rich-text.command.inline.text-color', optionCommand('color', ({ editor, value }) => editor.chain().focus().setColor(value).run())],
   ['rich-text.command.inline.highlight', optionCommand('color', ({ editor, value }) => editor.chain().focus().toggleHighlight({ color: value }).run())],
   ['rich-text.command.align.start', run(({ editor }) => editor.chain().focus().setTextAlign('start').run())],
@@ -77,12 +77,17 @@ export const CANONICAL_DOCUMENT_EDITOR_COMMANDS: ReadonlyMap<string, CanonicalCo
   ['rich-text.command.insert.code-block', run(({ editor }) => editor.chain().focus().toggleCodeBlock().run())],
   ['rich-text.command.insert.mermaid', run(({ editor, input }) => editor.chain().focus().insertContent({
     type: 'mermaid',
-    attrs: { nodeId: null, source: typeof input.options?.source === 'string' ? input.options.source : '' },
+    attrs: {
+      nodeId: null,
+      source: typeof input.options?.source === 'string'
+        ? input.options.source
+        : 'flowchart LR\nNew --> Diagram',
+    },
   }).run())],
   ['rich-text.command.table.row-add-after', run(({ editor }) => editor.chain().focus().addRowAfter().run())],
   ['rich-text.command.table.column-add-after', run(({ editor }) => editor.chain().focus().addColumnAfter().run())],
   ['rich-text.command.table.delete', run(({ editor }) => editor.chain().focus().deleteTable().run())],
-  ['rich-text.command.code.language', optionCommand('language', ({ editor, value }) => editor.chain().focus().updateAttributes('codeBlock', { language: value }).run(), codeSelected)],
+  ['rich-text.command.code.language', optionCommand('language', ({ editor, value }) => editor.chain().focus().updateAttributes('codeBlock', { language: value }).run(), (context) => editable(context) && codeSelected(context))],
   ['rich-text.command.code.fold', command(({ editor, codePresenter }) => {
     const nodeId = selectedCodeNodeId(editor);
     if (nodeId === undefined) return unavailable('Select a code block first.');

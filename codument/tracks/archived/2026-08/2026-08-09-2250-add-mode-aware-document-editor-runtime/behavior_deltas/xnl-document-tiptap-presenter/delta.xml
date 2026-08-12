@@ -1,0 +1,14 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/document-display-mode-session">
+    <requirement id="document-display-mode-session">
+      <statement>系统 SHALL 以单 owner session 串行管理动态显示模式，并让文档编辑器只消费受限投影。</statement>
+      <suite id="session-actor" name="Mode session actor">
+        <case id="atomic-async-policy"><given>policy 为异步且 occurrence 具有独立 lease</given><when>宿主切换模式或权限事实失效</when><then>session MUST 原子发布 state/projection，隔离陈旧 lease、陈旧 policy response 和 subscriber 异常</then></case>
+      </suite>
+      <suite id="editor-adapter" name="Editor adapter">
+        <case id="in-place-mode-switch"><given>同一 accepted document 和 EditorState lineage</given><when>只读 mode projection 在 view/edit 间变化</when><then>Editor MUST 原位 setEditable 并重编译 toolbar，且不得发出 authoring interaction 或持久化写入</then></case>
+        <case id="command-fail-closed"><given>effective mode 为 view</given><when>调用方绕过可见 UI 直接执行 authoring command</when><then>命令入口 MUST 根据最终 guard 拒绝执行</then></case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

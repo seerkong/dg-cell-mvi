@@ -49,6 +49,11 @@ export type {
 } from './xnlUnitBundle';
 
 export { createDocumentInstanceRegistry } from './documentInstanceRegistry';
+export { createDocumentDisplayModeSession } from './documentDisplayModeSession';
+export type {
+  CreateDocumentDisplayModeSessionOptions,
+  DocumentDisplayModePolicyBinding,
+} from './documentDisplayModeSession';
 export {
   closeDocument,
   createDocumentOccurrenceRegistry,

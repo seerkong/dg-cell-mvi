@@ -1,0 +1,9 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/mode-aware-halfcode-nodeview-shell/suites/presentation/cases/contextual-mode-chrome">
+    <case id="contextual-mode-chrome">
+      <given>A Component or Capsule occurrence is resting, hovered, keyboard-focused, selected, touched, explicitly overridden or policy-restricted.</given>
+      <when>The default mode-aware shell presents its mode affordance at wide or narrow width.</when>
+      <then>The shell SHALL keep identity and mode controls out of normal document flow, reveal one compact accessible trigger through progressive disclosure, expose View/Edit/Inherit and policy detail in a contextual menu, preserve an unobtrusive explicit-overlay indicator, and SHALL cause no content displacement or alternate transition authority.</then>
+    </case>
+  </upsert>
+</behavior-patch>

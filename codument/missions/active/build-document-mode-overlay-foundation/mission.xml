@@ -1,0 +1,134 @@
+<Mission id="build-document-mode-overlay-foundation" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>建立文档 base mode、内嵌 occurrence overlay 与 runtime permission policy 协作的可复用显示模式基座。</Goal>
+    <Description>保留早期 Tiptap edit/view 交互理念，以 session actor、restricted mode facade 和统一 NodeView shell 重建，并在 Workbench 验证文档微应用场景。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <Revision>12</Revision>
+    <CreatedAt>2026-08-09T19:14:35Z</CreatedAt>
+    <UpdatedAt>2026-08-10T11:06:36Z</UpdatedAt>
+  </Metadata>
+
+  <Ports scope="mission">
+    <MaterialBundle role="state" name="analysis" domain="mission" path="vfs://./analysis/"/>
+    <MaterialBundle role="state" name="reports" domain="mission" path="vfs://./reports/"/>
+    <MaterialBundle role="input" name="document-contracts" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="input" name="document-editor" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/"/>
+    <MaterialBundle role="output" name="tracks" domain="codument" path="vfs://@/codument/tracks/"/>
+  </Ports>
+
+  <cdt:ProjectRefs>
+    <cdt:ProjectRef id="dg-cell-mvi" kind="host"/>
+    <cdt:ProjectRef id="eidolon-workbench" kind="external"/>
+  </cdt:ProjectRefs>
+
+  <cdt:ActorSets default="foundation-loop">
+    <cdt:ActorSet id="foundation-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="dg-cell-mvi"><Description>按 mode contract、policy、session、NodeView shell 的依赖切分底层 tracks，并根据 Workbench 反馈修订后续边界。</Description></cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="dg-cell-mvi"><Description>观察 Document mode 现有语义、Tiptap editor lineage、occurrence identity、behavior registry、track 状态和 package tests。</Description></cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="dg-cell-mvi"><Description>比较 base/overlay/policy 期望态与实际 authority，阻止 mode 进入 Domain XNL、Vue 私有真源或业务权限混合层。</Description></cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="dg-cell-mvi"><Description>连续创建、执行、验证和归档底层 tracks，并在动作内运行 contract、typecheck、identity、browser 和 authority 验证。</Description></cdt:Actor>
+    </cdt:ActorSet>
+    <cdt:ActorSet id="workbench-loop">
+      <cdt:Actor role="MissionPlanner" project-ref="eidolon-workbench"><Description>把通用 mode 基座组合为文档级和 occurrence 级可发现产品交互，不复制底层 reducer 或 policy。</Description></cdt:Actor>
+      <cdt:Actor role="MissionObserver" project-ref="eidolon-workbench"><Description>观察 Programmable Document 的 Component/Capsule、工具栏、NodeView 生命周期、VFS/VCS 和真实浏览器体验。</Description></cdt:Actor>
+      <cdt:Actor role="MissionReconciler" project-ref="eidolon-workbench"><Description>判断产品缺口属于 Workbench 组合还是底层 mode/shell 契约，并把通用问题反馈给 dg-cell-mvi。</Description></cdt:Actor>
+      <cdt:Actor role="MissionApplier" project-ref="eidolon-workbench"><Description>执行产品集成 track 与宽窄视口 E2E/chaos，验证查看态业务交互和编辑态 authoring 边界。</Description></cdt:Actor>
+    </cdt:ActorSet>
+  </cdt:ActorSets>
+
+  <TaskSpace id="space_build-document-mode-overlay-foundation" name="build-document-mode-overlay-foundation" version="1" cdt:child-mode="dag">
+    <Description>从历史交互证据到 mode contract、session、NodeView shell 和 Workbench 产品验证的 Mission DAG。</Description>
+    <SubNodes>
+      <TaskGroup id="G1" name="证据与语义冻结" status="DONE" order="0">
+        <Description>对照 rad-workbench 与当前 Document/Tiptap/Halfcode authority，冻结 mode、permission 和 business interaction 的边界。</Description>
+        <SubNodes>
+          <Task id="G1-T1" name="记录早期 edit/view 交互与当前缺口" status="DONE" order="0"/>
+          <Task id="G1-T2" name="冻结 base/overlay/policy/identity 语义" status="DONE" order="1"/>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G2" name="建立显示模式 Contract 与 Policy" status="DONE" order="1">
+        <Description>在 renderer-neutral foundation 中定义 mode data、projection、transition、policy port、diagnostics 与 behavior。</Description>
+        <SubNodes>
+          <Task id="G2-T1" name="创建并执行 document display mode contracts track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="add-document-display-mode-contracts" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G3" name="实现 Mode Session 与文档编辑器集成" status="DONE" order="2">
+        <Description>以单 actor 管理动态 base/overlay，驱动 Tiptap editable、ToolbarPlan、订阅和 transition policy。</Description>
+        <SubNodes>
+          <Task id="G3-T1" name="创建并执行 mode-aware document editor runtime track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="add-mode-aware-document-editor-runtime" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G4" name="实现统一 Mode-aware NodeView Shell" status="DONE" order="3">
+        <Description>为 Component/Capsule 与复杂内置区块提供统一 shell、restricted mode facade、overlay lifecycle 和 Presenter override。</Description>
+        <SubNodes>
+          <Task id="G4-T1" name="创建并执行 mode-aware Halfcode NodeView shell track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="add-mode-aware-halfcode-nodeview-shell" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G5" name="Workbench 文档微应用集成" status="DONE" order="4" cdt:actor-set="workbench-loop">
+        <Description>迁移 Programmable Document，交付文档级切换、区块 overlay、权限拒绝样例和统一交互。</Description>
+        <SubNodes>
+          <Task id="G5-T1" name="创建并执行 Workbench document mode overlays track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="adopt-document-mode-overlays-in-workbench" project-ref="eidolon-workbench"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G4B" name="稳定 NodeView Remount Lifecycle" status="DONE" order="5">
+        <Description>根据 Workbench 真实 EditorContent 反馈，把稳定 occurrence 的 mode lease 提升为 browser-host 私有共享生命周期。</Description>
+        <SubNodes><Task id="G4B-T1" name="创建并执行 NodeView remount lifecycle 修正 track" status="DONE" order="0"><cdt:TrackLink state="bound" id="stabilize-mode-nodeview-remount-lifecycle" project-ref="dg-cell-mvi"/></Task></SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="G4C" name="补齐跨 Host 模式边界" status="DONE" order="6">
+        <Description>根据 fresh GapLoop 反馈，支持 presentation-owned registration coordinator 与准确的 Inherit 可用性。</Description>
+        <SubNodes><Task id="G4C-T1" name="执行跨 host replacement 与 transition affordance 修正 track" status="DONE" order="0"><cdt:TrackLink state="bound" id="complete-document-mode-transition-boundaries" project-ref="dg-cell-mvi"/></Task></SubNodes>
+      </TaskGroup>
+
+      <TaskGroup id="VERIFY" name="跨仓验证与反馈收敛" status="DONE" order="7" cdt:actor-set="workbench-loop">
+        <Description>验证 mode-only 无内容写入、权限 fail-closed、identity/lifecycle、业务交互、宽窄视口和 chaos。</Description>
+        <SubNodes>
+          <Task id="VERIFY-T1" name="运行 package、typecheck、build、browser E2E 与 chaos" status="DONE" order="0"/>
+          <Task id="VERIFY-T2" name="对照成功判据完成 authority 与产品 gap 检查" status="DONE" order="1"/>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="G6" name="补齐 Insert 结构化 NodeView 模式" status="DONE" order="8" cdt:actor-set="workbench-loop">
+        <Description>把用户反馈暴露出的 Mermaid/Code occurrence 模式与插入后发现性缺口纳入统一基座。</Description>
+        <SubNodes>
+          <Task id="G6-T1" name="执行 structured NodeView display mode track" status="DONE" order="0">
+            <cdt:TrackLink state="bound" id="extend-document-modes-to-structured-nodeviews" project-ref="dg-cell-mvi"/>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+
+  <Schedule>
+    <Dag for="space_build-document-mode-overlay-foundation">
+      <Node id="G2"><After ref="G1"/></Node>
+      <Node id="G3"><After ref="G2"/></Node>
+      <Node id="G4"><After ref="G3"/></Node>
+      <Node id="G4B"><After ref="G4"/></Node>
+      <Node id="G4C"><After ref="G4B"/></Node>
+      <Node id="G5"><After ref="G4C"/></Node>
+      <Node id="VERIFY"><After ref="G5"/></Node>
+      <Node id="G6"><After ref="VERIFY"/></Node>
+    </Dag>
+  </Schedule>
+
+  <Hooks>
+    <Hook on="mission:after-node">
+      <cdt:MissionReconcile max-tracks="10" on-limit="checkpoint" on-drift="replan-or-block"/>
+    </Hook>
+  </Hooks>
+</Mission>

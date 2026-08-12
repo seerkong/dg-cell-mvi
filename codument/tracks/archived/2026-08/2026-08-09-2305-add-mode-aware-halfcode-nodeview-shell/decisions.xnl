@@ -1,0 +1,12 @@
+<decision #add-mode-aware-halfcode-nodeview-shell.dual-lifecycle {
+  priority = "P0"
+  status = "accepted"
+}
+(
+  <question ?>同步 document token 与异步 mode lease 如何组合？</?>
+  <answer { } (
+    <decision-text ?>NodeView host 独立捕获两个 authority；迟到的 mode lease 若 mount 已销毁则立即 unregister。</?>
+    <rationale ?>两个 registry 有不同 owner 和时序，混成单 token 会泄漏 authority 并制造半注册。</?>
+    <evidence ?>统一 lifecycle tests 覆盖 mount、late completion、unmount 与 host dispose。</?>
+  )>
+)>

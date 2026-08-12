@@ -1,0 +1,11 @@
+<decisions>
+  <decision #structured-nodeview-mode-classification {
+    status = "accepted"
+  }>
+    <question ?>哪些 Insert 类型应拥有 occurrence 级 View/Edit？</?>
+    <answer>
+      <decision-text ?>只有具备独立局部 presenter 且存在阅读/编辑投影差异的 Mermaid、Enhanced Code Block、Component、Capsule 使用 occurrence overlay；Image、Table、Hard Break 继承 document base mode。</?>
+      <rationale ?>模式应表达真实产品投影差异，不能为没有局部编辑面的结构节点制造空状态。</?>
+    </answer>
+  </decision>
+</decisions>

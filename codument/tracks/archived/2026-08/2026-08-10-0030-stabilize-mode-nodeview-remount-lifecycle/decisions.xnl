@@ -1,0 +1,1 @@
+<Decisions [<Decision #mode-lease-owner { status = "accepted" durable_candidate = false summary = "Browser host coordinates one mode lease per stable occurrence while transient NodeViews hold ref-counted consumers." }>]>

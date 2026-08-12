@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import { Editor } from '@tiptap/core';
-import { defineComponent, h, nextTick, onUnmounted, type Component } from 'vue';
+import { defineComponent, h, nextTick, onUnmounted, ref, type Component } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createDocumentInstanceRegistry,
+  createDocumentDisplayModeSession,
   createXnlProjectionPresenterCapabilityProtocol,
   createXnlProjectionPresenterRuntimeFacet,
   createXnlProjectionPresenterSnapshotGrant,
@@ -16,6 +17,7 @@ import type {
 import type {
   CapsuleNodePlan,
   DocumentInstanceRef,
+  DocumentDisplayModeSession,
   HalfcodeRef,
   UnitFqn,
   UnitRenderPlan,
@@ -23,6 +25,7 @@ import type {
   XnlRichDocumentDomainNodeId,
 } from 'dg-cell-mvi-halfcode-contract';
 import {
+  createXnlRichDocumentModeRegistrationCoordinator,
   createXnlRichDocumentHalfcodeNodeViewHost,
   assembleXnlRichDocumentHalfcodeNodeViewOccurrence,
   type XnlRichDocumentHalfcodeNodeViewHostRuntime,
@@ -176,6 +179,7 @@ function createRuntime(
       plan: capsulePlan('CounterCapsule', 'CounterCapsuleProbe'),
     },
   ],
+  displayModeSession?: DocumentDisplayModeSession,
 ) {
   const host: PresenterHost = { title: 'Trusted title' };
   const documentInstances = createDocumentInstanceRegistry();
@@ -191,6 +195,7 @@ function createRuntime(
     documentInstances,
     halfcodeRuntime: appRuntime(targets.map((target) => target.plan)),
     canonicalRegistry,
+    ...(displayModeSession === undefined ? {} : { displayMode: { session: displayModeSession } }),
   };
   const occurrence = (
     nodeId: string,
@@ -227,15 +232,515 @@ async function mountEditor(
     ? TResult extends { status: 'ready'; extensions: infer TExtensions } ? TExtensions : never
     : never,
   content: Record<string, unknown>,
+  ownerDocument: Document = document,
 ) {
-  const target = document.body.appendChild(document.createElement('div'));
+  const target = ownerDocument.body.appendChild(ownerDocument.createElement('div'));
   const editor = new Editor({ element: target, extensions: extensions as never, content });
   mountedEditors.push(editor);
   await nextTick();
   return { editor, target };
 }
 
+async function openModeMenu(target: HTMLElement) {
+  const trigger = target.querySelector<HTMLButtonElement>('[data-testid="xnl-mode-shell-trigger"]');
+  expect(trigger).not.toBeNull();
+  trigger!.click();
+  await nextTick();
+  expect(target.querySelector('[data-testid="xnl-mode-shell-menu"]')).not.toBeNull();
+  return trigger!;
+}
+
+async function chooseMode(target: HTMLElement, mode: 'inherit' | 'view' | 'edit') {
+  await openModeMenu(target);
+  const option = target.querySelector<HTMLButtonElement>(`[data-mode-option="${mode}"]`);
+  expect(option).not.toBeNull();
+  option!.click();
+}
+
 describe('T3.2 Halfcode Component/Capsule NodeView host', () => {
+  it('preserves one mode lease and overlay across browser-host replacement when a presentation shares its coordinator', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: (props) => () => h('output', { 'data-testid': 'replacement-mode' }, `${props.mode.mode}:${props.mode.overlay}`),
+    });
+    const owner = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await owner.refreshPolicy();
+    const register = vi.fn((instanceRef: DocumentInstanceRef) => owner.register(instanceRef));
+    const unregister = vi.fn((instanceRef: DocumentInstanceRef, lease: string) => owner.unregister(instanceRef, lease));
+    const session: DocumentDisplayModeSession = Object.freeze({ ...owner, register, unregister });
+    const registrations = createXnlRichDocumentModeRegistrationCoordinator(session);
+    const seed = createRuntime({ CounterCardProbe: Probe });
+    const runtime = Object.assign(Object.create(seed.runtime) as object, {
+      displayMode: { session, registrations },
+    }) as HostRuntime;
+    const firstHost = createXnlRichDocumentHalfcodeNodeViewHost(runtime, seed.hostInput, EMPTY);
+    const secondHost = createXnlRichDocumentHalfcodeNodeViewHost(runtime, seed.hostInput, EMPTY);
+    expect(firstHost.status).toBe('ready');
+    expect(secondHost.status).toBe('ready');
+    if (firstHost.status !== 'ready' || secondHost.status !== 'ready') return;
+    const content = {
+      type: 'doc',
+      attrs: { nodeId: 'document.fixture' },
+      content: [node('componentEmbed', COMPONENT_REF, {})],
+    };
+    const { editor: firstEditor } = await mountEditor(firstHost.extensions, content);
+    await vi.waitFor(() => expect(
+      owner.snapshot().state.occurrences,
+      `${JSON.stringify(firstHost.readDiagnostics())}\n${document.body.innerHTML}`,
+    ).toHaveLength(1));
+    const occurrence = owner.snapshot().state.occurrences[0]!;
+    await owner.dispatch({
+      type: 'set-overlay',
+      correlationId: 'replacement:view',
+      ref: occurrence.ref,
+      lease: occurrence.lease,
+      mode: 'view',
+    });
+
+    firstEditor.destroy();
+    firstHost.dispose();
+    const target = document.body.appendChild(document.createElement('div'));
+    const replacementEditor = new Editor({ element: target, extensions: secondHost.extensions, content });
+    mountedEditors.push(replacementEditor);
+    await nextTick();
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="replacement-mode"]')?.textContent).toBe('view:view'));
+    expect(register).toHaveBeenCalledTimes(1);
+    expect(unregister).not.toHaveBeenCalled();
+
+    replacementEditor.destroy();
+    secondHost.dispose();
+    registrations.dispose();
+    await vi.waitFor(() => expect(unregister).toHaveBeenCalledTimes(1));
+    expect(owner.snapshot().state.occurrences).toHaveLength(0);
+    owner.destroy();
+  });
+
+  it('disables Inherit when policy does not allow the inherited document mode', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: (props) => () => h('output', { 'data-testid': 'inherit-mode' }, `${props.mode.inheritedMode}:${props.mode.overlay}`),
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: {
+        runtime: {},
+        config: {},
+        processor: (_runtime, input) => input.requestedMode === 'edit'
+          ? ({ allowed: false, allowedModes: ['view'], reason: 'Edit denied.' })
+          : ({ allowed: true, allowedModes: ['view'], reason: 'Edit denied.' }),
+      },
+    });
+    await session.refreshPolicy();
+    const { result } = createRuntime({ CounterCardProbe: Probe }, undefined, session);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc',
+      attrs: { nodeId: 'document.fixture' },
+      content: [
+        node('componentEmbed', COMPONENT_REF, {}),
+        { type: 'paragraph', attrs: { nodeId: 'paragraph.after' }, content: [{ type: 'text', text: 'After' }] },
+      ],
+    });
+    await vi.waitFor(() => expect(
+      session.snapshot().state.occurrences,
+      `${JSON.stringify(result.readDiagnostics())}\n${document.body.innerHTML}`,
+    ).toHaveLength(1));
+    const occurrence = session.snapshot().state.occurrences[0]!;
+    await session.dispatch({
+      type: 'set-overlay',
+      correlationId: 'policy:view',
+      ref: occurrence.ref,
+      lease: occurrence.lease,
+      mode: 'view',
+    });
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="inherit-mode"]')?.textContent).toBe('edit:view'));
+    expect(target.querySelector('.xnl-mode-shell__header')).toBeNull();
+    expect(target.querySelector('.xnl-mode-shell__reason')).toBeNull();
+    await openModeMenu(target);
+    const inherit = target.querySelector<HTMLButtonElement>('[data-mode-option="inherit"]');
+    expect(inherit?.disabled).toBe(true);
+    expect(target.querySelector('.xnl-mode-shell__reason')?.textContent).toContain('Edit denied.');
+    editor.destroy();
+    result.dispose();
+    session.destroy();
+  });
+
+  it('keeps contextual mode chrome out of document flow and closes it accessibly', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: () => () => h('output', { 'data-testid': 'contextual-content' }, 'Document content'),
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await session.refreshPolicy();
+    const { result } = createRuntime({ CounterCardProbe: Probe }, undefined, session);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc',
+      attrs: { nodeId: 'document.fixture' },
+      content: [
+        node('componentEmbed', COMPONENT_REF, {}),
+        { type: 'paragraph', attrs: { nodeId: 'paragraph.after' }, content: [{ type: 'text', text: 'After' }] },
+      ],
+    });
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="contextual-content"]')).not.toBeNull());
+
+    const shell = target.querySelector<HTMLElement>('[data-testid="xnl-mode-shell"]')!;
+    expect(shell.querySelector('.xnl-mode-shell__header')).toBeNull();
+    expect(shell.querySelector('[data-testid="xnl-mode-shell-menu"]')).toBeNull();
+    editor.commands.setNodeSelection(0);
+    await nextTick();
+    expect(shell.classList.contains('is-selected')).toBe(true);
+    editor.commands.setTextSelection(2);
+    await nextTick();
+    expect(shell.classList.contains('is-selected')).toBe(false);
+    const trigger = await openModeMenu(target);
+    expect(shell.querySelectorAll('[data-mode-option]')).toHaveLength(3);
+    expect(shell.querySelector('[role="menu"]')).toBeNull();
+    expect(shell.querySelector('[role="group"]')).not.toBeNull();
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await nextTick();
+    expect(shell.querySelector('[data-testid="xnl-mode-shell-menu"]')).toBeNull();
+    await openModeMenu(target);
+    shell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await nextTick();
+    expect(shell.querySelector('[data-testid="xnl-mode-shell-menu"]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    editor.destroy();
+    result.dispose();
+    session.destroy();
+  });
+
+  it('binds contextual dismissal and cleanup to the editor owner document', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: () => () => h('output', { 'data-testid': 'foreign-content' }, 'Foreign document content'),
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await session.refreshPolicy();
+    const { result } = createRuntime({ CounterCardProbe: Probe }, undefined, session);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const ownerDocument = iframe.contentDocument!;
+    const addListener = vi.spyOn(ownerDocument, 'addEventListener');
+    const removeListener = vi.spyOn(ownerDocument, 'removeEventListener');
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc', attrs: { nodeId: 'document.fixture' }, content: [node('componentEmbed', COMPONENT_REF, {})],
+    }, ownerDocument);
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="foreign-content"]')).not.toBeNull());
+
+    await openModeMenu(target);
+    ownerDocument.body.dispatchEvent(new ownerDocument.defaultView!.MouseEvent('pointerdown', { bubbles: true }));
+    await nextTick();
+    expect(target.querySelector('[data-testid="xnl-mode-shell-menu"]')).toBeNull();
+    expect(addListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
+
+    editor.destroy();
+    result.dispose();
+    session.destroy();
+    expect(removeListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
+  });
+
+  it('shares one mode lease when a stable occurrence is synchronously remounted', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: (props) => () => h('output', { 'data-testid': 'remount-mode' }, props.mode.mode),
+    });
+    const owner = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await owner.refreshPolicy();
+    const register = vi.fn((instanceRef: DocumentInstanceRef) => owner.register(instanceRef));
+    const unregister = vi.fn((instanceRef: DocumentInstanceRef, lease: string) => owner.unregister(instanceRef, lease));
+    const observedSession: DocumentDisplayModeSession = Object.freeze({
+      ...owner,
+      register,
+      unregister,
+    });
+    const { result } = createRuntime({ CounterCardProbe: Probe }, undefined, observedSession);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+
+    const content = {
+      type: 'doc',
+      attrs: { nodeId: 'document.fixture' },
+      content: [node('componentEmbed', COMPONENT_REF, {})],
+    };
+    const { editor: firstEditor } = await mountEditor(result.extensions, content);
+    await vi.waitFor(() => expect(
+      owner.snapshot().state.occurrences,
+      `${JSON.stringify(result.readDiagnostics())}\n${document.body.innerHTML}`,
+    ).toHaveLength(1));
+    expect(register).toHaveBeenCalledTimes(1);
+    firstEditor.destroy();
+    const target = document.body.appendChild(document.createElement('div'));
+    const replacementEditor = new Editor({ element: target, extensions: result.extensions, content });
+    mountedEditors.push(replacementEditor);
+    await nextTick();
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="remount-mode"]')).not.toBeNull());
+    expect(register).toHaveBeenCalledTimes(1);
+    expect(unregister).not.toHaveBeenCalled();
+
+    expect(result.readDiagnostics()).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'HALFCODE_NODEVIEW_MODE_REGISTRATION_REJECTED' }),
+    ]));
+    await owner.dispatch({ type: 'set-base', correlationId: 'remount:view', mode: 'view' });
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="remount-mode"]')?.textContent).toBe('view'));
+
+    replacementEditor.destroy();
+    await vi.waitFor(() => expect(owner.snapshot().state.occurrences).toHaveLength(0));
+    expect(unregister).toHaveBeenCalledTimes(1);
+    result.dispose();
+    owner.destroy();
+  });
+
+  it('creates a fresh mode registration generation when reacquired during async unregister', async () => {
+    const owner = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await owner.refreshPolicy();
+    let finishUnregister!: () => void;
+    const unregisterGate = new Promise<void>((resolve) => { finishUnregister = resolve; });
+    const register = vi.fn((instanceRef: DocumentInstanceRef) => owner.register(instanceRef));
+    const unregister = vi.fn(async (instanceRef: DocumentInstanceRef, lease: string) => {
+      await unregisterGate;
+      return owner.unregister(instanceRef, lease);
+    });
+    const coordinator = createXnlRichDocumentModeRegistrationCoordinator(Object.freeze({
+      ...owner,
+      register,
+      unregister,
+    }));
+
+    const first = coordinator.acquire(INSTANCE_REF);
+    await vi.waitFor(() => expect(first.lease()).toEqual(expect.any(String)));
+    first.release();
+    await vi.waitFor(() => expect(unregister).toHaveBeenCalledTimes(1));
+    const second = coordinator.acquire(INSTANCE_REF);
+    expect(second.lease()).toBeUndefined();
+    finishUnregister();
+    await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(second.lease()).toEqual(expect.any(String)));
+    expect(owner.snapshot().state.occurrences).toHaveLength(1);
+
+    second.release();
+    coordinator.dispose();
+    await vi.waitFor(() => expect(owner.snapshot().state.occurrences).toHaveLength(0));
+    owner.destroy();
+  });
+
+  it('projects occurrence mode through one shell while guarding authoring and preserving business interaction', async () => {
+    const businessCount = ref(0);
+    const editOutcome = ref('none');
+    const emitted = vi.fn(() => ({ status: 'emitted' as const }));
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup(props) {
+        return () => h('div', {}, [
+          h('output', { 'data-testid': 'mode-probe' }, `${props.mode.mode}:${props.mode.overlay}`),
+          h('button', { 'data-testid': 'business-action', onClick: () => { businessCount.value += 1; } }, 'Business action'),
+          h('button', {
+            'data-testid': 'authoring-action',
+            onClick: async () => {
+              const outcome = await props.emitEditIntent(props.view, {
+                intent: {
+                  kind: 'interaction',
+                  proposal: {
+                    type: 'xnl.rich-document.edit',
+                    target: { planNodeId: 'xnlp:node:document' },
+                    payload: { action: 'configure' },
+                  },
+                },
+              }, {});
+              editOutcome.value = outcome.status;
+            },
+          }, 'Authoring action'),
+        ]);
+      },
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await session.refreshPolicy();
+    const { runtime, hostInput } = createRuntime({ CounterCardProbe: Probe }, undefined, session);
+    const result = createXnlRichDocumentHalfcodeNodeViewHost(
+      { ...runtime, editIntentPort: emitted } as never,
+      hostInput,
+      EMPTY,
+    );
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc', attrs: { nodeId: 'document.fixture' }, content: [node('componentEmbed', COMPONENT_REF, {})],
+    });
+    await vi.waitFor(() => expect(session.snapshot().state.occurrences).toHaveLength(1));
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="xnl-mode-shell"]')?.getAttribute('data-display-mode')).toBe('edit'));
+    const documentBeforeModeChanges = editor.getJSON();
+
+    await chooseMode(target, 'view');
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="mode-probe"]')?.textContent).toBe('view:view'));
+    target.querySelector<HTMLButtonElement>('[data-testid="business-action"]')!.click();
+    target.querySelector<HTMLButtonElement>('[data-testid="authoring-action"]')!.click();
+    await vi.waitFor(() => expect(editOutcome.value).toBe('rejected'));
+    expect(businessCount.value).toBe(1);
+    expect(emitted).not.toHaveBeenCalled();
+
+    await chooseMode(target, 'edit');
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="mode-probe"]')?.textContent).toBe('edit:edit'));
+    target.querySelector<HTMLButtonElement>('[data-testid="authoring-action"]')!.click();
+    await vi.waitFor(() => expect(editOutcome.value).toBe('emitted'));
+    expect(emitted).toHaveBeenCalledTimes(1);
+    await chooseMode(target, 'inherit');
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="mode-probe"]')?.textContent).toBe('edit:inherit'));
+    expect(editor.getJSON()).toEqual(documentBeforeModeChanges);
+
+    editor.destroy();
+    await vi.waitFor(() => expect(session.snapshot().state.occurrences).toHaveLength(0));
+    session.destroy();
+  });
+
+  it('resolves a stable shell presenter without handing it transition authority', async () => {
+    const shellPropKeys: string[][] = [];
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: (props) => () => h('output', { 'data-testid': 'shell-child' }, props.mode.mode),
+    });
+    const CustomShell = defineComponent({
+      props: ['kind', 'title', 'mode', 'view', 'requestModeTransition'],
+      setup: (props, { slots }) => {
+        shellPropKeys.push(Object.keys(props).sort());
+        return () => h('section', {
+        'data-testid': 'custom-mode-shell',
+        }, [
+          h('button', {
+            'data-testid': 'custom-shell-view',
+            onClick: () => props.requestModeTransition(props.view, { mode: 'view' }, {}),
+          }, 'View'),
+          slots.default?.(),
+        ]);
+      },
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await session.refreshPolicy();
+    const targets = [{
+      kind: 'component-embed' as const,
+      ref: COMPONENT_REF,
+      presenterIdentity: 'CounterCardProbe',
+      modeShellPresenterId: 'document.shell.compact',
+      plan: componentPlan('CounterCard', 'CounterCardProbe'),
+    }];
+    const { runtime, hostInput } = createRuntime({ CounterCardProbe: Probe }, targets, session);
+    const result = createXnlRichDocumentHalfcodeNodeViewHost({
+      ...runtime,
+      modeShellPresenters: { resolve: (id: string) => id === 'document.shell.compact' ? CustomShell : undefined },
+    } as never, hostInput, EMPTY);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc', attrs: { nodeId: 'document.fixture' }, content: [node('componentEmbed', COMPONENT_REF, {})],
+    });
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="custom-mode-shell"]'), JSON.stringify(result.readDiagnostics())).not.toBeNull());
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="shell-child"]')?.textContent).toBe('edit'));
+    expect(shellPropKeys[0]).toEqual(['kind', 'mode', 'requestModeTransition', 'title', 'view']);
+    for (const forbidden of ['session', 'lease', 'registry', 'ownerToken', 'writer', 'unregister']) {
+      expect(shellPropKeys.flat()).not.toContain(forbidden);
+    }
+    target.querySelector<HTMLButtonElement>('[data-testid="custom-shell-view"]')!.click();
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="shell-child"]')?.textContent).toBe('view'));
+    expect(session.snapshot().state.occurrences[0]?.overlay).toBe('view');
+    editor.destroy();
+    await vi.waitFor(() => expect(session.snapshot().state.occurrences).toHaveLength(0));
+    session.destroy();
+  });
+
+  it('uses the same mode shell protocol for Capsule occurrences', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: (props) => () => h('output', { 'data-testid': 'capsule-mode-probe' }, `${props.mode.mode}:${props.mode.overlay}`),
+    });
+    const session = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await session.refreshPolicy();
+    const { result } = createRuntime({ CounterCapsuleProbe: Probe }, undefined, session);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor, target } = await mountEditor(result.extensions, {
+      type: 'doc', attrs: { nodeId: 'document.fixture' }, content: [node('capsuleEmbed', CAPSULE_REF, {})],
+    });
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="capsule-mode-probe"]')?.textContent).toBe('edit:inherit'));
+    await chooseMode(target, 'view');
+    await vi.waitFor(() => expect(target.querySelector('[data-testid="capsule-mode-probe"]')?.textContent).toBe('view:view'));
+    editor.destroy();
+    await vi.waitFor(() => expect(session.snapshot().state.occurrences).toHaveLength(0));
+    session.destroy();
+  });
+
+  it('releases a mode lease exactly once when async registration settles after NodeView destruction', async () => {
+    const Probe = defineComponent({
+      props: ['view', 'snapshot', 'instanceRef', 'emitEditIntent', 'mode', 'requestModeTransition'],
+      setup: () => () => h('output', {}, 'Pending'),
+    });
+    const owner = createDocumentDisplayModeSession({
+      unitInstanceId: 'document-1',
+      initialBaseMode: 'edit',
+      policy: { runtime: {}, config: {}, processor: () => ({ allowed: true, allowedModes: ['view', 'edit'] }) },
+    });
+    await owner.refreshPolicy();
+    let releaseRegistration!: () => void;
+    const registrationGate = new Promise<void>((resolve) => { releaseRegistration = resolve; });
+    const register = vi.fn(async (instanceRef: DocumentInstanceRef) => {
+      await registrationGate;
+      return owner.register(instanceRef);
+    });
+    const unregister = vi.fn((instanceRef: DocumentInstanceRef, lease: string) => owner.unregister(instanceRef, lease));
+    const deferredSession: DocumentDisplayModeSession = Object.freeze({
+      ...owner,
+      register,
+      unregister,
+    });
+    const { result } = createRuntime({ CounterCardProbe: Probe }, undefined, deferredSession);
+    expect(result.status).toBe('ready');
+    if (result.status !== 'ready') return;
+    const { editor } = await mountEditor(result.extensions, {
+      type: 'doc', attrs: { nodeId: 'document.fixture' }, content: [node('componentEmbed', COMPONENT_REF, {})],
+    });
+    await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+    editor.destroy();
+    releaseRegistration();
+    await vi.waitFor(() => expect(unregister).toHaveBeenCalledTimes(1));
+    expect(owner.snapshot().state.occurrences).toHaveLength(0);
+    owner.destroy();
+  });
+
   it.each([
     ['componentEmbed' as const, COMPONENT_REF, 'CounterCardProbe', 'component'],
     ['capsuleEmbed' as const, CAPSULE_REF, 'CounterCapsuleProbe', 'capsule'],

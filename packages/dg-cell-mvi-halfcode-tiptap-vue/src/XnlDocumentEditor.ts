@@ -4,6 +4,46 @@ import type {
   DocumentEditorToolbarToolPlan,
 } from 'dg-cell-mvi-halfcode-contract';
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Braces,
+  Code,
+  Columns3,
+  Copy,
+  CornerDownLeft,
+  Ellipsis,
+  FoldVertical,
+  Heading1,
+  Heading2,
+  Heading3,
+  Highlighter,
+  ImagePlus,
+  Italic,
+  Link,
+  List,
+  ListChecks,
+  ListOrdered,
+  Minus,
+  Palette,
+  Pilcrow,
+  Plus,
+  Quote,
+  Redo2,
+  History,
+  Rows3,
+  SquareCode,
+  Sparkles,
+  Strikethrough,
+  Table2,
+  TableProperties,
+  Underline,
+  Undo2,
+  Workflow,
+} from 'lucide-vue-next';
+import {
   computed,
   defineComponent,
   h,
@@ -12,6 +52,7 @@ import {
   ref,
   shallowRef,
   watch,
+  type Component,
   type PropType,
   type VNode,
 } from 'vue';
@@ -118,7 +159,7 @@ export const XnlDocumentEditor = defineComponent({
           'data-tool-id': tool.id,
           'data-command-id': tool.commandId,
         }, [
-          h('span', { 'aria-hidden': 'true' }, compactLabel(tool)),
+          renderToolIcon(tool),
           h('input', {
             type: 'color',
             disabled: !tool.enabled,
@@ -138,6 +179,7 @@ export const XnlDocumentEditor = defineComponent({
           'data-command-id': tool.commandId,
         }, [
           h('span', { class: 'xnl-document-editor__sr-only' }, tool.label),
+          h(Braces, { size: 16, 'aria-hidden': 'true' }),
           h('select', {
             disabled: !tool.enabled,
             'aria-label': tool.label,
@@ -158,7 +200,9 @@ export const XnlDocumentEditor = defineComponent({
         disabled: !enabled,
         onMousedown: (event: MouseEvent) => event.preventDefault(),
         onClick: () => executeWithCollectedInput(tool),
-      }, overflow ? tool.label : compactLabel(tool));
+      }, overflow
+        ? [renderToolIcon(tool), h('span', { class: 'xnl-document-editor__tool-label' }, tool.label)]
+        : renderToolIcon(tool));
     };
 
     const execute = async (
@@ -202,7 +246,7 @@ export const XnlDocumentEditor = defineComponent({
       'data-testid': 'xnl-document-editor',
     }, [
       h('style', {}, DOCUMENT_EDITOR_STYLE),
-      h('div', {
+      visibleGroups.value.length === 0 ? null : h('div', {
         class: 'xnl-document-editor__toolbar',
         role: 'toolbar',
         'aria-label': 'Document tools',
@@ -222,11 +266,12 @@ export const XnlDocumentEditor = defineComponent({
                 'aria-label': 'More tools',
                 'aria-expanded': String(overflowOpen.value),
                 onClick: () => { overflowOpen.value = !overflowOpen.value; },
-              }, '...'),
+              }, [h(Ellipsis, { size: 18, 'aria-hidden': 'true' })]),
               overflowOpen.value
                 ? h('div', {
                     class: 'xnl-document-editor__overflow-menu',
-                    role: 'menu',
+                    role: 'group',
+                    'aria-label': 'More document tools',
                   }, groupSplit.value.overflow.flatMap((group) => [
                     h('div', {
                       class: 'xnl-document-editor__overflow-label',
@@ -306,16 +351,49 @@ function selectChoices(tool: DocumentEditorToolbarToolPlan): readonly string[] {
     : ['plaintext', 'typescript', 'javascript', 'json', 'css', 'html', 'shell'];
 }
 
-function compactLabel(tool: DocumentEditorToolbarToolPlan): string {
-  const labels: Record<string, string> = {
-    'undo-2': 'Undo', 'redo-2': 'Redo',
-    bold: 'B', italic: 'I', underline: 'U', strikethrough: 'S', code: '</>', link: 'Link',
-    palette: 'A', highlighter: 'HL',
-    'align-left': 'Left', 'align-center': 'Center', 'align-right': 'Right',
-    'align-justify': 'Justify', 'corner-down-left': 'Break',
-  };
-  return (tool.icon === undefined ? undefined : labels[tool.icon])
-    ?? tool.label.split(' ').map((part) => part[0]).join('').slice(0, 4);
+const TOOL_ICONS: Readonly<Record<string, Component>> = Object.freeze({
+  'undo-2': Undo2,
+  'redo-2': Redo2,
+  pilcrow: Pilcrow,
+  'heading-1': Heading1,
+  'heading-2': Heading2,
+  'heading-3': Heading3,
+  quote: Quote,
+  list: List,
+  'list-ordered': ListOrdered,
+  'list-checks': ListChecks,
+  minus: Minus,
+  bold: Bold,
+  italic: Italic,
+  underline: Underline,
+  strikethrough: Strikethrough,
+  code: Code,
+  link: Link,
+  palette: Palette,
+  highlighter: Highlighter,
+  'align-left': AlignLeft,
+  'align-center': AlignCenter,
+  'align-right': AlignRight,
+  'align-justify': AlignJustify,
+  'image-plus': ImagePlus,
+  'table-2': Table2,
+  'corner-down-left': CornerDownLeft,
+  'square-code': SquareCode,
+  workflow: Workflow,
+  'rows-3': Rows3,
+  'columns-3': Columns3,
+  'table-properties': TableProperties,
+  braces: Braces,
+  'fold-vertical': FoldVertical,
+  copy: Copy,
+  plus: Plus,
+  history: History,
+  sparkles: Sparkles,
+});
+
+function renderToolIcon(tool: DocumentEditorToolbarToolPlan): VNode {
+  const Icon = tool.icon === undefined ? SquareCode : TOOL_ICONS[tool.icon] ?? SquareCode;
+  return h(Icon, { size: 17, strokeWidth: 1.8, 'aria-hidden': 'true' });
 }
 
 function isActive(
@@ -334,27 +412,31 @@ function isActive(
 }
 
 const DOCUMENT_EDITOR_STYLE = `
-.xnl-document-editor{position:relative;display:grid;grid-template-rows:auto auto minmax(12rem,1fr);min-width:0;border:1px solid #d8dde6;background:#fff;color:#182230;font:14px/1.5 system-ui,sans-serif}
-.xnl-document-editor__toolbar{position:relative;z-index:10;display:flex;align-items:center;gap:8px;min-width:0;min-height:46px;padding:4px 6px;border-bottom:1px solid #d8dde6;background:#f7f8fa;overflow:visible}
-.xnl-document-editor__group{display:flex;align-items:center;gap:3px;flex:0 0 auto;padding-right:7px;border-right:1px solid #d8dde6}
-.xnl-document-editor__tool,.xnl-document-editor__more{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:36px;height:36px;padding:0 8px;border:1px solid transparent;border-radius:4px;background:transparent;color:#344054;cursor:pointer;white-space:nowrap}
-.xnl-document-editor__tool:hover,.xnl-document-editor__more:hover,.xnl-document-editor__tool.is-active{border-color:#98a2b3;background:#fff;color:#0057b8}
-.xnl-document-editor__tool:focus-visible,.xnl-document-editor__more:focus-visible{outline:2px solid #1677ff;outline-offset:1px}
-.xnl-document-editor__tool:disabled{opacity:.45;cursor:not-allowed}
+.xnl-document-editor{position:relative;display:grid;grid-template-rows:auto auto minmax(12rem,1fr);min-width:0;border:1px solid #d9dedb;border-radius:6px;background:#fff;color:#202522;font:14px/1.55 Inter,ui-sans-serif,system-ui,sans-serif;box-shadow:0 1px 2px rgba(25,35,29,.04);container-type:inline-size}
+.xnl-document-editor__toolbar{position:relative;z-index:10;display:flex;align-items:center;gap:6px;min-width:0;min-height:44px;padding:5px 8px;border-bottom:1px solid #e3e7e4;border-radius:6px 6px 0 0;background:rgba(250,251,250,.96);overflow:visible;backdrop-filter:blur(8px)}
+.xnl-document-editor__group{display:flex;align-items:center;gap:2px;flex:0 0 auto;padding-right:6px;border-right:1px solid #e1e5e2}.xnl-document-editor__group:last-of-type{border-right:0}
+.xnl-document-editor__tool,.xnl-document-editor__more{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:32px;height:32px;padding:0 7px;border:1px solid transparent;border-radius:5px;background:transparent;color:#525d56;cursor:pointer;white-space:nowrap;transition:background 120ms ease,color 120ms ease,border-color 120ms ease}
+.xnl-document-editor__tool:hover:not(:disabled),.xnl-document-editor__more:hover,.xnl-document-editor__tool.is-active{border-color:#d7ddd9;background:#fff;color:#176847;box-shadow:0 1px 2px rgba(30,44,35,.06)}
+.xnl-document-editor__tool.is-active{border-color:#b8d6c7;background:#eaf5ef;color:#155c40}
+.xnl-document-editor__tool:focus-visible,.xnl-document-editor__more:focus-visible{outline:2px solid #26745a;outline-offset:1px}
+.xnl-document-editor__tool:disabled{opacity:.34;cursor:not-allowed}
 .xnl-document-editor__tool input[type=color]{position:absolute;width:1px;height:1px;opacity:0}
-.xnl-document-editor__tool select{max-width:8rem;height:30px;border:0;background:transparent;color:inherit}
+.xnl-document-editor__tool select{max-width:7.5rem;height:28px;border:0;background:transparent;color:inherit;font-size:12px;outline:0}.xnl-document-editor__tool:has(select){gap:4px;padding-right:3px}
 .xnl-document-editor__overflow{position:relative;margin-left:auto;flex:0 0 auto}
-.xnl-document-editor__overflow-menu{position:absolute;z-index:20;top:42px;right:0;display:grid;min-width:210px;max-height:60vh;padding:6px;border:1px solid #d0d5dd;border-radius:6px;background:#fff;box-shadow:0 10px 24px rgba(16,24,40,.16);overflow:auto}
-.xnl-document-editor__overflow-label{padding:8px 8px 3px;color:#667085;font-size:12px;font-weight:600}
-.xnl-document-editor__tool--overflow{justify-content:flex-start;width:100%}
-.xnl-document-editor__diagnostics{margin:0;padding:6px 12px 6px 30px;background:#fff4f2;color:#b42318;border-bottom:1px solid #fecdca}
-.xnl-document-editor__surface{min-width:0;overflow:auto}
-.xnl-document-editor__content{box-sizing:border-box;min-height:12rem;padding:24px;outline:0}
+.xnl-document-editor__overflow-menu{position:absolute;z-index:20;top:38px;right:0;display:grid;min-width:224px;max-height:60vh;padding:6px;border:1px solid #d8dedb;border-radius:6px;background:#fff;box-shadow:0 14px 34px rgba(24,36,29,.16);overflow:auto}
+.xnl-document-editor__overflow-label{padding:9px 9px 4px;color:#7b857f;font-size:10px;font-weight:700;text-transform:uppercase}
+.xnl-document-editor__tool--overflow{justify-content:flex-start;gap:10px;width:100%;padding:0 10px}.xnl-document-editor__tool-label{overflow:hidden;text-overflow:ellipsis}
+.xnl-document-editor__diagnostics{margin:0;padding:8px 14px 8px 34px;border-bottom:1px solid #f0c9c3;background:#fff6f4;color:#a43a2e;font-size:12px}
+.xnl-document-editor__surface{min-width:0;overflow:visible}
+.xnl-document-editor__content{box-sizing:border-box;min-height:12rem;padding:42px 52px 56px;outline:0;color:#292e2b;font-size:15px;line-height:1.75}
 .xnl-document-editor__content>*:first-child{margin-top:0}.xnl-document-editor__content>*:last-child{margin-bottom:0}
+.xnl-document-editor__content h1{margin:0 0 .7em;color:#1f2421;font-size:2rem;line-height:1.22}.xnl-document-editor__content h2{margin:1.7em 0 .55em;font-size:1.45rem;line-height:1.3}.xnl-document-editor__content h3{margin:1.5em 0 .45em;font-size:1.15rem;line-height:1.35}.xnl-document-editor__content p{margin:.8em 0}.xnl-document-editor__content blockquote{margin:1.2em 0;padding:.1em 0 .1em 1em;border-left:3px solid #9db8aa;color:#56615b}.xnl-document-editor__content hr{margin:2em 0;border:0;border-top:1px solid #dfe4e1}
 .xnl-document-editor__content ul[data-type=taskList]{padding-left:0;list-style:none}.xnl-document-editor__content li[data-type=taskItem]{display:flex;gap:8px}.xnl-document-editor__content li[data-type=taskItem]>div{flex:1}
 .xnl-document-editor__content pre{position:relative;padding:16px;border-left:3px solid #1677ff;background:#111827;color:#e5e7eb;overflow:auto}.xnl-document-editor__content code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .xnl-document-editor__surface.has-folded-code .xnl-document-editor__content pre code{display:block;max-height:1.5em;overflow:hidden}
 .xnl-enhanced-code{margin:1em 0;border:1px solid #d0d5dd;border-radius:6px;background:#111827;color:#e5e7eb;overflow:hidden}.xnl-enhanced-code__header{display:flex;align-items:center;justify-content:space-between;min-height:34px;padding:0 10px;border-bottom:1px solid #344054;background:#1f2937;color:#d0d5dd;font-size:12px}.xnl-enhanced-code__actions{display:flex;gap:4px}.xnl-enhanced-code__actions button{height:26px;padding:0 8px;border:1px solid #475467;border-radius:4px;background:#101828;color:#f2f4f7;cursor:pointer}.xnl-enhanced-code__body{display:grid;grid-template-columns:auto minmax(0,1fr);max-height:32rem;overflow:auto}.xnl-enhanced-code__gutter{display:grid;align-content:start;min-width:3ch;padding:16px 8px;text-align:right;color:#667085;background:#0b1220;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;user-select:none}.xnl-enhanced-code__gutter span{display:block}.xnl-enhanced-code pre{margin:0;border:0;border-radius:0;background:transparent}.xnl-enhanced-code.is-folded .xnl-enhanced-code__body{max-height:3.2rem;overflow:hidden}.xnl-code-token.syntax-keyword{color:#7dd3fc}.xnl-code-token.syntax-string{color:#86efac}.xnl-code-token.syntax-number{color:#f9a8d4}
 .xnl-document-editor__loading{padding:24px;color:#667085}
 .xnl-document-editor__sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@container(max-width:560px){.xnl-document-editor__content{padding:30px 26px 42px}.xnl-document-editor__toolbar{gap:3px;padding-inline:5px}}
+@media(prefers-reduced-motion:reduce){.xnl-document-editor__tool,.xnl-document-editor__more{transition:none}}
 `;

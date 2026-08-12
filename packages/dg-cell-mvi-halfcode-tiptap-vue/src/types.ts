@@ -1,7 +1,12 @@
 import type { Extensions, JSONContent } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { EditorState, Transaction } from '@tiptap/pm/state';
+import type { Component } from 'vue';
 import type {
+  DocumentDisplayMode,
+  DocumentDisplayModeOverlay,
+  DocumentDisplayModeProjection,
+  DocumentDisplayModeSession,
   DocumentInstanceRef,
   DocumentAddressDescriptor,
   DocumentInstanceRegistry,
@@ -28,6 +33,8 @@ import type {
 } from 'dg-cell-mvi-halfcode-contract';
 import type { HalfcodeAppRuntime } from 'dg-cell-mvi-halfcode-support';
 import type { CanonicalComponentRegistry } from 'dg-cell-mvi-halfcode-vue';
+import type { XnlRichDocumentModeRegistrationCoordinator } from './modeRegistrationCoordinator';
+import type { XnlRichDocumentStructuredNodeViewModeRuntime } from './structuredNodeViewMode';
 
 export type XnlRichDocumentEmbeddedPresenterDiagnosticCode =
   | 'INVALID_EMBEDDED_PRESENTER_RUNTIME'
@@ -36,7 +43,8 @@ export type XnlRichDocumentEmbeddedPresenterDiagnosticCode =
   | 'INVALID_EMBEDDED_PRESENTER_SNAPSHOT'
   | 'INVALID_EMBEDDED_PRESENTER_INSTANCE_REF'
   | 'INVALID_EMBEDDED_PRESENTER_EDIT_INTENT'
-  | 'EMBEDDED_PRESENTER_EDIT_PORT_REJECTED';
+  | 'EMBEDDED_PRESENTER_EDIT_PORT_REJECTED'
+  | 'EMBEDDED_PRESENTER_EDIT_MODE_DENIED';
 
 export type XnlRichDocumentEmbeddedPresenterDiagnostic = Readonly<{
   severity: 'error';
@@ -93,6 +101,38 @@ export type XnlRichDocumentEmbeddedPresenterInput<
   emitEditIntent: XnlRichDocumentEmbeddedPresenterEmitEditIntentGrant<TView>;
 }>;
 
+export type XnlRichDocumentEmbeddedModeView = Readonly<{
+  mode: DocumentDisplayMode;
+  overlay: DocumentDisplayModeOverlay;
+  inheritedMode: DocumentDisplayMode;
+  source: 'base' | 'overlay' | 'policy';
+  allowedModes: readonly DocumentDisplayMode[];
+  canSwitch: boolean;
+  reason?: string;
+}>;
+
+export type XnlRichDocumentEmbeddedModeTransitionInput = Readonly<{
+  mode: DocumentDisplayModeOverlay;
+}>;
+
+export type XnlRichDocumentEmbeddedModeTransitionResult =
+  | Readonly<{ status: 'accepted' }>
+  | Readonly<{ status: 'rejected'; reason: string }>;
+
+export type XnlRichDocumentEmbeddedModeTransitionGrant<TView extends object> = (
+  runtime: XnlProjectionPresenterReadonlyView<TView>,
+  input: XnlRichDocumentEmbeddedModeTransitionInput,
+  config: Readonly<Record<PropertyKey, never>>,
+) => Promise<XnlRichDocumentEmbeddedModeTransitionResult>;
+
+export type XnlRichDocumentModeAwareEmbeddedPresenterInput<
+  TView extends object,
+  TSnapshot extends XnlProjectionSerializableRecord = XnlProjectionSerializableRecord,
+> = XnlRichDocumentEmbeddedPresenterInput<TView, TSnapshot> & Readonly<{
+  mode: XnlRichDocumentEmbeddedModeView;
+  requestModeTransition: XnlRichDocumentEmbeddedModeTransitionGrant<TView>;
+}>;
+
 export type XnlRichDocumentEmbeddedPresenterCapabilityInput<
   TSnapshot extends XnlProjectionSerializableRecord,
 > = Readonly<{
@@ -133,7 +173,10 @@ export type XnlRichDocumentHalfcodeNodeViewDiagnosticCode =
   | 'DUPLICATE_HALFCODE_NODEVIEW_OCCURRENCE'
   | 'HALFCODE_NODEVIEW_VUE_MOUNT_FAILED'
   | 'HALFCODE_NODEVIEW_UPDATE_REJECTED'
-  | 'HALFCODE_NODEVIEW_CLEANUP_REJECTED';
+  | 'HALFCODE_NODEVIEW_CLEANUP_REJECTED'
+  | 'HALFCODE_NODEVIEW_MODE_REGISTRATION_REJECTED'
+  | 'HALFCODE_NODEVIEW_MODE_TRANSITION_REJECTED'
+  | 'UNKNOWN_HALFCODE_NODEVIEW_SHELL_PRESENTER';
 
 export type XnlRichDocumentHalfcodeNodeViewDiagnostic = Readonly<{
   severity: 'error';
@@ -145,6 +188,7 @@ export type XnlRichDocumentHalfcodeNodeViewTarget = Readonly<{
   kind: 'component-embed' | 'capsule-embed';
   ref: string;
   presenterIdentity: string;
+  modeShellPresenterId?: string;
   plan: UnitRenderPlan;
 }>;
 
@@ -215,7 +259,24 @@ export interface XnlRichDocumentHalfcodeNodeViewHostRuntime<
   readonly documentInstances: DocumentInstanceRegistry;
   readonly halfcodeRuntime: HalfcodeAppRuntime;
   readonly canonicalRegistry?: CanonicalComponentRegistry;
+  readonly displayMode?: Readonly<{
+    session: DocumentDisplayModeSession;
+    registrations?: XnlRichDocumentModeRegistrationCoordinator;
+  }>;
+  readonly modeShellPresenters?: XnlRichDocumentModeShellPresenterRegistry;
 }
+
+export interface XnlRichDocumentModeShellPresenterRegistry {
+  readonly resolve: (id: string) => Component | undefined;
+}
+
+export type XnlRichDocumentModeShellPresenterProps<TView extends object = object> = Readonly<{
+  kind: 'component-embed' | 'capsule-embed';
+  title: string;
+  mode: XnlRichDocumentEmbeddedModeView;
+  view: XnlProjectionPresenterReadonlyView<TView>;
+  requestModeTransition: XnlRichDocumentEmbeddedModeTransitionGrant<TView>;
+}>;
 
 export type XnlRichDocumentHalfcodeNodeViewHostConfig = Readonly<
   Record<PropertyKey, never>
@@ -361,6 +422,7 @@ export interface XnlRichDocumentTiptapBrowserHostRuntime<
 > {
   readonly halfcode: THost & XnlRichDocumentHalfcodeNodeViewHostRuntime<TView, THost>;
   readonly mermaid: XnlRichDocumentMermaidNodeViewRuntime<TRenderRuntime, TDiagnosticRuntime>;
+  readonly structuredNodeViews?: XnlRichDocumentStructuredNodeViewModeRuntime;
 }
 
 export type XnlRichDocumentTiptapBrowserHostInput =

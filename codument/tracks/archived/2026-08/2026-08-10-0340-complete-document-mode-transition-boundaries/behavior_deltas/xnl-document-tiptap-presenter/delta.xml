@@ -1,0 +1,16 @@
+<behavior-patch capability="xnl-document-tiptap-presenter" version="1">
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/mode-aware-halfcode-nodeview-shell/suite/lifecycle/case/host-replacement-lifecycle">
+    <case id="host-replacement-lifecycle">
+      <given>A product presentation replaces its Tiptap browser host while retaining a stable occurrence identity.</given>
+      <when>Both host generations use the presentation-owned mode registration coordinator.</when>
+      <then>The occurrence SHALL retain one lease and overlay across replacement, then unregister after the final presentation consumer is disposed.</then>
+    </case>
+  </upsert>
+  <upsert selector="behavior://xnl-document-tiptap-presenter/requirements/mode-aware-halfcode-nodeview-shell/suite/presentation/case/inherit-affordance">
+    <case id="inherit-affordance">
+      <given>An occurrence has an explicit overlay and policy restricts its inherited document mode.</given>
+      <when>The mode-aware shell projects available transitions.</when>
+      <then>Inherit SHALL be disabled when the inherited mode is not allowed and the final session transition SHALL remain authoritative.</then>
+    </case>
+  </upsert>
+</behavior-patch>

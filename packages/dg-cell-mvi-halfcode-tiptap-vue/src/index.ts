@@ -1,4 +1,11 @@
 export {
+  createXnlRichDocumentModeRegistrationCoordinator,
+} from './modeRegistrationCoordinator';
+export type {
+  XnlRichDocumentModeRegistrationCoordinator,
+  XnlRichDocumentModeRegistrationHandle,
+} from './modeRegistrationCoordinator';
+export {
   createXnlRichDocumentEmbeddedPresenterCapability,
 } from './embeddedPresenterCapability';
 export {
@@ -11,6 +18,16 @@ export {
   createXnlRichDocumentTiptapBrowserHost,
 } from './tiptapBrowserHost';
 export { XnlDocumentEditor } from './XnlDocumentEditor';
+export { DefaultModeAwareHalfcodeNodeViewShell } from './modeAwareNodeViewShell';
+export {
+  createModeAwareStructuredNodeViewRenderer,
+  structuredNodeViewIdentitySignature,
+} from './structuredNodeViewMode';
+export type {
+  XnlRichDocumentStructuredNodeViewModeAdapterRuntime,
+  XnlRichDocumentStructuredNodeViewModeConfig,
+  XnlRichDocumentStructuredNodeViewModeRuntime,
+} from './structuredNodeViewMode';
 export { createXnlDocumentEditor } from './documentEditorSession';
 export {
   assembleXnlRichDocumentHalfcodeNodeViewOccurrence,
@@ -96,6 +113,11 @@ export type {
   XnlRichDocumentEmbeddedPresenterEmitEditIntentGrant,
   XnlRichDocumentEmbeddedPresenterHostRuntime,
   XnlRichDocumentEmbeddedPresenterInput,
+  XnlRichDocumentEmbeddedModeTransitionGrant,
+  XnlRichDocumentEmbeddedModeTransitionInput,
+  XnlRichDocumentEmbeddedModeTransitionResult,
+  XnlRichDocumentEmbeddedModeView,
+  XnlRichDocumentModeAwareEmbeddedPresenterInput,
   XnlRichDocumentHalfcodeNodeViewDiagnostic,
   XnlRichDocumentHalfcodeNodeViewDiagnosticCode,
   XnlRichDocumentHalfcodeNodeViewHostConfig,
@@ -109,6 +131,8 @@ export type {
   XnlRichDocumentHalfcodeNodeViewOccurrenceAssemblyRuntime,
   XnlRichDocumentHalfcodeNodeViewOccurrenceDescriptorFacts,
   XnlRichDocumentHalfcodeNodeViewTarget,
+  XnlRichDocumentModeShellPresenterProps,
+  XnlRichDocumentModeShellPresenterRegistry,
   XnlRichDocumentEmbeddedPresenterLifecyclePhase,
   XnlRichDocumentMermaidDiagnostic,
   XnlRichDocumentMermaidDiagnosticCode,

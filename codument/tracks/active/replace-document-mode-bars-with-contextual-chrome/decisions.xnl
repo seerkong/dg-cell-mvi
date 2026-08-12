@@ -1,0 +1,16 @@
+<Decisions [
+  <Decision #contextual-progressive-disclosure {
+    status = "accepted"
+    durable_candidate = true
+  } (
+    <decision-text ?>Default mode controls SHALL be contextual editor chrome rather than permanent document-flow content.</?>
+    <rationale ?>This preserves mode capability while removing repeated vertical and visual cost from every embedded occurrence.</?>
+  )>
+  <Decision #presentation-only-state {
+    status = "accepted"
+    durable_candidate = false
+  } (
+    <decision-text ?>Hover, focus, menu-open and shell-selection state remain local presentation facts.</?>
+    <rationale ?>ModeSession and policy remain the only transition authority and no UI visibility state enters XNL.</?>
+  )>
+]>

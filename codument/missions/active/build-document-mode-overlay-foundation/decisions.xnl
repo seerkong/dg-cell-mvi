@@ -1,0 +1,65 @@
+<decision #build-document-mode-overlay-foundation.base-overlay {
+  priority = "P0"
+  status = "accepted"
+  durable_candidate = true
+}
+(
+  <question ?>文档与内嵌组件的显示模式如何组合？</?>
+  <answer { }
+  (
+    <raw-answer ?>文档级是 base，提供默认显示模式；内嵌组件级是 overlay，可以动态切换各个组件的显示模式。</?>
+    <decision-text ?>Document session 拥有动态 base mode；每个稳定 occurrence identity 拥有 inherit/view/edit overlay；effective mode 从 overlay 或 base 单向派生并经过 policy 约束。</?>
+    <rationale ?>该模型同时支持整篇文档切换、单区块覆盖和未来嵌套微应用，不要求把模式复制进每个领域节点。</?>
+    <evidence ?>用户在 2026-08-09 明确指定 base/overlay 组合模型。</?>
+  )
+  >
+)>
+
+<decision #build-document-mode-overlay-foundation.session-authority {
+  priority = "P0"
+  status = "accepted"
+  durable_candidate = true
+}
+(
+  <question ?>动态 edit/view 状态是否写入 RichDocument XNL？</?>
+  <answer { }
+  (
+    <decision-text ?>动态 base/overlay 默认是 mode session actor 的投影状态，不写入 RichDocument、Tiptap attrs、HTML、VFS 或 VCS；需要跨会话偏好时由独立 preference owner 扩展。</?>
+    <rationale ?>显示模式不应制造内容 mutation、revision 或历史提交，也不能复活旧版 `isEditing` node attr 的平行事实源。</?>
+    <evidence ?>当前架构以 accepted Domain XNL 为内容事实源；早期 Mermaid 实现把 isEditing 写入节点属性，属于需要纠正的历史边界。</?>
+  )
+  >
+)>
+
+<decision #build-document-mode-overlay-foundation.permission-separation {
+  priority = "P0"
+  status = "accepted"
+  durable_candidate = true
+}
+(
+  <question ?>未来文档功能权限与显示模式怎样结合？</?>
+  <answer { }
+  (
+    <decision-text ?>base/overlay 只表达显示请求；runtime-bound policy 单独决定 allowed modes 与 transition。Presentation 只引用 stable id，不嵌入 ACL、用户对象或权限实现。</?>
+    <rationale ?>显示状态与授权分离后，同一组件可复用于不同业务权限模型，并继续符合 Halfcode 的定义/实现分离。</?>
+    <evidence ?>用户要求未来以 document 级功能权限决定是否有权切换，同时保留动态组件模式。</?>
+  )
+  >
+)>
+
+<decision #build-document-mode-overlay-foundation.view-interactivity {
+  priority = "P0"
+  status = "accepted"
+  durable_candidate = true
+}
+(
+  <question ?>查看态是否禁用内嵌微应用的全部交互？</?>
+  <answer { }
+  (
+    <decision-text ?>view 只移除 document/embedded authoring 和配置能力；业务 command/effect 是否可用由组件自己的 Scope/runtime capability 决定。</?>
+    <rationale ?>若 view 等价于 disabled，文档只能展示静态内容，无法成为高交互微应用容器。</?>
+    <evidence ?>用户把该能力定位为基于文档开发微应用的产品基石。</?>
+  )
+  >
+)>
+

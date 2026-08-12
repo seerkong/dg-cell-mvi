@@ -1,0 +1,55 @@
+<Track id="replace-document-mode-bars-with-contextual-chrome" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>把文档内嵌组件的常驻模式栏替换为一流块编辑产品式的渐进披露 contextual chrome。</Goal>
+    <Description>删除占用文档流的 header，以 halo、紧凑 trigger、popover 和响应式触摸/键盘路径呈现 occurrence 模式。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-10T08:49:40Z</CreatedAt>
+    <UpdatedAt>2026-08-10T09:50:00Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="mode-shell" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="mode-shell" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/src/"/>
+    <MaterialBundle role="output" name="tests" domain="test" path="vfs://@/packages/dg-cell-mvi-halfcode-tiptap-vue/test/"/>
+    <MaterialBundle role="output" name="behavior" domain="codument" path="vfs://@/codument/behaviors/"/>
+  </Ports>
+  <TaskSpace id="space_replace-document-mode-bars-with-contextual-chrome" name="replace-document-mode-bars-with-contextual-chrome" version="1">
+    <Description>先建立稳定的 contextual interaction，再验证 authority、布局和可访问性。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Contextual chrome interaction" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="移除常驻 header 并实现 halo、trigger 与 popover" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">resting inherit occurrence 不占用任何额外 header 高度</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">显式 overlay 以轻量 badge 表达且菜单包含 View/Edit/Inherit</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+          <Task id="T1.2" name="补齐键盘、触摸、响应式和 policy detail" status="DONE" order="1" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.2-AC1" checked="true">hover、focus、touch 均可到达，Escape 正确关闭并恢复焦点</cdt:Criterion>
+              <cdt:Criterion id="T1.2-AC2" checked="true">窄屏无横向溢出，policy 原因不进入文档布局流</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Foundation verification" status="DONE" order="1">
+        <SubNodes>
+          <Task id="T2.1" name="覆盖 shell 状态、transition 与零布局位移测试" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">unit、typecheck 与真实 host regression 全绿</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">contextual chrome 不新增 mode 或 writer authority</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+        <Hooks>
+          <Hook on="phase:after"><cdt:GapLoop max-rounds="3" on-exhausted="block" verify-round="false"/></Hook>
+          <Hook on="phase:after"><cdt:AttractorCheck use="coding"/></Hook>
+        </Hooks>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule/>
+</Track>

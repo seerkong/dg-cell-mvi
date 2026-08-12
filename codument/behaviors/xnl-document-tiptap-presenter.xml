@@ -30,7 +30,7 @@
       <case id="transaction-proposal">
         <given>A Tiptap transaction changes supported document content.</given>
         <when>The adapter normalizes the transaction.</when>
-        <then>It SHALL emit only the revision-free kind=&amp;amp;amp;amp;amp;amp;amp;quot;interaction&amp;amp;amp;amp;amp;amp;amp;quot; variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then>
+        <then>It SHALL emit only the revision-free kind=&amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;quot;interaction&amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;amp;quot; variant of XnlProjectionPresenterEditIntent with affected stable identities and SHALL contain no AST, ValueHost, VFS or mutation writer authority; a command variant from the Tiptap normalizer SHALL fail closed.</then>
       </case>
       <case id="trusted-host-proposal">
         <given>A trusted host receives a valid Interaction edit intent.</given>
@@ -343,6 +343,82 @@
         <given>容器处于宽或窄视口且存在 contextual tools</given>
         <when>工具栏布局和键盘导航</when>
         <then>全部工具 SHALL 可达，低优先级组进入 overflow，且不得以横向滚动隐藏能力</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="document-display-mode-overlay">
+    <statement>系统 SHALL 以 renderer-neutral session facts 和 runtime policy 派生文档 base mode 与 occurrence overlay 的有效显示模式。</statement>
+    <suite id="overlay-contract" name="显示模式覆盖契约">
+      <case id="canonical-overlay">
+        <given>一个由 compiled Document mode 初始化且含完整 occurrence identity 的文档会话</given>
+        <when>调用方请求切换 base mode 或 occurrence overlay</when>
+        <then>effective mode 由 canonical base/overlay 与 runtime policy 纯派生，inherit 删除 overlay，拒绝操作不改变既有事实</then>
+      </case>
+      <case id="authority-separation">
+        <given>一个 policy 允许 edit 显示投影的 occurrence</given>
+        <when>Presenter 获得 mode projection</when>
+        <then>投影不包含 authoring capability、policy implementation、ACL、DOM 或持久化 authority</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="document-display-mode-session">
+    <statement>系统 SHALL 以单 owner session 串行管理动态显示模式，并让文档编辑器只消费受限投影。</statement>
+    <suite id="session-actor" name="Mode session actor">
+      <case id="atomic-async-policy">
+        <given>policy 为异步且 occurrence 具有独立 lease</given>
+        <when>宿主切换模式或权限事实失效</when>
+        <then>session MUST 原子发布 state/projection，隔离陈旧 lease、陈旧 policy response 和 subscriber 异常</then>
+      </case>
+    </suite>
+    <suite id="editor-adapter" name="Editor adapter">
+      <case id="in-place-mode-switch">
+        <given>同一 accepted document 和 EditorState lineage</given>
+        <when>只读 mode projection 在 view/edit 间变化</when>
+        <then>Editor MUST 原位 setEditable 并重编译 toolbar，且不得发出 authoring interaction 或持久化写入</then>
+      </case>
+      <case id="command-fail-closed">
+        <given>effective mode 为 view</given>
+        <when>调用方绕过可见 UI 直接执行 authoring command</when>
+        <then>命令入口 MUST 根据最终 guard 拒绝执行</then>
+      </case>
+    </suite>
+  </requirement>
+  <requirement id="mode-aware-halfcode-nodeview-shell">
+    <statement>系统 SHALL 为文档内嵌 Component/Capsule 提供统一 mode shell、受限模式能力与双 registry lifecycle。</statement>
+    <suite id="restricted-capability" name="Restricted mode capability">
+      <case id="view-authoring-guard">
+        <given>occurrence effective mode 为 view</given>
+        <when>组件直接调用 edit intent 或 shell authoring control</when>
+        <then>host MUST 拒绝 authoring 且继续允许独立授权的业务 interaction</then>
+      </case>
+    </suite>
+    <suite id="lifecycle" name="Dual lifecycle">
+      <case id="async-mode-registration">
+        <given>NodeView 同步创建且 mode registration 异步完成</given>
+        <when>mount 更新销毁或 host dispose</when>
+        <then>document owner token 与 mode lease MUST 各自精确释放，迟到结果不得复活 mount</then>
+      </case>
+      <case id="remount-lifecycle">
+        <given>Tiptap remounts a NodeView for the same stable occurrence within one browser host.</given>
+        <when>The old and replacement NodeView lifecycles overlap or registration is still pending.</when>
+        <then>The host SHALL share one mode registration lease, preserve the occurrence projection, and unregister exactly once after the final consumer or host is disposed.</then>
+      </case>
+      <case id="host-replacement-lifecycle">
+        <given>A product presentation replaces its Tiptap browser host while retaining a stable occurrence identity.</given>
+        <when>Both host generations use the presentation-owned mode registration coordinator.</when>
+        <then>The occurrence SHALL retain one lease and overlay across replacement, then unregister after the final presentation consumer is disposed.</then>
+      </case>
+    </suite>
+    <suite id="presentation" name="Shell presentation">
+      <case id="stable-override">
+        <given>target 声明 stable shell presenter id</given>
+        <when>runtime registry 解析 override</when>
+        <then>仅 shell 视觉可替换，transition guard lifecycle authority MUST 保持 host-owned</then>
+      </case>
+      <case id="inherit-affordance">
+        <given>An occurrence has an explicit overlay and policy restricts its inherited document mode.</given>
+        <when>The mode-aware shell projects available transitions.</when>
+        <then>Inherit SHALL be disabled when the inherited mode is not allowed and the final session transition SHALL remain authoritative.</then>
       </case>
     </suite>
   </requirement>

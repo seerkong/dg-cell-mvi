@@ -38,7 +38,7 @@ export function createXnlRichDocumentTiptapBrowserHost<
     TDiagnosticRuntime
   >;
 
-  const outer = readExactDataCarrier(runtime, ['halfcode', 'mermaid']);
+  const outer = readBrowserHostRuntime(runtime);
   if (!outer.ok) return rejected('INVALID_TIPTAP_BROWSER_HOST_RUNTIME', outer.message);
 
   const halfcode = prepareXnlRichDocumentHalfcodeNodeViewCapability(
@@ -52,6 +52,12 @@ export function createXnlRichDocumentTiptapBrowserHost<
     outer.value.mermaid as MermaidRuntime,
     EMPTY,
     config,
+    outer.value.structuredNodeViews as XnlRichDocumentTiptapBrowserHostRuntime<
+      TView,
+      THost,
+      TRenderRuntime,
+      TDiagnosticRuntime
+    >['structuredNodeViews'],
   );
   if (mermaid.status !== 'ready') {
     halfcode.dispose();
@@ -86,6 +92,12 @@ export function createXnlRichDocumentTiptapBrowserHost<
       mermaid.dispose();
     },
   });
+}
+
+function readBrowserHostRuntime(value: unknown): ReadResult<Record<string, unknown>> {
+  const base = readExactDataCarrier(value, ['halfcode', 'mermaid']);
+  if (base.ok) return base;
+  return readExactDataCarrier(value, ['halfcode', 'mermaid', 'structuredNodeViews']);
 }
 
 function readExactDataCarrier(

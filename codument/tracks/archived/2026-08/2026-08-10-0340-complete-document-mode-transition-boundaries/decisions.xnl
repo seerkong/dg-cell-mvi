@@ -1,0 +1,8 @@
+<Decisions [
+  <Decision #presentation-owned-mode-registration {
+    status = "accepted"
+    durable_candidate = true
+  } [
+    <Summary ?>跨 browser-host 代际复用 lease 的 coordinator 由 presentation lifecycle 可选持有，mode session 仍是唯一模式事实 owner。</?>
+  ]>
+]>

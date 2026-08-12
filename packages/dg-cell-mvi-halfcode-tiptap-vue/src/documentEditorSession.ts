@@ -76,6 +76,7 @@ export function createXnlDocumentEditor(
     {
       clipboard: runtime.clipboard,
       highlighter: runtime.highlighter,
+      displayMode: runtime.structuredNodeViews,
       diagnostics: {
         runtime: Object.freeze({}),
         effect: (_runtime, input) => {
@@ -130,6 +131,7 @@ export function createXnlDocumentEditor(
       ],
       content: projected.document,
       enableContentCheck: true,
+      editable: input.displayMode?.effectiveMode !== 'view',
       editorProps: {
         attributes: {
           class: 'xnl-document-editor__content',
@@ -185,7 +187,8 @@ export function createXnlDocumentEditor(
     commands: Object.freeze({
       execute: async (commandInput: XnlDocumentEditorCommandInput) => {
         if (destroyed) return unavailable('The editor session has been destroyed.');
-        if (!toolbarAllows(snapshot, commandInput.commandId)) {
+        if (!toolbarAllows(snapshot, commandInput.commandId)
+          || !canExecuteCommand(editor, runtime, commandInput, codePresenter, historyCommands)) {
           return unavailable('The command is not granted by the compiled toolbar plan.');
         }
         const outcome = await executeCommand(
@@ -221,7 +224,10 @@ export function createXnlDocumentEditor(
         ? nextInput.acceptedObservation !== currentInput.acceptedObservation
         : nextInput.document !== currentInput.document;
       currentInput = nextInput;
-      if (acceptedFactChanged) reprojectDocument(nextInput);
+      const nextEditable = nextInput.displayMode?.effectiveMode !== 'view';
+      const enteredViewMode = editor.isEditable && !nextEditable;
+      if (editor.isEditable !== nextEditable) editor.setEditable(nextEditable);
+      if (acceptedFactChanged || enteredViewMode) reprojectDocument(nextInput, enteredViewMode);
       else refresh();
     },
     reproject: (nextInput: Pick<XnlDocumentEditorInput, 'document' | 'acceptedObservation'>) => {
@@ -253,6 +259,7 @@ export function createXnlDocumentEditor(
 
   function reprojectDocument(
     nextInput: Pick<XnlDocumentEditorInput, 'document' | 'acceptedObservation'>,
+    forceAccepted = false,
   ): void {
       if (destroyed || draft === undefined) return;
       const nextProjection = projectTiptapDocument(
@@ -274,7 +281,7 @@ export function createXnlDocumentEditor(
             ? {}
             : { acceptedObservation: nextInput.acceptedObservation }),
         },
-        { ...configuration, staleDraftPolicy: config.staleDraftPolicy },
+        { ...configuration, staleDraftPolicy: forceAccepted ? 'replace' : config.staleDraftPolicy },
       );
       if (result.state !== undefined && result.outcome.status === 'reprojected') {
         const targetState = result.state.editorState;
@@ -310,6 +317,7 @@ export function createXnlDocumentEditor(
           configuration,
         );
         if (rebound.state !== undefined) draft = rebound.state;
+        else draft = result.state;
         if ('diagnostics' in rebound.outcome) {
           transientDiagnostics = toolbarDiagnostics(rebound.outcome.diagnostics);
         }
@@ -353,6 +361,7 @@ export function createXnlDocumentEditor(
         compositionActive: draft.compositionActive,
         codeFolded: readSelectedCodeNodeId(editor) !== undefined
           && codePresenter.isFolded(readSelectedCodeNodeId(editor)!),
+        displayMode: currentInput.displayMode,
       });
     } else {
       snapshot = Object.freeze({
@@ -365,6 +374,7 @@ export function createXnlDocumentEditor(
         compositionActive: draft.compositionActive,
         codeFolded: readSelectedCodeNodeId(editor) !== undefined
           && codePresenter.isFolded(readSelectedCodeNodeId(editor)!),
+        displayMode: currentInput.displayMode,
       });
     }
     listeners.forEach((listener) => listener(snapshot));
@@ -461,8 +471,9 @@ function canExecuteCommand(
   if (canonical !== undefined) {
     return canonical.canExecute(Object.freeze({ editor, runtime, input, codePresenter, history }));
   }
-  return !input.commandId.startsWith('rich-text.command.')
-    && runtime.commands?.has(input.commandId) === true;
+  if (input.commandId.startsWith('rich-text.command.')) return false;
+  const binding = runtime.commands?.get(input.commandId);
+  return binding !== undefined && (binding.requiresEditable === false || editor.isEditable);
 }
 
 function draftConfig(config: XnlDocumentEditorConfig): XnlRichDocumentTiptapDraftConfig {
@@ -514,6 +525,6 @@ function unavailable(reason: string): XnlDocumentEditorCommandOutcome {
 
 function toolbarAllows(snapshot: XnlDocumentEditorSnapshot | undefined, commandId: string): boolean {
   return snapshot?.toolbar.groups.some((group) => group.tools.some((tool) => (
-    tool.commandId === commandId && tool.enabled
+    tool.commandId === commandId && tool.visible && tool.enabled
   ))) === true;
 }
