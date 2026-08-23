@@ -7,5 +7,7 @@
     <Unit kind="bp-ctrl-flow" fqn="dg.demo.flow.WelcomeBiz" src="vfs://./flows/welcome.BPCtrlFlow.xnl">
     <Unit kind="eager-data-flow" fqn="dg.demo.flow.TransformMain" src="vfs://./flows/transform-main/manifest.xnl">
     <Unit kind="eager-data-flow" fqn="dg.demo.flow.TransformSub" src="vfs://./flows/transform-sub/manifest.xnl">
+    <Unit kind="ai-ctrl-workflow" fqn="dg.demo.flow.SupportReview" src="vfs://./flows/support-review.AICtrlWorkflow.xnl">
+    <Unit kind="ai-data-workflow" fqn="dg.demo.flow.SupportEvidence" src="vfs://./flows/support-evidence.AIDataWorkflow.xnl">
   ]>
 )>

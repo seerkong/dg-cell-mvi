@@ -22,6 +22,8 @@ import {
 } from 'xnl-core';
 import { loadEagerDataFlowSources } from 'eager-data-flow-logic/browser';
 import { loadFlowBundleFromSources } from 'instant-ctrl-flow-logic/browser';
+import { loadAICtrlWorkflowSources } from 'ai-ctrl-workflow-logic/browser';
+import { loadAIDataWorkflowSources } from 'ai-data-workflow-logic/browser';
 import {
   HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_MESSAGE_DSL_INVALID,
@@ -61,6 +63,7 @@ import {
   type FlowUnitKind,
   type FrontendUnitKind,
   type HalfcodeFlowSpec,
+  type HalfcodeFlowProfileBinding,
   type MessagePolicySpec,
   type MessageRefSpec,
   type HalfcodeProductSpec,
@@ -196,6 +199,8 @@ export interface LoadedHalfcodeUnit {
   scopeRuntimeBindings: RuntimeScopeBindingSpec[];
   /** Parse/validate/project-only Flow representation. Never contains executable code. */
   flow?: HalfcodeFlowSpec;
+  /** AI product profile identity paired with the same canonical substrate definition. */
+  flowProfile?: HalfcodeFlowProfileBinding;
 }
 
 export interface HalfcodeUnitRegistryEntry {
@@ -1481,6 +1486,8 @@ function readUnitManifestBase(
     case 'work-ctrl-flow':
     case 'bp-ctrl-flow':
     case 'eager-data-flow':
+    case 'ai-ctrl-workflow':
+    case 'ai-data-workflow':
       return { ...base, kind };
     default:
       return assertNever(kind, 'Unit manifest dispatch');
@@ -1606,9 +1613,28 @@ function loadCanonicalFlowUnit(
   let actualFqn = entry.fqn;
   let version = '';
   let flow: HalfcodeFlowSpec | undefined;
+  let flowProfile: HalfcodeFlowProfileBinding | undefined;
   let upstreamDiagnostics: readonly UpstreamFlowDiagnostic[];
 
-  if (entry.kind === 'eager-data-flow') {
+  if (entry.kind === 'ai-ctrl-workflow') {
+    const result = loadAICtrlWorkflowSources(sources, { baseUri });
+    upstreamDiagnostics = result.diagnostics;
+    if (result.binding && result.diagnostics.length === 0) {
+      flowProfile = result.binding;
+      flow = result.binding.definition;
+      actualFqn = asUnitFqn(result.binding.definition.fqn);
+      version = result.binding.definition.version;
+    }
+  } else if (entry.kind === 'ai-data-workflow') {
+    const result = loadAIDataWorkflowSources(sources, { baseUri, registry: eagerRegistry });
+    upstreamDiagnostics = result.diagnostics;
+    if (result.binding && result.diagnostics.length === 0) {
+      flowProfile = result.binding;
+      flow = result.binding.definition;
+      actualFqn = asUnitFqn(result.binding.definition.fqn);
+      version = result.binding.definition.version;
+    }
+  } else if (entry.kind === 'eager-data-flow') {
     const result = loadEagerDataFlowSources(sources, { baseUri, registry: eagerRegistry });
     upstreamDiagnostics = result.diagnostics;
     if (result.plan && result.diagnostics.length === 0) {
@@ -1654,6 +1680,7 @@ function loadCanonicalFlowUnit(
     manifest: createFlowManifest(actualKind, actualFqn, version),
     domains: {},
     ...(flow ? { flow } : {}),
+    ...(flowProfile ? { flowProfile } : {}),
   });
   return { unit, diagnostics };
 }

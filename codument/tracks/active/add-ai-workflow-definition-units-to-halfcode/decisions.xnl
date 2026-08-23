@@ -1,0 +1,16 @@
+<decisions>
+  <decision #preserve-profile-binding { status = "accepted" }>
+    <question ?>Halfcode 应保存 profile root 还是只保存 substrate plan？</?>
+    <answer>
+      <decision-text ?>保存 depa-flows 的 typed definition binding，同时保留其 substrate definition。</?>
+      <rationale ?>Profile 决定产品 authoring policy；只保存 substrate 会丢失业务身份，复制 AST 又会产生 authority 冲突。</?>
+    </answer>
+  </decision>
+  <decision #definition-only-loader { status = "accepted" }>
+    <question ?>加载 AI workflow Unit 时是否创建执行对象？</?>
+    <answer>
+      <decision-text ?>不创建。Halfcode Unit loader 只 parse、validate、project definition。</?>
+      <rationale ?>本 Mission 明确排除 runtime 与 RunGraph，执行对象属于后续独立边界。</?>
+    </answer>
+  </decision>
+</decisions>

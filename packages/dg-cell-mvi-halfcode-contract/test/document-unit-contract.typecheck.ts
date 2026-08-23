@@ -33,7 +33,12 @@ type CanonicalFrontendKinds = Expect<
 type CanonicalFlowKinds = Expect<
   Equal<
     (typeof FLOW_UNIT_KINDS)[number],
-    'instant-ctrl-flow' | 'work-ctrl-flow' | 'bp-ctrl-flow' | 'eager-data-flow'
+    | 'instant-ctrl-flow'
+    | 'work-ctrl-flow'
+    | 'bp-ctrl-flow'
+    | 'eager-data-flow'
+    | 'ai-ctrl-workflow'
+    | 'ai-data-workflow'
   >
 >;
 type CanonicalUnitKinds = Expect<Equal<(typeof UNIT_KINDS)[number], UnitKind>>;

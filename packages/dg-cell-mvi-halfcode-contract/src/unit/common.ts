@@ -23,6 +23,8 @@ export const FLOW_UNIT_KINDS = [
   'work-ctrl-flow',
   'bp-ctrl-flow',
   'eager-data-flow',
+  'ai-ctrl-workflow',
+  'ai-data-workflow',
 ] as const;
 export type FlowUnitKind = (typeof FLOW_UNIT_KINDS)[number];
 

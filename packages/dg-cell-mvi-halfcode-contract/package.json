@@ -24,6 +24,7 @@
     "test-fixtures"
   ],
   "dependencies": {
+    "ai-workflow-contract": "workspace:*",
     "eager-data-flow-contract": "workspace:*",
     "instant-ctrl-flow-contract": "workspace:*"
   },

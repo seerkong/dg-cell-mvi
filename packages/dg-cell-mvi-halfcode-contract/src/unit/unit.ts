@@ -81,6 +81,14 @@ export interface HalfcodeEagerDataFlowManifest extends HalfcodeUnitManifestBase 
   kind: 'eager-data-flow';
 }
 
+export interface HalfcodeAICtrlWorkflowManifest extends HalfcodeUnitManifestBase {
+  kind: 'ai-ctrl-workflow';
+}
+
+export interface HalfcodeAIDataWorkflowManifest extends HalfcodeUnitManifestBase {
+  kind: 'ai-data-workflow';
+}
+
 export type HalfcodeUnitManifest =
   | PageUnitManifest
   | ComponentUnitManifest
@@ -88,7 +96,9 @@ export type HalfcodeUnitManifest =
   | HalfcodeInstantCtrlFlowManifest
   | HalfcodeWorkCtrlFlowManifest
   | HalfcodeBPCtrlFlowManifest
-  | HalfcodeEagerDataFlowManifest;
+  | HalfcodeEagerDataFlowManifest
+  | HalfcodeAICtrlWorkflowManifest
+  | HalfcodeAIDataWorkflowManifest;
 
 /** Product identity (app.product domain root). */
 export interface HalfcodeProductSpec {

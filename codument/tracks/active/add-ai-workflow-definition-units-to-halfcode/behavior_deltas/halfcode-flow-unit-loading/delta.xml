@@ -1,0 +1,31 @@
+<behavior-patch capability="halfcode-flow-unit-loading" version="1">
+  <upsert selector="behavior://halfcode-flow-unit-loading/requirements/ai-workflow-profile-units">
+    <requirement id="ai-workflow-profile-units">
+      <statement>Halfcode SHALL load AI workflow definitions as explicit profile Units while preserving their substrate definitions.</statement>
+      <suite id="identity" name="Profile 与 substrate 双层身份">
+        <case id="ai-ctrl-profile">
+          <given>AppBundle 注册 `ai-ctrl-workflow` 且 source 根为 `AICtrlWorkflow`</given>
+          <when>Halfcode loader 解析该 Unit</when>
+          <then>结果 SHALL 保留 `AICtrlWorkflow` profile 与 `WorkCtrlFlow` substrate definition</then>
+        </case>
+        <case id="ai-data-profile">
+          <given>AppBundle 注册 `ai-data-workflow` 且 source 根为 `AIDataWorkflow`</given>
+          <when>Halfcode loader 解析该 Unit</when>
+          <then>结果 SHALL 保留 `AIDataWorkflow` profile 与 `EagerDataFlow` substrate definition</then>
+        </case>
+        <case id="profile-kind-mismatch">
+          <given>Unit kind 与 source profile root 不一致</given>
+          <when>Halfcode loader 校验 registry</when>
+          <then>结果 SHALL 产生稳定 kind mismatch diagnostic</then>
+        </case>
+      </suite>
+      <suite id="boundary" name="Definition-only 边界">
+        <case id="no-runtime-materialization">
+          <given>合法 AI workflow Unit 已加载</given>
+          <when>调用 definition loader</when>
+          <then>结果 SHALL NOT 创建 controller、RunGraph、runtime handle 或执行动态代码</then>
+        </case>
+      </suite>
+    </requirement>
+  </upsert>
+</behavior-patch>

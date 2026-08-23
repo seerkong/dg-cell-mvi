@@ -120,7 +120,20 @@ describe('AppBundle vocabulary E2E (real on-disk fixtures)', () => {
       'dg.demo.flow.WelcomeData': ['eager-data-flow', 'EagerDataFlow'],
       'dg.demo.flow.TransformMain': ['eager-data-flow', 'EagerDataFlow'],
       'dg.demo.flow.TransformSub': ['eager-data-flow', 'EagerDataFlow'],
+      'dg.demo.flow.SupportReview': ['ai-ctrl-workflow', 'WorkCtrlFlow'],
+      'dg.demo.flow.SupportEvidence': ['ai-data-workflow', 'EagerDataFlow'],
     });
+    expect(bundle.units['dg.demo.flow.SupportReview'].flowProfile).toMatchObject({
+      kind: 'AICtrlWorkflow',
+      substrate: 'WorkCtrlFlow',
+      definition: { fqn: 'dg.demo.flow.SupportReview', form: 'WorkCtrlFlow' },
+    });
+    expect(bundle.units['dg.demo.flow.SupportEvidence'].flowProfile).toMatchObject({
+      kind: 'AIDataWorkflow',
+      substrate: 'EagerDataFlow',
+      definition: { fqn: 'dg.demo.flow.SupportEvidence', form: 'EagerDataFlow' },
+    });
+    expect(bundle.units['dg.demo.flow.SupportEvidence'].runtime).toBeUndefined();
     expect([
       bundle.units['dg.demo.flow.WelcomeCtrl'].flow,
       bundle.units['dg.demo.flow.ComplexCtrl'].flow,

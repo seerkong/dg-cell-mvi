@@ -5,6 +5,7 @@
 
 import type { EagerDataFlowAuthoringPlan } from 'eager-data-flow-contract';
 import type { FlowBundleSpec } from 'instant-ctrl-flow-contract';
+import type { AIWorkflowDefinitionBinding } from 'ai-workflow-contract';
 
 export type {
   FlowBundleSpec,
@@ -30,3 +31,6 @@ export type {
 } from 'eager-data-flow-contract';
 
 export type HalfcodeFlowSpec = FlowBundleSpec | EagerDataFlowAuthoringPlan;
+
+/** AI product profile identity paired with its canonical substrate definition. */
+export type HalfcodeFlowProfileBinding = AIWorkflowDefinitionBinding;

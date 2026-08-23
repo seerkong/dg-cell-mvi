@@ -1,0 +1,18 @@
+<AICtrlWorkflow #dg.demo.flow.SupportReview apiVersion="depa.flows/v1" version="0.1.0" (
+  <FlowContract #dg.demo.flow.SupportReview {
+    input = "vfs://./flow-code/ai.contracts.ts#SupportReviewInput"
+    output = "vfs://./flow-code/ai.contracts.ts#SupportReviewOutput"
+  }>
+  <FlowAuthoring #dg.demo.flow.SupportReview { viewport = { x = 0 y = 0 zoom = 1 } } [
+    <NodeLayout #prepare { x = 80 y = 100 }>
+    <NodeLayout #agent-review { x = 360 y = 100 }>
+    <NodeLayout #done { x = 640 y = 100 }>
+  ]>
+) [
+  <Run #prepare { src = "vfs://./flow-code/ai.ctrl.ts#prepareReview" }>
+  <ExternalJob #agent-review {
+    signalKind = "ai.agent.reviewed"
+    signalKey = "support-review"
+  }>
+  <Return #done { src = "vfs://./flow-code/ai.ctrl.ts#toReviewResult" }>
+]>

@@ -14,9 +14,14 @@ import {
 } from '../src';
 
 describe('Halfcode canonical Flow unit contract', () => {
-  it('registers exactly the four upstream Flow product kinds and manifests', () => {
+  it('registers the four substrate products and two AI profile products', () => {
     expectTypeOf<FlowUnitKind>().toEqualTypeOf<
-      'instant-ctrl-flow' | 'work-ctrl-flow' | 'bp-ctrl-flow' | 'eager-data-flow'
+      | 'instant-ctrl-flow'
+      | 'work-ctrl-flow'
+      | 'bp-ctrl-flow'
+      | 'eager-data-flow'
+      | 'ai-ctrl-workflow'
+      | 'ai-data-workflow'
     >();
     expectTypeOf<UnitKind>().toEqualTypeOf<FrontendUnitKind | FlowUnitKind>();
 
@@ -25,6 +30,8 @@ describe('Halfcode canonical Flow unit contract', () => {
       { kind: 'work-ctrl-flow', fqn: asUnitFqn('demo.flow.Work'), version: '1' },
       { kind: 'bp-ctrl-flow', fqn: asUnitFqn('demo.flow.Biz'), version: '1' },
       { kind: 'eager-data-flow', fqn: asUnitFqn('demo.flow.Eager'), version: '1' },
+      { kind: 'ai-ctrl-workflow', fqn: asUnitFqn('demo.flow.AICtrl'), version: '1' },
+      { kind: 'ai-data-workflow', fqn: asUnitFqn('demo.flow.AIData'), version: '1' },
     ];
 
     expect(manifests.map(({ kind }) => kind)).toEqual([
@@ -32,6 +39,8 @@ describe('Halfcode canonical Flow unit contract', () => {
       'work-ctrl-flow',
       'bp-ctrl-flow',
       'eager-data-flow',
+      'ai-ctrl-workflow',
+      'ai-data-workflow',
     ]);
   });
 
@@ -56,6 +65,7 @@ describe('Halfcode canonical Flow unit contract', () => {
 
     expect(source).toContain("from 'instant-ctrl-flow-contract'");
     expect(source).toContain("from 'eager-data-flow-contract'");
+    expect(source).toContain("from 'ai-workflow-contract'");
     expect(source).not.toMatch(
       /\b(CtrlFlowAuthoringPlan|DataFlowAuthoringPlan|FlowCodeNodePlan|DataFlowEdgePlan|CtrlFlowStatementPlan)\b/,
     );

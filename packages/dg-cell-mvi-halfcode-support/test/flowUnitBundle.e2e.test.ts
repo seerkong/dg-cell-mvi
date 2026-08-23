@@ -50,6 +50,70 @@ const eagerParent = `<EagerDataFlow #demo.flow.Parent apiVersion="depa.flows/v1"
 ]>`;
 
 describe('canonical Flow products in an AppBundle', () => {
+  it('loads AI workflow profiles without flattening their substrate identity', () => {
+    const bundle = loadHalfcodeUnitBundle(memoryResolver({
+      '/flow/manifest.xnl': `<AppBundle #demo.flow.App (
+        <Units [
+          <Unit kind="ai-ctrl-workflow" fqn="demo.flow.AICtrl" src="vfs://./ai-ctrl.xnl">
+          <Unit kind="ai-data-workflow" fqn="demo.flow.AIData" src="vfs://./ai-data.xnl">
+        ]>
+      )>`,
+      '/flow/ai-ctrl.xnl': `<AICtrlWorkflow #demo.flow.AICtrl apiVersion="depa.flows/v1" version="1" (
+        <FlowContract #demo.flow.AICtrl { input = "vfs://./ai.ts#Input" output = "vfs://./ai.ts#Output" }>
+      ) [
+        <ExternalJob #review { signalKind = "ai.reviewed" signalKey = "review" }>
+        <Return #done>
+      ]>`,
+      '/flow/ai-data.xnl': `<AIDataWorkflow #demo.flow.AIData apiVersion="depa.flows/v1" version="1" (
+        <FlowContract #demo.flow.AIData { inputPorts = ["input"] outputPorts = ["output"] }>
+      ) [
+        <EntryNode #entry>
+        <TransformNode #transform {
+          inputs = { input = "flow-port://#entry/input" }
+          outputs = ["output"]
+          src = "vfs://./ai.ts#transform"
+          config = { reuse_policy = "semantic-hash" node_type = "manual" }
+        }>
+        <ReturnNode #return { inputs = { output = "flow-port://#transform/output" } }>
+      ]>`,
+    }), 'vfs://@/flow/', { baseDir: '/', workspaceRoot: '/' });
+
+    expect(bundle.diagnostics).toEqual([]);
+    expect(bundle.units['demo.flow.AICtrl']).toMatchObject({
+      kind: 'ai-ctrl-workflow',
+      flow: { form: 'WorkCtrlFlow', fqn: 'demo.flow.AICtrl' },
+      flowProfile: { kind: 'AICtrlWorkflow', substrate: 'WorkCtrlFlow' },
+    });
+    expect(bundle.units['demo.flow.AIData']).toMatchObject({
+      kind: 'ai-data-workflow',
+      flow: { form: 'EagerDataFlow', fqn: 'demo.flow.AIData' },
+      flowProfile: { kind: 'AIDataWorkflow', substrate: 'EagerDataFlow' },
+    });
+    expect(bundle.units['demo.flow.AICtrl'].runtime).toBeUndefined();
+    expect(bundle.units['demo.flow.AIData'].runtime).toBeUndefined();
+  });
+
+  it('rejects a profile root that does not match its registered AI workflow kind', () => {
+    const bundle = loadHalfcodeUnitBundle(memoryResolver({
+      '/flow/manifest.xnl': `<AppBundle #demo.flow.App (
+        <Units [
+          <Unit kind="ai-ctrl-workflow" fqn="demo.flow.WrongProfile" src="vfs://./wrong.xnl">
+        ]>
+      )>`,
+      '/flow/wrong.xnl': `<AIDataWorkflow #demo.flow.WrongProfile apiVersion="depa.flows/v1" version="1" (
+        <FlowContract #demo.flow.WrongProfile { inputPorts = [] outputPorts = [] }>
+      ) [ <EntryNode #entry> <ReturnNode #return> ]>`,
+    }), 'vfs://@/flow/', { baseDir: '/', workspaceRoot: '/' });
+
+    expect(bundle.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'HALFCODE_UNIT_KIND_MISMATCH',
+        message: expect.stringContaining('profile root <AICtrlWorkflow>'),
+      }),
+    ]);
+    expect(bundle.units['demo.flow.WrongProfile'].flowProfile).toBeUndefined();
+  });
+
   it('loads all four products through upstream source APIs and preserves nested control topology', () => {
     const bundle = loadHalfcodeUnitBundle(memoryResolver({
       '/flow/manifest.xnl': `<AppBundle #demo.flow.App (

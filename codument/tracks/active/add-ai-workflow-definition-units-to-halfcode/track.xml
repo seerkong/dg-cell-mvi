@@ -1,0 +1,60 @@
+<Track id="add-ai-workflow-definition-units-to-halfcode" version="1" xmlns:cdt="urn:codument:v1">
+  <Metadata>
+    <Status>completed</Status>
+    <Goal>让 Halfcode AppBundle definition loader 保留两种 AI Workflow profile 与 substrate 双层身份。</Goal>
+    <Description>新增 AI workflow Unit kinds、typed definition projection、profile loader dispatch 和 fixtures/tests，不引入执行 runtime。</Description>
+    <QuestionMode>decision-tree</QuestionMode>
+    <QuestionSeverity>auto</QuestionSeverity>
+    <CommitMode>manual</CommitMode>
+    <CreatedAt>2026-08-12T17:35:52Z</CreatedAt>
+    <UpdatedAt>2026-08-12T17:41:43Z</UpdatedAt>
+  </Metadata>
+  <Ports scope="track">
+    <MaterialBundle role="input" name="behavior-deltas" domain="behavior" path="vfs://./behavior_deltas/"/>
+    <MaterialBundle role="input" name="upstream-profile-contracts" domain="code" path="vfs://@/../depa-flows.ts/packages/"/>
+    <MaterialBundle role="output" name="halfcode-contract" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-contract/"/>
+    <MaterialBundle role="output" name="halfcode-support" domain="code" path="vfs://@/packages/dg-cell-mvi-halfcode-support/"/>
+  </Ports>
+  <TaskSpace id="space_add-ai-workflow-definition-units-to-halfcode" name="add-ai-workflow-definition-units-to-halfcode" version="1" cdt:child-mode="dag">
+    <Description>先扩展纯契约，再接入 loader 与真实 fixture，最后执行回归验证。</Description>
+    <SubNodes>
+      <TaskGroup id="P1" name="Profile Unit contracts" status="DONE" order="0">
+        <SubNodes>
+          <Task id="T1.1" name="增加 AI profile Unit kinds、manifests 与 typed flow spec" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T1.1-AC1" checked="true">公共类型同时保留 profile kind、substrate 与 definition</cdt:Criterion>
+              <cdt:Criterion id="T1.1-AC2" checked="true">既有 Unit kind 与 flow spec 保持兼容</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P2" name="Profile source loading" status="DONE" order="1">
+        <SubNodes>
+          <Task id="T2.1" name="接入两种 upstream profile loader 与 registry diagnostics" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T2.1-AC1" checked="true">两种合法 profile definition 可由 AppBundle 加载且身份不被压平</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC2" checked="true">kind/FQN/profile 错配产生 diagnostics</cdt:Criterion>
+              <cdt:Criterion id="T2.1-AC3" checked="true">loader 不物化 runtime 或 RunGraph</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+      <TaskGroup id="P3" name="Fixtures and verification" status="DONE" order="2">
+        <SubNodes>
+          <Task id="T3.1" name="增加真实 AppBundle fixtures 与 contract/loader tests" status="DONE" order="0" priority="P0">
+            <cdt:Acceptance>
+              <cdt:Criterion id="T3.1-AC1" checked="true">真实 fixtures 覆盖 Ctrl 与 Data profile policy</cdt:Criterion>
+              <cdt:Criterion id="T3.1-AC2" checked="true">focused tests、typecheck 与既有回归测试通过</cdt:Criterion>
+            </cdt:Acceptance>
+          </Task>
+        </SubNodes>
+      </TaskGroup>
+    </SubNodes>
+  </TaskSpace>
+  <Schedule>
+    <Dag for="space_add-ai-workflow-definition-units-to-halfcode">
+      <Node id="P2"><After ref="P1"/></Node>
+      <Node id="P3"><After ref="P2"/></Node>
+    </Dag>
+  </Schedule>
+</Track>

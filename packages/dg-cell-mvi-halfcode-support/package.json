@@ -33,6 +33,8 @@
     "typecheck:xnl-vfs-workspace": "tsc --noEmit -p typecheck/xnl-vfs-workspace/tsconfig.json"
   },
   "dependencies": {
+    "ai-ctrl-workflow-logic": "workspace:*",
+    "ai-data-workflow-logic": "workspace:*",
     "bp-ctrl-flow-contract": "workspace:*",
     "bp-ctrl-flow-logic": "workspace:*",
     "dg-cell-mvi-core": "^0.1.1",

@@ -110,16 +110,18 @@ describe('latest xnl-bundles DSL corpus', () => {
     expect(manifest.match(/kind="work-ctrl-flow"/g)).toHaveLength(1);
     expect(manifest.match(/kind="bp-ctrl-flow"/g)).toHaveLength(1);
     expect(manifest.match(/kind="eager-data-flow"/g)).toHaveLength(3);
+    expect(manifest.match(/kind="ai-ctrl-workflow"/g)).toHaveLength(1);
+    expect(manifest.match(/kind="ai-data-workflow"/g)).toHaveLength(1);
     expect(manifest).not.toMatch(/kind="(?:ctrl-flow|data-flow)"/);
     for (const file of flowFiles) {
       const content = readFileSync(file, 'utf8');
-      expect(content, `canonical product root missing in ${file}`).toMatch(/^<(?:InstantCtrlFlow|WorkCtrlFlow|BPCtrlFlow|EagerDataFlow)\b/);
+      expect(content, `canonical product root missing in ${file}`).toMatch(/^<(?:InstantCtrlFlow|WorkCtrlFlow|BPCtrlFlow|EagerDataFlow|AICtrlWorkflow|AIDataWorkflow)\b/);
       expect(content, `apiVersion missing in ${file}`).toContain('apiVersion="depa.flows/v1"');
       expect(content, `version missing in ${file}`).toMatch(/\bversion="[^"]+"/);
       expect(content, `legacy Flow syntax remains in ${file}`).not.toMatch(
         /<(?:CtrlFlow|DataFlow)\b|ctrl-flow:\/\/|(?<!eager-)data-flow:\/\//,
       );
-      if (/^<(?:InstantCtrlFlow|WorkCtrlFlow|BPCtrlFlow)\b/.test(content)) {
+      if (/^<(?:InstantCtrlFlow|WorkCtrlFlow|BPCtrlFlow|AICtrlWorkflow)\b/.test(content)) {
         expect(content.match(/<FlowContract\b/g), `CtrlFlow contract count in ${file}`).toHaveLength(1);
         expect(content, `CtrlFlow input type missing in ${file}`).toMatch(
           /\binput\s*=\s*"vfs:\/\/[^"]+#[A-Za-z_$][A-Za-z0-9_$]*"/,

@@ -52,6 +52,8 @@ describe('Document Unit canonical contract surface', () => {
       'work-ctrl-flow',
       'bp-ctrl-flow',
       'eager-data-flow',
+      'ai-ctrl-workflow',
+      'ai-data-workflow',
     ]);
     expect(documentContract.UNIT_KINDS).toEqual([
       'page',
@@ -61,6 +63,8 @@ describe('Document Unit canonical contract surface', () => {
       'work-ctrl-flow',
       'bp-ctrl-flow',
       'eager-data-flow',
+      'ai-ctrl-workflow',
+      'ai-data-workflow',
     ]);
   });
 
