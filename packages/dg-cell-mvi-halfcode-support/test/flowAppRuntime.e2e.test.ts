@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportResolver } from 'xnl-core';
-import type { TaskSpaceDTO, TaskSpaceStore } from 'task-manager-contract';
-import {
-  applyOperation,
-  findNode,
-  findTask,
-  isOperable,
-  listTasks,
-  terminalStatusOf,
-} from 'task-manager-logic';
+import { InMemoryTaskSpaceOwner as MemoryTaskSpaceStore } from 'task-manager-logic';
 import type { WorkCtrlFlowSnapshot, WorkCtrlFlowStore } from 'work-ctrl-flow-contract';
 import {
   createHalfcodeAppRuntime,
@@ -46,12 +38,6 @@ class MemoryWorkCtrlFlowStore implements WorkCtrlFlowStore {
   async remove(treeId: string) { this.snapshots.delete(treeId); }
 }
 
-class MemoryTaskSpaceStore implements TaskSpaceStore {
-  private readonly spaces = new Map<string, TaskSpaceDTO>();
-  async load(spaceId: string) { return this.spaces.get(spaceId); }
-  async save(spaceId: string, space: TaskSpaceDTO) { this.spaces.set(spaceId, structuredClone(space)); }
-  async remove(spaceId: string) { this.spaces.delete(spaceId); }
-}
 
 const files = {
   '/flow/manifest.xnl': `<AppBundle #demo.flow.Runtime apiVersion="halfcode.dg-cell-mvi/v1" version="1" (
@@ -265,7 +251,6 @@ async function createRuntime() {
       resolveBPCtrlFlowDependencies: () => ({
         store: new MemoryWorkCtrlFlowStore(),
         taskStore: new MemoryTaskSpaceStore(),
-        tasks: { applyOperation, findNode, findTask, isOperable, listTasks, terminalStatusOf },
         clock: { now: () => 1234 },
       }),
     },

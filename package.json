@@ -25,11 +25,23 @@
     "../depa-flows.ts/packages/work-ctrl-flow-logic",
     "../../lang/xnl.ts/packages/core",
     "../../lang/xnl.ts/packages/collab-core",
-    "../../lang/xnl.ts/packages/vfs"
+    "../../lang/xnl.ts/packages/vfs",
+    "../depa-flows.ts/packages/port-control-graph-contract",
+    "../depa-flows.ts/packages/port-control-graph-logic",
+    "../depa-flows.ts/packages/flow-step-space-contract",
+    "../depa-flows.ts/packages/flow-step-space-logic",
+    "../depa-processor"
   ],
   "scripts": {
     "build": "bun run --filter './packages/*' build",
     "test": "bun run --filter './packages/*' test",
     "lint": "bun run --filter './packages/*' lint"
+  },
+  "overrides": {
+    "xnl-core": "workspace:*",
+    "xnl-collab-core": "workspace:*",
+    "xnl-vfs": "workspace:*",
+    "ai-workflow-logic": "workspace:*",
+    "ai-workflow-contract": "workspace:*"
   }
 }

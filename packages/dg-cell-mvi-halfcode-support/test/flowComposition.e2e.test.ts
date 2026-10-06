@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportResolver } from 'xnl-core';
-import type { TaskSpaceDTO, TaskSpaceStore } from 'task-manager-contract';
-import {
-  applyOperation,
-  findNode,
-  findTask,
-  isOperable,
-  listTasks,
-  terminalStatusOf,
-} from 'task-manager-logic';
+import { InMemoryTaskSpaceOwner as MemoryTaskSpaceStore } from 'task-manager-logic';
 import type {
   DurableChildFlowHandle,
   DurableChildFlowResolver,
@@ -59,21 +51,6 @@ class MemoryWorkCtrlFlowStore implements WorkCtrlFlowStore {
   }
 }
 
-class MemoryTaskSpaceStore implements TaskSpaceStore {
-  private readonly spaces = new Map<string, TaskSpaceDTO>();
-
-  async load(spaceId: string) {
-    return this.spaces.get(spaceId);
-  }
-
-  async save(spaceId: string, space: TaskSpaceDTO) {
-    this.spaces.set(spaceId, structuredClone(space));
-  }
-
-  async remove(spaceId: string) {
-    this.spaces.delete(spaceId);
-  }
-}
 
 class RecordingDurableChildren implements DurableChildFlowResolver {
   readonly starts: Array<{ reference: string; treeId: string; input: unknown }> = [];
@@ -140,13 +117,17 @@ const files = {
     'demo.flow.BizSyncParent',
     '<CallFlow #child { flow = "instant-ctrl-flow://demo.flow.InstantChild" }>',
   ),
-  '/flow/parents/biz-sync/task.space.xnl': '<TaskSpace #tasks version=1 []>',
+  '/flow/parents/biz-sync/task.space.xnl': `<TaskSpace #tasks version=1 [
+    <Task #review { name = "Review" ownerAccount = "user:reviewer" status = "NotStarted" order = 0 }>
+  ]>`,
   '/flow/parents/biz-durable/manifest.xnl': controlFlow(
     'BPCtrlFlow',
     'demo.flow.BizDurableParent',
     '<CallFlow #child { flow = "work-ctrl-flow://demo.flow.DurableChild" }>',
   ),
-  '/flow/parents/biz-durable/task.space.xnl': '<TaskSpace #tasks version=1 []>',
+  '/flow/parents/biz-durable/task.space.xnl': `<TaskSpace #tasks version=1 [
+    <Task #review { name = "Review" ownerAccount = "user:reviewer" status = "NotStarted" order = 0 }>
+  ]>`,
   '/flow/children/durable/manifest.xnl': controlFlow(
     'WorkCtrlFlow',
     'demo.flow.DurableChild',
@@ -291,7 +272,6 @@ async function createRuntime(
       resolveBPCtrlFlowDependencies: (unit) => ({
         store: getOrCreate(bizStores, unit.fqn, () => new MemoryWorkCtrlFlowStore()),
         taskStore: getOrCreate(taskStores, unit.fqn, () => new MemoryTaskSpaceStore()),
-        tasks: { applyOperation, findNode, findTask, isOperable, listTasks, terminalStatusOf },
         durableChildren: durableChildren[unit.fqn],
       }),
     },

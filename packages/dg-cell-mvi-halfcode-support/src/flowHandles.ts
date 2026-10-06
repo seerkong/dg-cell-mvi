@@ -5,7 +5,8 @@ import type {
   EagerDataFlowRecord,
 } from 'eager-data-flow-contract';
 import type { FlowBundleSpec, UnitFqn } from 'dg-cell-mvi-halfcode-contract';
-import type { TaskDTO, TaskSpaceStore } from 'task-manager-contract';
+import type { TaskSpaceOwnerPort } from 'task-manager-contract';
+import type { BPTaskDTO } from 'bp-ctrl-flow-contract';
 import type {
   DurableChildFlowResolver,
   ResumeSignal,
@@ -69,7 +70,7 @@ export interface BPCtrlFlowHandle extends HalfcodeFlowHandleBase<'bp-ctrl-flow'>
   start(treeId: string, options?: { input?: Record<string, unknown> }): Promise<TickOutcome>;
   refresh(treeId: string): Promise<TickOutcome>;
   getOutcome(treeId: string): Promise<TickOutcome | undefined>;
-  tasks(treeId: string): Promise<TaskDTO[]>;
+  tasks(treeId: string): Promise<BPTaskDTO[]>;
   operateTask(treeId: string, request: TaskOperationRequest): Promise<TaskOperationResult>;
 }
 
@@ -96,8 +97,8 @@ export interface WorkCtrlFlowLifecycleDependencies {
 
 export interface BPCtrlFlowLifecycleDependencies {
   store: WorkCtrlFlowStore;
-  taskStore: TaskSpaceStore;
-  tasks: BPCtrlFlowTaskDependencies;
+  taskStore: TaskSpaceOwnerPort;
+  tasks?: BPCtrlFlowTaskDependencies;
   clock?: WorkCtrlFlowClock;
   durableChildren?: DurableChildFlowResolver;
 }

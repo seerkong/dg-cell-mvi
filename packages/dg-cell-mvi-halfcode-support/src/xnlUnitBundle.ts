@@ -22,8 +22,8 @@ import {
 } from 'xnl-core';
 import { loadEagerDataFlowSources } from 'eager-data-flow-logic/browser';
 import { loadFlowBundleFromSources } from 'instant-ctrl-flow-logic/browser';
-import { loadAICtrlWorkflowSources } from 'ai-ctrl-workflow-logic/browser';
-import { loadAIDataWorkflowSources } from 'ai-data-workflow-logic/browser';
+import { loadAICtrlWorkflowSources } from 'ai-ctrl-workflow-logic/sources';
+import { loadAIDataWorkflowSources } from 'ai-data-workflow-logic/sources';
 import {
   HALFCODE_DOCUMENT_DSL_INVALID,
   HALFCODE_MESSAGE_DSL_INVALID,

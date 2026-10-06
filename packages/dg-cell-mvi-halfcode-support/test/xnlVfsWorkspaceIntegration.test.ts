@@ -94,8 +94,8 @@ describe('local xnl-vfs workspace integration', () => {
     });
     expect(supportPackage.dependencies).not.toHaveProperty('xnl-vcs');
     expect(readJson(resolve(XNL_PACKAGES_ROOT, 'vfs/package.json')).dependencies).toMatchObject({
-      'xnl-collab-core': 'workspace:*',
-      'xnl-core': 'workspace:^',
+      'xnl-collab-core': readJson(resolve(XNL_PACKAGES_ROOT, 'collab-core/package.json')).version,
+      'xnl-core': readJson(resolve(XNL_PACKAGES_ROOT, 'core/package.json')).version,
     });
   });
 
